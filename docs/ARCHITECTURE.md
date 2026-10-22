@@ -1138,7 +1138,7 @@ final acceptance. No model weight, public evaluation image, private patent or
 derived scientific product is committed here. DECIMER remains primary OCSR;
 there is no new default queue, resident model or local LLM.
 
-## Complete detected-image observations, before chemical identity admission
+## Complete drawing inventory, product-only model admission
 
 `candidate_inputs` composes one source plan from the original PDF, the complete
 segmentation metadata/worker manifest and the existing proved recognition plan.
@@ -1150,26 +1150,30 @@ graphs or row order cannot. Missing assets remain explicit unavailable inputs.
 This is declared producer/input provenance, not independent detector-recall or
 chemical-identity certification.
 
-All remaining images enter the SAME bounded serial DECIMER worker/cache as typed
-unassigned candidates, with an empty original compound label. Even a document
-without a proved numbered molecule receives these observations. An actually
-empty complete detector inventory starts no model and cannot claim compounds.
-Candidates cannot consume the optional maximum-eight stereo-rescue queue, acquire
-activity/Lead/SAR membership, or become numbered products through RDKit parsing.
-No second default recognizer, source store, execution queue or resident model is
-introduced. Existing raw image/model observations are reused by their existing
-exact-image/model keys, never as inherited acceptance.
+Only the existing original-source catalogue's proved numbered product images
+enter the SAME bounded serial DECIMER worker/cache, whether or not activities
+exist. Its proved reprints retain the same original and whole-graph checks.
+Unassigned drawings remain complete source inventory, explicitly deferred with
+`not_processed`, no raw/canonical SMILES, no engine and no model fingerprint.
+An empty proved catalogue loads no model even when the document contains many
+drawings. This is not success: missing ownership still fails binding/completeness
+QA. A crop, graph parse, I-prefix, size or model agreement cannot establish a
+terminal product. General reaction-role/continuation ambiguities stay unresolved.
+No second recognizer, store, execution queue or resident model is introduced.
+Existing exact-image/model raw cache identity remains unchanged; current original
+ownership, source pixels and chemistry must be revalidated before reuse.
 
-SMILES schema4 retains distinct formal, supplemental, reprint and candidate
-groups plus one complete `candidate_inventory`. `candidate_scope` owns the pure
-saved-accounting/source-marker/model-shape boundary; `candidate_observations`
-owns replay against the original current inputs. Every referenced result must
-retain its actual raw source ID, page, crop and processed observation. The
-unassigned source marker cannot be moved to a numbered record. Source-only
-component artifacts remain readable but explicitly lack whole-detection scope.
-The coordinator, worker, checkpoint reuse and final QA6 consume this same policy.
-Whole QA independently replays original input identity and current source bytes;
-a saved success flag cannot replace omitted observations or changed metadata.
+SMILES schema6 and inventory2 declare `proved_numbered_products_only`. Formal,
+supplemental and reprint groups retain actual model observations; the existing
+`candidate_records` group retains exact no-execution records, not predicted
+molecules. `recognition_selection` is the shared admission/deferral boundary;
+the existing `candidate_scope` and `candidate_observations` validate complete
+saved accounting and original inputs. All asset identities, including deferred
+ones, must match. Mutated, omitted, extra or falsely modelled deferred records
+refuse. The coordinator, worker, reuse, Web and final QA share these validators.
+Source-only component artifacts lack whole-inventory scope. Previous complete-
+image inference outputs remain historical; no raw asset/model result or manual
+audit is rewritten or retrospectively certified under the new policy.
 
 The Web adapter uses the same replay through existing `SafeFiles` no-follow,
 bounded reads. Its stat-bound digest memo exists only during one read, is not a
@@ -1177,9 +1181,15 @@ scientific result cache, and ignores ordinary access-time changes. Projection
 and cached source-epoch assessment share `ArtifactView.assessment`. Unassigned
 rows retain original images and accurate observation status without a usable
 molecular field, guessed original ID, measurement or automatic property input.
-Existing review exports and SAR/Lead gates preserve that separation. English and
-Chinese badges distinguish observed-but-unassigned, unverified and unexecuted
-inputs without translating source labels or scientific data.
+`product_records` is the shared view predicate for product queries, filters,
+CSV/JSON exports and downstream project SAR/property/Lead selection. It does not
+replace original source-role proof. Anonymous, explicitly intermediate and
+activity-only ledger rows cannot become table products through a name/graph
+overlay. Proven numbered products without activity or usable SMILES stay visible
+for review. All raw ledger rows, source images, annotations and audits remain;
+the existing original annotation selection no longer searches for an anonymous
+source in the product table. Empty product views distinguish unproved ownership
+from an empty original document, in English and Chinese.
 The shared structure detail shows two previews only when a redraw is usable;
 otherwise the original remains the single preview with a compact withholding
 status. Empty not-run property blocks are omitted, but actual values, warnings,

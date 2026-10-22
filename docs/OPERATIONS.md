@@ -145,7 +145,7 @@ is introduced; missing/forged metadata never qualifies for that retry.
 An internal control token still refuses retry when the end sentinel is also
 missing; retain both defects in the unchanged token sequence, not a repair.
 
-Current contracts are DECIMER adapter2, raw observation3 and SMILES schema5.
+Current contracts are DECIMER adapter2, raw observation3 and SMILES schema6.
 An old raw-v2 cache cannot establish completion. It stays unchanged at its
 source, is not promoted by transport, and cannot be made current by changing a
 version label. Current exact-image/model caches require matching completed raw
@@ -901,30 +901,44 @@ PR label and coherent release scope are independently prepared;
 a development checkpoint is not a deployed upgrade. Synthetic native controls
 are not patent/model validation.
 
-## Unassigned images still receive source observations
+## Whole-document inventory does not require whole-document OCSR
 
 The normal extraction worker now requires both the original PDF and its complete
 structures metadata/producer manifest. Missing page coverage is an error, not a
-zero. A known empty numbered catalogue no longer prevents otherwise-detected
-images from being observed by the same serial DECIMER process and raw cache.
-Only a genuinely empty full detector inventory avoids starting that model.
+zero. Original, proved numbered product sources and their proved reprints use
+the one serial DECIMER process/cache; no activity is required. Other drawings
+remain in the complete inventory but are deferred before inference. An empty
+proved catalogue starts no model or native availability probe and cannot claim
+successful compounds. Missing/ambiguous terminal ownership remains a failure.
+The OCSR worker's former `--include-unbound`, `--include-intermediates` and
+redundant `--only-bound` switches are removed; old commands fail argument validation
+before loading a model. Diagnostic inputs cannot restore anonymous inference.
 
-SMILES4 keeps unassigned `candidate_records` separate from numbered results.
-Missing/rejected images retain explicit observations; the UI must not call
-observed candidates unexecuted or accepted products. Their original labels,
-activities and usable molecular fields remain empty, and existing property,
-Lead and SAR gates exclude them. Raw observations remain in the versioned output;
-review table/CSV/JSON exports do not invent numbered chemistry. Whole QA6
-requires complete original-source replay, not just the new field or a success
-flag. Source-only component/diagnostic artifacts cannot supply this guarantee.
+SMILES6/inventory2 declare `proved_numbered_products_only`. Existing
+`candidate_records` contain strict source-bound `not_processed` deferrals, with
+no model/engine/fingerprint or molecular output. They cannot be counted as
+inference, failure or accepted compounds. Every drawing and original page still
+has explicit source accounting and image-identity replay. Saved fake model data,
+changed source bytes, omitted rows or stale policy identities refuse. Original
+source/chemical/QA gates are not weakened by excluding unproved inference.
+Source-only component/diagnostic artifacts do not prove full inventory coverage.
 
 Checkpoint reuse includes metadata, manifest and complete source-plan identity.
-Older SMILES3/QA5 products stay historical and are not retagged; compatible raw
+Older SMILES5 and earlier products stay historical and are not retagged; compatible raw
 model observations can still be reused through the existing exact-image/model
 cache in a normal new producer. Preserve original PDFs, raw assets, failed
 attempts, manual audit and the compatible rollback package/state. A failed
 source replay must not trigger poll-time inference, a duplicate task, automatic
 numbering, another recognizer or an external LLM call.
+
+The default product table, its filter choices and CSV/JSON exports exclude
+anonymous/intermediate/activity-only ledger rows before metric population,
+paging, filtering or sorting. The same view feeds project SAR/properties/Lead.
+A name or graph overlay cannot turn an unproved original into a product. Proven
+numbered products stay visible when activity or chemistry is unavailable. Original
+annotations, crop URLs, raw artifacts and manual audit remain intact for diagnosis;
+selecting an unassigned annotation does not alter product-table filters. Historical
+source views never regain scientific acceptance merely by appearing in a table.
 
 All-crop observations alone do not solve unlabelled multi-step reaction schemes. A
 matching known molecule may be a reactant, not the heading's product. Continue

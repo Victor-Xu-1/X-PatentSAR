@@ -13,6 +13,8 @@ from patent_sar_extractor.core.catalog_reader import (
 from patent_sar_extractor.core.pipeline_rules import _label_key
 from patent_sar_extractor.core.role_text_sources import role_text_cells
 
+from .recognition_selection import require_numbered_model_input
+
 _SOURCE_INPUT_FIELDS = (
     "image_path",
     "source_image_path",
@@ -63,6 +65,7 @@ def recognition_inputs(payload: dict[str, Any]) -> RecognitionPlan:
     }
     used_labels, used_images = set(), set()
     for row in formal:
+        require_numbered_model_input(row)
         label = _label_key(str(row.get("cpd") or row.get("compound_id") or ""))
         image = str(row.get("structure_id") or "")
         if not label or not image or label in used_labels or image in used_images:
@@ -85,6 +88,7 @@ def recognition_inputs(payload: dict[str, Any]) -> RecognitionPlan:
     supplemental = []
     reprints = []
     for row in catalog or []:
+        require_numbered_model_input(row)
         label = _label_key(str(row.get("cpd") or row.get("compound_id") or ""))
         if label not in used_labels:
             if row.get("structure_id") in used_images:
@@ -92,6 +96,7 @@ def recognition_inputs(payload: dict[str, Any]) -> RecognitionPlan:
             supplemental.append(row)
             used_images.add(row["structure_id"])
         for source in row.get("additional_sources", []):
+            require_numbered_model_input(source)
             if source["structure_id"] in used_images:
                 raise ValueError("A reprint image competes with another source owner.")
             reprints.append(source)

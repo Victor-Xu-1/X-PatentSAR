@@ -95,6 +95,7 @@ from patent_sar_extractor.core.health_check import (
 )
 from patent_sar_extractor.core.ocsr import run_smiles as run_smiles_module
 from patent_sar_extractor.core.ocsr import smiles_converter as smiles_converter_module
+from patent_sar_extractor.core.ocsr.recognition_selection import deferred_source_records
 from patent_sar_extractor.core.ocsr.run_smiles import (
     validate_strict_binding_input,
     validate_strict_smiles_results,
@@ -1977,10 +1978,7 @@ class StrictAcceptanceTests(unittest.TestCase):
                     observation(row, raw_by_source[row["structure_id"]])
                     for row in plan.proven.formal
                 ],
-                candidate_records=[
-                    observation(row, raw_by_source[row["structure_id"]])
-                    for row in plan.candidates
-                ],
+                candidate_records=deferred_source_records(plan.inventory),
                 candidate_inventory=plan.inventory,
             )
             from types import SimpleNamespace

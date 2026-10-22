@@ -27,6 +27,7 @@ from patent_sar_extractor.core.ocsr.candidate_observations import (
 )
 from patent_sar_extractor.core.ocsr.generation import observe_generation
 from patent_sar_extractor.core.ocsr.recognition_inputs import RecognitionPlan
+from patent_sar_extractor.core.ocsr.recognition_selection import deferred_source_records
 from patent_sar_extractor.core.ocsr.smiles_converter import SmilesConverter
 from patent_sar_extractor.core.ocsr.stereo_rescue_pass import eligible
 from patent_sar_extractor.core.structure_inventory import inventory_packet
@@ -175,7 +176,7 @@ class CandidateSourceControls:
             "records": [observed(self.owner)],
             "source_records": [],
             "reprint_records": [],
-            "candidate_records": [observed(item) for item in plan.candidates],
+            "candidate_records": deferred_source_records(plan.inventory),
         }
 
     def converter(self):
@@ -234,7 +235,9 @@ class CandidateObservationTests(CandidateSourceControls, unittest.TestCase):
         self.assertEqual(
             [r["cpd_id"] for r in smiles_candidate_records(artifact)], [""]
         )
-        self.assertEqual(artifact["recognition_input_scope"], "all_detected_images")
+        self.assertEqual(
+            artifact["recognition_input_scope"], "proved_numbered_products_only"
+        )
         changed = copy.deepcopy(artifact)
         changed["candidate_records"][0]["cpd_id"] = "Compound 7"
         self.assertFalse(smiles_artifact_is_current(changed))
@@ -253,7 +256,7 @@ class CandidateObservationTests(CandidateSourceControls, unittest.TestCase):
         )
         self.assertEqual(artifact["recognition_input_scope"], "proved_sources_only")
 
-    def test_saved_candidate_records_require_their_exact_source_and_model_shape(self):
+    def test_saved_deferred_records_require_exact_source_and_no_model_fields(self):
         plan = self.plan()
         records = self.records(plan)
         artifact = build_smiles_artifact(
@@ -274,11 +277,12 @@ class CandidateObservationTests(CandidateSourceControls, unittest.TestCase):
             ("page_no", 2.0),
             ("ocsr_original_input", "relative.png"),
             ("image_hash", "f" * 64),
-            ("model_fingerprint", None),
+            ("model_fingerprint", "a" * 64),
             ("OCSR_engine", "molscribe"),
             ("cpd_num", 7),
             ("prefix", "Compound"),
-            ("OCSR_status", "not_processed"),
+            ("OCSR_status", "success"),
+            ("canonical_smiles", "CCO"),
             ("raw_smiles", []),
         ):
             changed = copy.deepcopy(artifact)
@@ -305,30 +309,29 @@ class CandidateObservationTests(CandidateSourceControls, unittest.TestCase):
             smiles_artifact_is_current(artifact, require_all_candidates=True)
         )
 
-    def test_one_default_queue_recognizes_proved_and_unassigned_sources(self):
+    def test_one_default_queue_recognizes_only_proved_numbered_sources(self):
         plan = self.plan()
         converter = self.converter()
         results = converter.convert_batch(plan.work_items)
-        self.assertEqual(len(results), 2)
-        self.assertEqual([row["cpd_id"] for row in results], ["Compound 7", ""])
-        self.assertEqual(
-            results[1]["candidate_source_id"], plan.candidates[0]["candidate_source_id"]
-        )
+        self.assertEqual(len(results), 1)
+        self.assertEqual([row["cpd_id"] for row in results], ["Compound 7"])
+        self.assertEqual(len(converter.engines["decimer"].calls), 1)
         payload = {
             "candidate_inventory": plan.inventory,
             "records": results[:1],
             "source_records": [],
             "reprint_records": [],
-            "candidate_records": results[1:],
+            "candidate_records": deferred_source_records(plan.inventory),
         }
         validate_candidate_observations(plan, payload)
         self.assertTrue(converter.engines["decimer"].closed)
 
-    def test_a_document_without_any_number_still_has_model_observations(self):
+    def test_a_document_without_any_proved_number_never_predicts_candidates(self):
         plan = self.plan(sources=RecognitionPlan([], [], []))
-        results = self.converter().convert_batch(plan.work_items)
-        self.assertEqual(len(results), 2)
-        self.assertTrue(all(row["cpd_id"] == "" for row in results))
+        converter = self.converter()
+        self.assertEqual(converter.convert_batch(plan.work_items), [])
+        self.assertEqual(converter.engines["decimer"].calls, [])
+        self.assertEqual(len(deferred_source_records(plan.inventory)), 2)
 
     def test_a_forged_candidate_label_is_not_a_normal_model_input(self):
         candidate = copy.deepcopy(self.plan().candidates[0])
@@ -355,7 +358,13 @@ class CandidateObservationTests(CandidateSourceControls, unittest.TestCase):
 
     def test_identical_raw_images_share_the_existing_model_cache_not_their_ids(self):
         self.metadata["structures"][1]["image_path"] = "source-1.png"
-        plan = self.plan()
+        second_owner = {
+            **self.owner,
+            "structure_id": "S2",
+            "page_no": 2,
+            "cpd": "Compound 8",
+        }
+        plan = self.plan(sources=RecognitionPlan([self.owner, second_owner], [], []))
         first = self.converter()
         results = first.convert_batch(plan.work_items)
         self.assertEqual(len(results), 2)
@@ -379,10 +388,13 @@ class CandidateObservationTests(CandidateSourceControls, unittest.TestCase):
         self.assertEqual(plan.candidates[0]["bind_status"], "candidate")
         validate_candidate_observations(plan, self.records(plan))
 
-    def test_zero_proved_identifiers_still_schedule_every_original_candidate(self):
+    def test_zero_proved_identifiers_keep_every_original_candidate_without_scheduling(
+        self,
+    ):
         plan = self.plan(sources=RecognitionPlan([], [], []))
         self.assertEqual([r["structure_id"] for r in plan.candidates], ["S1", "S2"])
         self.assertTrue(all(r["cpd"] == "" for r in plan.candidates))
+        self.assertEqual(plan.work_items, [])
 
     def test_equal_ids_or_image_pixels_do_not_replace_different_source_geometry(self):
         for mutation in ("page", "geometry"):
@@ -479,20 +491,12 @@ class CandidateObservationTests(CandidateSourceControls, unittest.TestCase):
             "records": [self.records_for_owner()],
             "source_records": [],
             "reprint_records": [],
-            "candidate_records": [
-                {
-                    "cpd_id": "",
-                    "structure_id": "S2",
-                    "ocsr_source_structure_id": "S2",
-                    "candidate_source_id": plan.candidates[0]["candidate_source_id"],
-                    "page_no": 2,
-                    "image_hash": None,
-                    "ocsr_original_input": str(self.root / "missing.png"),
-                    "OCSR_status": "image_missing",
-                    "raw_smiles": None,
-                }
-            ],
+            "candidate_records": deferred_source_records(plan.inventory),
         }
+        self.assertIsNone(records["candidate_records"][0]["image_hash"])
+        self.assertEqual(
+            records["candidate_records"][0]["OCSR_status"], "not_processed"
+        )
         validate_candidate_observations(plan, records)
 
     def records_for_owner(self):

@@ -72,7 +72,8 @@ class ColumnHeaderConsumerTests(unittest.TestCase):
         self.assertEqual(len(plan.proven.role_text), 2)
         self.assertEqual({number for number, _ in plan.proven.role_text}, {5})
         self.assertEqual(len(plan.proven.work_items), 1)
-        self.assertEqual(len(plan.work_items), 2)
+        self.assertEqual(len(plan.work_items), 1)
+        self.assertEqual(len(plan.inventory["entries"]), 2)
 
     def test_changed_original_pixels_refuse_even_with_refreshed_document_identity(self):
         consumer, header = self.source()

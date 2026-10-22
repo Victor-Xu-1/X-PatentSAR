@@ -114,8 +114,12 @@ class ResultTests(WebFixture, unittest.TestCase):
             prefix = f"/api/v1/projects/{imported.id}"
             result = client.get(prefix + "/results")
             self.assertEqual(result.status_code, 200, result.text)
-            self.assertEqual(result.json()["total"], 2)
-            for row in result.json()["items"]:
+            self.assertEqual(result.json()["total"], 0)
+            self.assertEqual(result.json()["items"], [])
+            source_rows = WorkspaceService(self.state).result_rows(imported.id)
+            self.assertEqual(len(source_rows), 2)
+            for stored in source_rows:
+                row = json.loads(stored["payload"])
                 self.assertIsNone(row["structure_image_url"])
                 self.assertIn("structure_not_generated", row["flags"])
                 self.assertNotIn("image_unavailable", row["flags"])

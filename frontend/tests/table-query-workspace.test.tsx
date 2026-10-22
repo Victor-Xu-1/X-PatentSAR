@@ -31,6 +31,46 @@ beforeEach(() => {
 });
 
 describe('the existing route is the sole source of global column queries', () => {
+  it('keeps an unassigned original annotation out of product-table search and preserves filters', async () => {
+    const sourceId = `source-structure:${'a'.repeat(32)}`;
+    vi.spyOn(api, 'results').mockResolvedValue({ ...data, items: [], total: 0 });
+    vi.spyOn(api, 'page').mockResolvedValue({
+      ...page,
+      annotations: [{ ...page.annotations[0]!, compound_id: sourceId }],
+    });
+    const navigate = vi.fn(),
+      onQuery = vi.fn();
+    render(
+      <Workspace
+        jobVerified
+        project={project}
+        route={{
+          ...emptyRoute,
+          projectId: project.id,
+          page: 4,
+          tab: 'annotations',
+          tableQuery: routed,
+        }}
+        navigate={navigate}
+        query="keep"
+        onQuery={onQuery}
+        ready
+        job={null}
+        onJobChange={vi.fn()}
+        onProjectReload={vi.fn()}
+        onUpload={vi.fn()}
+        onAttach={vi.fn()}
+      />,
+    );
+    fireEvent.load(await screen.findByRole('img', { name: '原始专利 PDF 第 4 页' }));
+    await userEvent.click(
+      await screen.findByRole('button', { name: `定位化合物 ${sourceId}，证据未确认` }),
+    );
+    expect(onQuery).not.toHaveBeenCalled();
+    expect(navigate).toHaveBeenLastCalledWith(
+      expect.objectContaining({ compoundId: sourceId, tableQuery: routed }),
+    );
+  });
   it('restores color sort from the route, resets pagination on band changes, and never retains a competing local band', async () => {
     const read = vi.spyOn(api, 'results').mockResolvedValue(data);
     const initial: TableQuery = {

@@ -29,6 +29,7 @@ from .pdf import open_pdf, rendered_box
 from .prediction_identity import source_stereo_blocked
 from .prediction_models import PredictionSummary
 from .prediction_storage import PredictionStore
+from .product_records import is_numbered_product
 from .recognition_storage import (
     RECOGNITION_COLUMNS,
     RECOGNITION_JOIN,
@@ -142,14 +143,17 @@ class ResultQueries:
         activity_columns = ActivityColumnCatalog()
         rows, project = self._rows_and_project(project_id)
         for row in rows:
+            original = Compound.model_validate_json(row["payload"])
+            if not is_numbered_product(original):
+                continue
             dto = apply_correction(
                 project,
                 row,
                 joined_correction(row),
-                apply_recognition(
-                    project, row, Compound.model_validate_json(row["payload"])
-                ),
+                apply_recognition(project, row, original),
             )
+            if not is_numbered_product(dto):
+                continue
             activity_columns.observe(dto.activities, compound_id=dto.id)
             dto.identifier_label = identifier_label(dto)
             metrics.update(a.name for a in dto.activities)

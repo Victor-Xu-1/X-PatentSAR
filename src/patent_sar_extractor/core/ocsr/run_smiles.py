@@ -1,7 +1,7 @@
 """
 PatentSAR SMILES engine runner.
 
-Observes proved and detected unassigned structure images with separate identities
+Recognizes proved numbered products, retaining unassigned source inventory only,
 using DECIMER as the only accepted production OCSR engine.
 
 Default strict chain: DECIMER only, no fallback.  This avoids accepting
@@ -43,7 +43,6 @@ from patent_sar_extractor.contracts import (
     artifact_identity_matches,
 )
 from patent_sar_extractor.core.binding_records import binding_records
-from patent_sar_extractor.core.cpd_filter import filter_examples_only
 from patent_sar_extractor.core.ocsr.candidate_inputs import load_source_observation_plan
 from patent_sar_extractor.core.ocsr.candidate_observations import (
     validate_candidate_observations,
@@ -61,6 +60,7 @@ from patent_sar_extractor.core.ocsr.recognition_policy import (
     recognition_acceptance_errors,
     validate_strict_smiles_results,
 )
+from patent_sar_extractor.core.ocsr.recognition_selection import deferred_source_records
 from patent_sar_extractor.core.ocsr.recognition_source_paths import resolve_image_paths
 from patent_sar_extractor.core.ocsr.smiles_converter import (
     DEFAULT_EXTRA_PREPROCESS,
@@ -294,17 +294,6 @@ def main():
         help="Bounded parallel image-preparation workers; DECIMER inference uses one owned model.",
     )
     parser.add_argument(
-        "--only-bound",
-        action="store_true",
-        default=True,
-        help="Use proved sources and typed original candidates; arbitrary unbound rows are excluded (default).",
-    )
-    parser.add_argument(
-        "--include-unbound",
-        action="store_true",
-        help="Diagnostic only: also process arbitrary unbound rows, never production acceptance.",
-    )
-    parser.add_argument(
         "--preprocess-long-edge",
         type=int,
         default=1024,
@@ -315,11 +304,6 @@ def main():
         type=int,
         default=20,
         help="Preprocessing padding in pixels (default: 20)",
-    )
-    parser.add_argument(
-        "--include-intermediates",
-        action="store_true",
-        help="Diagnostic label filtering only; production uses the proved source roles and retains all detected candidates.",
     )
     parser.add_argument(
         "--diagnostic-unvalidated-input",
@@ -355,7 +339,6 @@ def main():
     # One policy/flag value: the default preserves the same input as the
     # coordinator, with the SDK owning its required image transforms.
     preprocess = args.preprocess
-    only_bound = args.only_bound and not args.include_unbound
 
     # Auto-generate output paths
     timestamp = time.strftime("%Y%m%d_%H%M%S")
@@ -376,12 +359,6 @@ def main():
     print(f"Loading bindings from: {args.input}")
     bindings = load_bindings(args.input)
     print(f"Loaded {len(bindings)} binding records")
-    # Filter out Intermediate (中间体), keep only Example (实施例)
-    # Production is already source-led; a lexical filter must not shrink its
-    # exact proved corpus, or the independently retained raw candidate inventory.
-    if args.diagnostic_unvalidated_input and not args.include_intermediates:
-        bindings = filter_examples_only(bindings)
-
     # One model process and one QC authority cover the complete proved catalog.
     # Formal QA keeps its ordered association view; no-activity rows are not
     # silently omitted or falsely labelled as formally accepted measurements.
@@ -424,13 +401,13 @@ def main():
             bindings,
             diagnostic=args.diagnostic_unvalidated_input,
             limit=args.limit,
-            include_unbound=args.include_unbound,
+            include_unbound=False,
             candidate_plan=candidate_plan,
         )
     formal_count = len(bindings)
     primary_count = formal_count + len(supplemental)
     reprint_count = primary_count + len(reprints)
-    all_inputs = [*bindings, *supplemental, *reprints, *candidates]
+    all_inputs = [*bindings, *supplemental, *reprints]
 
     # Resolve image paths
     base_dir = os.path.dirname(os.path.abspath(args.input))
@@ -438,7 +415,6 @@ def main():
     bindings = all_inputs[:formal_count]
     supplemental = all_inputs[formal_count:primary_count]
     reprints = all_inputs[primary_count:reprint_count]
-    candidates = all_inputs[reprint_count:]
 
     # Check how many images are accessible
     images_found = sum(
@@ -471,46 +447,51 @@ def main():
     print(f"\nEngines: primary={primary_engines}, fallback={fallback_engines}")
     print(f"Preprocess: {preprocess}, Timeout: {args.timeout}s")
 
-    converter = SmilesConverter(
-        engines=primary_engines,
-        fallback_engines=fallback_engines,
-        cache_path=args.cache,
-        preprocess=preprocess,
-        timeout=args.timeout,
-        preprocess_long_edge=args.preprocess_long_edge,
-        preprocess_padding=args.preprocess_padding,
-        engine_configs=engine_configs,
-        retry_normalization=args.retry_normalization,
-    )
-
-    # Check engine availability
-    print("\nEngine availability:")
-    for name in set(primary_engines + fallback_engines):
-        engine = converter.engines.get(name)
-        if engine:
-            avail = engine.is_available()
-            print(f"  {name}: {'✓ available' if avail else '✗ unavailable'}")
-        else:
-            print(f"  {name}: ✗ not registered")
-
-    # Run conversion
-    print("\nProcessing...")
     start_time = time.time()
-
-    results = converter.convert_batch(
-        all_inputs,
-        preprocess_dir=preprocess_dir,
-        only_bound=only_bound,
-        limit=args.limit,
-        jobs=args.jobs,
-        progress_path=str(Path(args.output).parent / "progress.json"),
-    )
+    converter = None
+    if all_inputs:
+        converter = SmilesConverter(
+            engines=primary_engines,
+            fallback_engines=fallback_engines,
+            cache_path=args.cache,
+            preprocess=preprocess,
+            timeout=args.timeout,
+            preprocess_long_edge=args.preprocess_long_edge,
+            preprocess_padding=args.preprocess_padding,
+            engine_configs=engine_configs,
+            retry_normalization=args.retry_normalization,
+        )
+        print("\nEngine availability:")
+        for name in set(primary_engines + fallback_engines):
+            engine = converter.engines.get(name)
+            if engine:
+                avail = engine.is_available()
+                print(f"  {name}: {'✓ available' if avail else '✗ unavailable'}")
+            else:
+                print(f"  {name}: ✗ not registered")
+        print("\nProcessing numbered products...")
+        results = converter.convert_batch(
+            all_inputs,
+            preprocess_dir=preprocess_dir,
+            limit=args.limit,
+            jobs=args.jobs,
+            progress_path=str(Path(args.output).parent / "progress.json"),
+        )
+    else:
+        results = []
+        print("No proved numbered products; model inference was not started.")
 
     elapsed = time.time() - start_time
     formal_results = results[:formal_count]
     source_results = results[formal_count:primary_count]
     reprint_results = results[primary_count:reprint_count]
-    candidate_results = results[reprint_count:]
+    if len(results) > reprint_count:
+        raise RuntimeError("Model returned results outside the numbered product queue")
+    candidate_results = (
+        deferred_source_records(candidate_plan.inventory)
+        if candidate_plan is not None
+        else []
+    )
     if args.continue_on_scientific_errors:
         require_complete_source_results(bindings, formal_results)
     if not args.diagnostic_unvalidated_input and not ordered_source_results(
@@ -563,7 +544,7 @@ def main():
     print_summary(results, args.output, args.csv_output, elapsed)
 
     # Cache stats
-    if converter.cache:
+    if converter is not None and converter.cache:
         stats = converter.cache.get_stats()
         print(
             f"\nCache stats: {stats['total_entries']} entries, "

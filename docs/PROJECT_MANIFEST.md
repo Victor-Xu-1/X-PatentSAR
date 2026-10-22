@@ -521,19 +521,25 @@
   Separately authorized RxnScribe evaluation stays external and experimental,
   not default software readiness or a new installed production dependency.
 
-- Complete-image observations: `candidate_inputs` composes original/manifest/
+- Complete-image inventory/product-only recognition: `candidate_inputs` composes original/manifest/
   proved inputs; `candidate_inventory` owns bounded original crop descriptors;
   `candidate_scope` owns saved accounting and `candidate_observations` owns exact
-  replay. One DECIMER queue/cache observes formal, supplemental, reprint and
-  otherwise-unassigned images, including zero-proved-ID runs. Source-only
-  component artifacts cannot represent complete pipeline coverage. SMILES4/QA6
-  refresh only derived observation/acceptance contracts, not raw OCSR2,
-  preparation8, Binding32/binder42, manual audit, API-v1/SQL, dependencies or
-  numerical SAR. Candidates have no original ID, automatic property, activity,
-  Lead or SAR eligibility; they cannot consume the <=8 stereo rescue budget.
+  replay. One DECIMER queue/cache recognizes only the original catalogue's proved
+  numbered products and reprints. `recognition_selection` rejects unassigned or
+  explicitly intermediate inputs before image/cache/model work. Empty catalogues
+  load no model. SMILES6/inventory2 retain exact no-execution candidate records
+  and unchanged complete drawing/source identities, not invented chemistry.
+  Original coverage and unresolved ownership still fail closed. Raw OCSR3,
+  preparation, current bindings/binder, manual audit, API-v1/SQL, dependencies,
+  stereo-rescue and numerical SAR policies are unchanged. Historical model
+  outputs are not promoted or rewritten. Source-only artifacts lack full scope.
   Web uses the same replay behind SafeFiles and one call-local stat/hash memo.
   `ArtifactView.assessment` serves both projection and source-epoch review;
-  current rows/exports preserve observation versus chemical admission. Projection
+  raw rows preserve observation versus chemical admission. `product_records`
+  filters default product tables, exports and project research consumers before
+  paging, filtering, metric ranking or overlays. No-activity numbered products
+  remain included. Anonymous original annotations retain source access without
+  initiating an impossible product-table search. Projection
   layout v3 is rebuildable, not a raw-data or manual-audit migration. No second
   parser/model/store/queue, copied winner or private-patent repair is introduced.
   Complete detection accounting does not prove recall, terminal reaction roles

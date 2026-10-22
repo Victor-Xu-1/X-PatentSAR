@@ -122,7 +122,7 @@ class CandidateStageControls(source_controls.CandidateSourceControls):
 
 
 class CandidateStageTests(CandidateStageControls, unittest.TestCase):
-    def test_main_chain_observes_original_images_when_no_printed_id_is_proved(self):
+    def test_main_chain_retains_images_but_defers_inference_without_proved_ids(self):
         state = self.state()
         self.execute(state)
         artifact = load_json(state.smiles_json, {})
@@ -131,10 +131,11 @@ class CandidateStageTests(CandidateStageControls, unittest.TestCase):
         )
         self.assertEqual(artifact["records"], [])
         self.assertEqual([r["cpd_id"] for r in artifact["candidate_records"]], ["", ""])
-        self.assertEqual(len(self.invocations), 1)
+        self.assertEqual(len(self.invocations), 0)
         stage = state.pipeline_log["steps"]["smiles"]
-        self.assertEqual(stage["candidate_total"], 2)
-        self.assertEqual(stage["execution_status"], "completed")
+        self.assertEqual(stage["candidate_total"], 0)
+        self.assertEqual(stage["deferred_total"], 2)
+        self.assertEqual(stage["execution_status"], "not_started")
         self.assertEqual(stage["status"], "failed")
         self.assertTrue(state.scientific_errors["smiles"])
 
@@ -180,14 +181,13 @@ class CandidateStageTests(CandidateStageControls, unittest.TestCase):
         )
         self.assertEqual(artifact["candidate_records"], [])
 
-    def test_resume_reuses_complete_observations_without_rerunning_the_model(self):
+    def test_repeat_empty_catalogue_keeps_inventory_without_ever_starting_a_model(self):
         first = self.state()
         self.execute(first)
         second = self.state()
         self.execute(second)
-        self.assertEqual(len(self.invocations), 1)
-        self.assertTrue(second.progress.checkpoint_reused)
-        self.assertEqual(second.pipeline_log["steps"]["smiles"]["candidate_total"], 2)
+        self.assertEqual(len(self.invocations), 0)
+        self.assertEqual(second.pipeline_log["steps"]["smiles"]["deferred_total"], 2)
         self.assertTrue(second.scientific_errors["smiles"])
 
     def test_final_qa_replays_complete_source_inputs_instead_of_trusting_a_saved_flag(

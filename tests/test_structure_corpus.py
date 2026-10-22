@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import csv
-import io
 import json
 import unittest
 from collections import Counter
@@ -13,10 +11,20 @@ from test_prediction_support import PredictionFixture
 from patent_sar_extractor.web.correction_models import CorrectionRequest
 from patent_sar_extractor.web.errors import WebError
 from patent_sar_extractor.web.exports import export_json
+from patent_sar_extractor.web.identifier_labels import identifier_label
 from patent_sar_extractor.web.sar.project_inputs import project_inputs
 
 
 class StructureCorpusTests(PredictionFixture, unittest.TestCase):
+    def unassociated_source(self):
+        rows = self.service.result_rows(self.project.id)
+        source = next(
+            json.loads(row["payload"])
+            for row in rows
+            if json.loads(row["payload"])["id"].startswith("source-structure:")
+        )
+        return self.service.effective_compound(self.project.id, source["id"])
+
     def add_source(self, *, unavailable=False, consistent_inventory=True):
         path = self.run / "structures/metadata.json"
         payload = json.loads(path.read_text())
@@ -37,21 +45,15 @@ class StructureCorpusTests(PredictionFixture, unittest.TestCase):
         return self.service.results(self.project.id)
 
     def test_generated_label_is_absent_from_identifier_choices_and_exports(self):
-        row = next(
-            item
-            for item in self.add_source().items
-            if item.record_kind == "structure_only"
-        )
+        self.add_source()
+        row = self.unassociated_source()
         files = {
             path: path.read_bytes() for path in self.run.rglob("*") if path.is_file()
         }
         prefix = f"/api/v1/projects/{self.project.id}"
         with self.client() as client:
             rows = client.get(prefix + "/results").json()["items"]
-            actual = next(item for item in rows if item["id"] == row.id)
-            self.assertNotIn("identifier_label", actual)
-            self.assertEqual(actual["display_id"], row.display_id)
-            self.assertEqual(actual["structure_id"], row.structure_id)
+            self.assertNotIn(row.id, {item["id"] for item in rows})
             choices = client.get(
                 prefix + "/filter-values", params={"column": "compound"}
             )
@@ -62,29 +64,18 @@ class StructureCorpusTests(PredictionFixture, unittest.TestCase):
             response = client.post(
                 prefix + "/export", json={"format": "json", "compound_ids": [row.id]}
             )
-            self.assertEqual(response.status_code, 200, response.text)
-            exported = response.json()["items"][0]
-            self.assertNotIn("identifier_label", exported)
-            self.assertEqual(exported["display_id"], row.display_id)
-            self.assertTrue(response.json()["review_only"])
+            self.assertEqual(response.status_code, 404, response.text)
             csv_response = client.post(
                 prefix + "/export", json={"format": "csv", "compound_ids": [row.id]}
             )
-            self.assertEqual(csv_response.status_code, 200, csv_response.text)
-            csv_row = next(
-                csv.DictReader(io.StringIO(csv_response.content.decode("utf-8-sig")))
-            )
-            self.assertEqual(csv_row["identifier_label"], "")
-            self.assertEqual(csv_row["compound_id"], row.id)
-            self.assertEqual(csv_row["display_id"], row.display_id)
+            self.assertEqual(csv_response.status_code, 404, csv_response.text)
+            original = client.get(row.structure_image_url)
+            self.assertEqual(original.status_code, 200, original.text)
         self.assertEqual({path: path.read_bytes() for path in files}, files)
 
     def test_effective_label_origin_survives_graph_edits_stale_renames_and_reset(self):
-        row = next(
-            item
-            for item in self.add_source().items
-            if item.record_kind == "structure_only"
-        )
+        self.add_source()
+        row = self.unassociated_source()
         self.service.corrections.on_save = None
         files = {
             path: path.read_bytes() for path in self.run.rglob("*") if path.is_file()
@@ -105,11 +96,10 @@ class StructureCorpusTests(PredictionFixture, unittest.TestCase):
         def current():
             imported = project_inputs(self.service, self.project.id)[0]
             self.assertNotIn(row.id, {item.source_compound_id for item in imported})
-            return next(
-                item
-                for item in self.service.compounds(self.project.id)
-                if item.id == row.id
+            self.assertNotIn(
+                row.id, {item.id for item in self.service.compounds(self.project.id)}
             )
+            return self.service.effective_compound(self.project.id, row.id)
 
         save(smiles="CCO")
         graph_edit = current()
@@ -120,7 +110,7 @@ class StructureCorpusTests(PredictionFixture, unittest.TestCase):
         save(display_id="Reviewed original 008A")
         renamed = current()
         self.assertTrue(renamed.correction.identifier_changed)
-        self.assertEqual(renamed.identifier_label, "Reviewed original 008A")
+        self.assertEqual(identifier_label(renamed), "Reviewed original 008A")
         self.service.refresh(self.project.id)
         stale = current()
         self.assertTrue(stale.correction.stale)
@@ -140,20 +130,19 @@ class StructureCorpusTests(PredictionFixture, unittest.TestCase):
         self,
     ):
         result = self.add_source(consistent_inventory=False)
-        self.assertEqual(result.total, 2)
+        self.assertEqual(result.total, 1)
+        self.assertEqual(len(self.service.result_rows(self.project.id)), 2)
         acceptance = self.service.project(self.project.id).acceptance
         self.assertEqual(acceptance.state, "failed")
         self.assertTrue(any("candidate count" in error for error in acceptance.errors))
 
-    def test_actual_structure_with_no_activity_is_retained_and_not_called_inactive(
+    def test_unassigned_source_is_retained_outside_product_table_not_called_inactive(
         self,
     ):
         before = self.service.project(self.project.id).acceptance
         result = self.add_source()
-        self.assertEqual(result.total, 2)
-        row = next(
-            item for item in result.items if item.record_kind == "structure_only"
-        )
+        self.assertEqual(result.total, 1)
+        row = self.unassociated_source()
         self.assertEqual(row.activities, [])
         self.assertIsNone(row.smiles)
         self.assertEqual(row.recognition.status, "unavailable")
@@ -164,30 +153,23 @@ class StructureCorpusTests(PredictionFixture, unittest.TestCase):
         self.assertIsNone(row.confidence.score)
         self.assertEqual(row.source.page, 1)
         self.assertTrue(row.structure_image_url)
-        self.assertEqual(row.admet.status, "unavailable")
-        self.assertEqual(row.admet.properties, [])
+        self.assertIsNone(row.admet)
         current = self.service.project(self.project.id)
         self.assertEqual(current.summary.structure_only, 1)
         self.assertEqual(current.acceptance, before)
         identifier = row.id
         self.service.refresh(self.project.id)
         self.assertEqual(
-            next(
-                item.id
-                for item in self.service.results(self.project.id).items
-                if item.record_kind == "structure_only"
-            ),
+            self.unassociated_source().id,
             identifier,
         )
 
     def test_missing_crop_is_explicit_but_observation_is_not_discarded(self):
         result = self.add_source(unavailable=True)
-        row = next(
-            item for item in result.items if item.record_kind == "structure_only"
-        )
+        row = self.unassociated_source()
         self.assertIsNone(row.structure_image_url)
         self.assertIn("image_unavailable", row.flags)
-        self.assertEqual(result.total, 2)
+        self.assertEqual(result.total, 1)
 
     def test_activity_rows_outside_formal_target_list_are_retained_separately(self):
         # Use the authoritative artifact route instead of assuming a producer filename.
@@ -205,22 +187,20 @@ class StructureCorpusTests(PredictionFixture, unittest.TestCase):
         path.write_text(json.dumps(payload))
         self.service.refresh(self.project.id)
         result = self.service.results(self.project.id)
-        row = next(
-            item for item in result.items if item.id == "Additional measured row"
+        self.assertNotIn("Additional measured row", {item.id for item in result.items})
+        row = self.service.effective_compound(
+            self.project.id, "Additional measured row"
         )
         self.assertEqual(row.record_kind, "activity_only")
         self.assertEqual(row.activities[0].value, "++")
         self.assertIsNone(row.structure_image_url)
         self.assertEqual(self.service.project(self.project.id).summary.activity_only, 1)
 
-    def test_structure_only_source_supports_editing_and_export_without_rewriting_artifacts(
+    def test_unassigned_source_edits_do_not_promote_it_to_product_exports(
         self,
     ):
-        row = next(
-            item
-            for item in self.add_source().items
-            if item.record_kind == "structure_only"
-        )
+        self.add_source()
+        row = self.unassociated_source()
         files = {
             path: path.read_bytes() for path in self.run.rglob("*") if path.is_file()
         }
@@ -239,7 +219,8 @@ class StructureCorpusTests(PredictionFixture, unittest.TestCase):
             ),
         )
         effective = self.service.compounds(self.project.id)
-        changed = next(item for item in effective if item.id == row.id)
+        self.assertNotIn(row.id, {item.id for item in effective})
+        changed = self.service.effective_compound(self.project.id, row.id)
         self.assertEqual(changed.smiles, "CCO")
         self.assertEqual(changed.activities, [])
         self.assertTrue(changed.redraw_image_url)
@@ -248,7 +229,8 @@ class StructureCorpusTests(PredictionFixture, unittest.TestCase):
             b"".join(export_json(self.service.project(self.project.id), effective))
         )
         self.assertTrue(exported["review_only"])
-        self.assertEqual(exported["structure_only"], 1)
+        self.assertEqual(exported["structure_only"], 0)
+        self.assertNotIn(row.id, {item["id"] for item in exported["items"]})
         self.assertEqual(
             exported["formal_acceptance_scope"],
             "proved_printed_identifier_structure_corpus",
@@ -284,7 +266,8 @@ class StructureCorpusTests(PredictionFixture, unittest.TestCase):
             path.write_text(json.dumps(payload))
         self.service.refresh(self.project.id)
         result = self.service.results(self.project.id)
-        self.assertEqual(result.total, 1)
-        self.assertEqual(result.items[0].record_kind, "structure_only")
-        self.assertEqual(result.items[0].activities, [])
-        self.assertTrue(result.items[0].structure_image_url)
+        self.assertEqual(result.total, 0)
+        source = self.unassociated_source()
+        self.assertEqual(source.record_kind, "structure_only")
+        self.assertEqual(source.activities, [])
+        self.assertTrue(source.structure_image_url)

@@ -84,7 +84,8 @@ export function Workspace({
       });
   }
   function selectAnnotation(compoundId: string) {
-    const locating = results.locateCompound(compoundId);
+    const locating =
+      !compoundId.startsWith('source-structure:') && results.locateCompound(compoundId);
     navigateSource(
       {
         tab: 'annotations',

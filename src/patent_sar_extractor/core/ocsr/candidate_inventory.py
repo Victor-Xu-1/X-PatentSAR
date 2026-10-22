@@ -8,6 +8,7 @@ from pathlib import Path
 from patent_sar_extractor.artifact_nodes import MAX_ARTIFACT_BYTES
 from patent_sar_extractor.contracts import (
     MAX_RECOGNITION_SOURCES,
+    OCSR_RECOGNITION_SCOPE,
     STEP_MANIFEST_SCHEMA,
     STEP_MANIFEST_SCHEMA_VERSION,
     STRUCTURE_WORKER_VERSION,
@@ -208,8 +209,9 @@ def original_candidate_inventory(
             }
         )
     return {
-        "version": 1,
-        "kind": "detected_image_observations",
+        "version": 2,
+        "kind": "detected_image_inventory",
+        "recognition_policy": OCSR_RECOGNITION_SCOPE,
         "original_pdf_sha256": original_sha,
         "metadata_identity": inventory_digest(metadata),
         "producer_identity": inventory_digest(manifest),

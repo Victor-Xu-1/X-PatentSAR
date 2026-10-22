@@ -8,6 +8,7 @@ from typing import Any
 
 from patent_sar_extractor.contracts import (
     MAX_RECOGNITION_SOURCES,
+    OCSR_RECOGNITION_SCOPE,
     SMILES_SCHEMA,
     SMILES_SCHEMA_VERSION,
     artifact_identity,
@@ -48,7 +49,7 @@ def build_smiles_artifact(
         "execution_mode": execution_mode,
         **groups,
         "candidate_inventory": candidate_inventory,
-        "recognition_input_scope": "all_detected_images"
+        "recognition_input_scope": OCSR_RECOGNITION_SCOPE
         if candidate_inventory is not None
         else "proved_sources_only",
         "formal_acceptance_scope": "proved_printed_identifier_structure_corpus",
@@ -77,12 +78,11 @@ def smiles_candidate_records(payload: Any) -> list[dict[str, Any]]:
 
 
 def smiles_observations(payload: Any) -> list[dict[str, Any]]:
-    """All model observations; this is deliberately not a compound selector."""
+    """Recognized numbered sources; deferred inventory is not model execution."""
     return [
         *smiles_records(payload),
         *smiles_source_records(payload),
         *smiles_reprint_records(payload),
-        *smiles_candidate_records(payload),
     ]
 
 
@@ -157,7 +157,7 @@ def smiles_artifact_is_current(
     except (ValueError, TypeError, KeyError, OverflowError):
         return False
     expected_scope = (
-        "all_detected_images"
+        OCSR_RECOGNITION_SCOPE
         if payload["candidate_inventory"] is not None
         else "proved_sources_only"
     )

@@ -123,7 +123,9 @@ class SourceStereochemistryTests(unittest.TestCase):
             path = Path(temporary) / "source.png"
             wave_image(path)
             converter, _ = self.converter("CC(O)C(=O)O")
-            result = converter.convert_one({"image_path": str(path)})
+            result = converter.convert_one(
+                {"cpd": "Compound 1", "image_path": str(path)}
+            )
             self.assertIsNone(stereo_record_error(result))
             missing = {**result, "stereochemistry": None}
             self.assertIsNotNone(stereo_record_error(missing))
@@ -233,7 +235,9 @@ class SourceDrawingStyleTests(unittest.TestCase):
             path = Path(temporary) / "source.png"
             Image.new("RGB", (4, 4), "white").save(path)
             converter, calls = SourceStereochemistryTests().converter("CCO")
-            result = converter.convert_one({"image_path": str(path)})
+            result = converter.convert_one(
+                {"cpd": "Compound 1", "image_path": str(path)}
+            )
             self.assertEqual(result["OCSR_quality_flag"], "stereo_source_unavailable")
             self.assertEqual(calls, [])
 

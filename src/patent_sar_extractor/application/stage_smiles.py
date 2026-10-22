@@ -18,6 +18,7 @@ from patent_sar_extractor.artifact_io import write_json_atomic as _write_json
 from patent_sar_extractor.contracts import (
     OCSR_OBSERVATION_VERSION,
     OCSR_PREPARATION_VERSION,
+    OCSR_RECOGNITION_SCOPE,
     SMILES_SCHEMA_VERSION,
 )
 from patent_sar_extractor.core.env_runner import run_in_env
@@ -35,6 +36,7 @@ from patent_sar_extractor.core.ocsr.engines.molscribe_engine import MolScribeEng
 from patent_sar_extractor.core.ocsr.recognition_inputs import (
     recognition_inputs,
 )
+from patent_sar_extractor.core.ocsr.recognition_selection import deferred_source_records
 from patent_sar_extractor.paths import PACKAGE_ROOT
 from patent_sar_extractor.smiles_artifact import (
     build_smiles_artifact,
@@ -73,8 +75,8 @@ def execute_smiles(state: PipelineContext) -> None:
     t0 = time.time()
     smiles_dir = state.step_dirs[step]
     state.smiles_json = os.path.join(smiles_dir, "smiles_results.json")
-    # Malformed ownership is technical failure. An empty proved catalogue still
-    # observes detected images, but cannot supply numbered-product acceptance.
+    # Observe all source assets, but never spend inference on unproved ownership.
+    # Missing terminal IDs remain binding/completeness findings, not successes.
     coverage_errors(state.bind_payload)
     plan = recognition_inputs(state.bind_payload)
     formal_inputs = plan.formal
@@ -91,11 +93,15 @@ def execute_smiles(state: PipelineContext) -> None:
     )
     work_count = len(source_plan.work_items)
     if work_count == 0:
-        print(f"  ⏭ [{step}] 完整原图清单没有候选图，保留空观察供验收")
+        print(f"  ⏭ [{step}] 无已证实的编号终产物；仅保留原图清单，不启动模型")
         _write_json(
             state.smiles_json,
             {
-                **build_smiles_artifact([], candidate_inventory=source_plan.inventory),
+                **build_smiles_artifact(
+                    [],
+                    candidate_records=deferred_source_records(source_plan.inventory),
+                    candidate_inventory=source_plan.inventory,
+                ),
                 "binding_execution_mode": SOURCE_EXECUTION_MODE,
                 "formal_acceptance_scope": FORMAL_SCOPE,
             },
@@ -140,6 +146,7 @@ def execute_smiles(state: PipelineContext) -> None:
             "gpu_mode": getattr(state.args, "gpu_mode", "auto"),
             "bindings_ocsr_digest": _bindings_ocsr_digest(state.bind_json),
             "candidate_inventory_identity": source_plan.inventory["identity"],
+            "recognition_input_scope": OCSR_RECOGNITION_SCOPE,
         },
     )
     reuse_existing_smiles = False
@@ -273,10 +280,16 @@ def execute_smiles(state: PipelineContext) -> None:
         "formal_total": len(smiles_results),
         "source_total": len(source_results),
         "reprint_total": len(reprint_results),
-        "candidate_total": len(candidate_results),
-        "recognition_input_scope": "all_detected_images",
+        "candidate_total": 0,
+        "deferred_total": len(candidate_results),
+        "detected_total": len(source_plan.inventory["entries"]),
+        "recognition_input_scope": OCSR_RECOGNITION_SCOPE,
         "execution_status": "completed" if work_count else "not_started",
-        **({"blocked_by": "structures"} if not work_count else {}),
+        **(
+            {"blocked_by": "bind" if source_plan.candidates else "structures"}
+            if not work_count
+            else {}
+        ),
         "binding_execution_mode": SOURCE_EXECUTION_MODE,
         "formal_acceptance_scope": FORMAL_SCOPE,
         "output_updated": bool(state.pipeline_log["steps"][step].get("output_updated"))
@@ -287,6 +300,6 @@ def execute_smiles(state: PipelineContext) -> None:
     smiles_errors = _smiles_acceptance_errors(smiles_payload, state.bind_payload)
     if not state.n_bound:
         smiles_errors.append(
-            "No proved printed-ID structures; detected-image observations remain unassigned."
+            "No proved printed-ID terminal structures; source images remain deferred without model execution."
         )
     retain_scientific_errors(state, step, smiles_errors)
