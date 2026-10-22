@@ -65,6 +65,7 @@
     "tests.test_source_led_pipeline",
     "tests.test_role_text_source_replay",
     "tests.test_role_original_consumers",
+    "tests.test_plot_original_replay",
     "tests.test_column_header_consumers",
     "tests.test_web_results",
     "tests.test_prediction_exports",
