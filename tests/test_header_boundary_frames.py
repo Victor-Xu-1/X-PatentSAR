@@ -286,6 +286,7 @@ class HeaderBoundaryFrameTests(unittest.TestCase):
         self.region = {"xs": [20, 90, 250], "ys": [70, 98, 124, 145]}
         clean = self.enterContext(fitz.open())
         page = clean.new_page(width=300, height=200)
+        page.insert_text((22, 50), "Table 9. Binding assay", fontsize=9)
         page.insert_text((42, 90), "No.", fontsize=9)
         page.insert_text((112, 90), "IC50", fontsize=9)
         page.insert_text((112, 116), "nM", fontsize=9)
@@ -304,11 +305,31 @@ class HeaderBoundaryFrameTests(unittest.TestCase):
             "patent_sar_extractor.core.activity_header_columns.get_ocr_engine",
             return_value=("rapidocr", engine),
         ):
-            result = observe_header_columns(page, self.region, 2, 400, tokens)
+            views = [
+                observe_header_columns(page, self.region, 2, dpi, tokens)
+                for dpi in (400, 600)
+            ]
+        result = views[0]
         self.assertTrue(result.verified[1])
         self.assertEqual(result.columns[1]["raw_text"], "IC50\nnM")
         self.assertIn("boundary_source", result.columns[1]["header_cells"][0])
         self.assertNotIn("boundary_source", result.columns[1]["header_cells"][1])
+        original = grid_schema(
+            context_from_text("Table 9. Binding assay"), result.matrix
+        )
+        with (
+            patch(
+                "patent_sar_extractor.core.activity_header_observation.observe_header_pair",
+                return_value=views,
+            ),
+            patch(
+                "patent_sar_extractor.core.activity_header_observation.ocr_tokens_with_positions",
+                return_value=tokens,
+            ),
+        ):
+            resolved = refine_scanned_header(page, self.region, original, tokens=tokens)
+        proof = json.loads(json.dumps(resolved.header_resolution))
+        self.assertTrue(valid_header_proof(proof))
 
     def test_changed_original_pixels_cannot_replay_a_saved_closed_cell(self):
         page, proof = self.proof()
