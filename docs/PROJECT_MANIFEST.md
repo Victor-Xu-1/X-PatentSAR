@@ -1,5 +1,11 @@
 # Project governance manifest
 
+- Source-header readability authority: shared `resultColumns` default/min96px,
+  max180px reserves label/menu space without locale/task branches or global
+  scientific-header no-wrap. Existing resizing/source navigation/i18n remain;
+  `source-column-heading` uses the existing read-only browser adapter. No
+  scientific epoch, API/SQL, assets/manual audit, model or dependency changes.
+
 - Complete original-route authority: `reaction_steps` inventories every local
   arrow/port; `reaction_graph.reaction_route` is the sole whole-route validator.
   `reaction_reactants`/`reaction_operators` retain explicit native addition

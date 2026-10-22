@@ -1,5 +1,16 @@
 # Operations and troubleshooting
 
+## A short original-source column title breaks across lines
+
+The result table's source column shares a96px default/minimum across English
+and Chinese; maximum180px is unchanged. This reserves room for both the short
+label and its existing column menu, including after Home, pointer resizing or
+double-click reset. Changing language does not reset widths, hide the source
+action or rename an original scientific identifier. Long scientific headers
+still wrap normally. This is a presentation-only change, not proof that a
+review record or the whole extraction is accepted. No stored source/result or
+manual revision is rewritten and no model/extraction/SAR task starts.
+
 ## Source-review presentation verification
 
 For workspace navigation changes, use the controlled read-only source fixture:

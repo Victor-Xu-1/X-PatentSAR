@@ -1,5 +1,16 @@
 # X-PatentSAR architecture
 
+## Short source headings retain their menu space
+
+`resultColumns` owns the shared source-column default/minimum96px and existing
+maximum180px. This keeps the short English/Chinese source label intact beside
+the existing menu at default, pointer/keyboard minimum and reset widths. Other
+columns retain their own widths and scientific-title wrapping; no locale/task
+special case, global no-wrap or replacement label is introduced. The existing
+resize state, source navigation and language authority remain unchanged. The
+browser spec uses the existing read-only fixture only. No scientific epoch,
+API/SQL, original artifact/manual audit, model or dependency changes.
+
 ## Existing-pane review navigation
 
 `WorkspaceLayout` owns source/results scroll and focus refs, not another route
