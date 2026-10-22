@@ -117,6 +117,7 @@ def bind(
                 all_structures=processed,
                 source_sections=source_sections,
                 source_cells=spatial.numbered_cells,
+                grids_for_page=spatial.grids_for_page,
                 progress=progress,
             )
             if blocks

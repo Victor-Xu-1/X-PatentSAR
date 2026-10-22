@@ -3,6 +3,7 @@
 from .heading_column_sources import independent_columns
 from .heading_declaration_scope import declaration_candidates
 from .heading_original_replay import validate_original_heading
+from .heading_panel_scope import panel_bounds
 from .reaction_graph import terminal_reaction_source
 from .reaction_vectors import observe_vectors, validate_vectors
 from .source_evidence_identity import proof_id
@@ -17,7 +18,13 @@ def _bounds(scope, heading, page):
         if page["page_no"] == scope["stop"]["page_no"]
         else page["page_size"][1]
     )
-    return [0, lower, page["page_size"][0], upper]
+    cell = panel_bounds(scope["panel"], heading) if scope.get("version") == 4 else None
+    return [
+        cell[0] if cell else 0,
+        lower,
+        cell[2] if cell else page["page_size"][0],
+        upper,
+    ]
 
 
 def _source_regions(scope, heading):
@@ -86,7 +93,13 @@ def observe_reaction_source(document, scope, heading):
         raise ValueError("Incomplete original declaration cannot prove reaction roles")
     validate_original_heading(document[heading["page_no"] - 1], heading)
     pages = [
-        observe_vectors(document[p["page_no"] - 1], _bounds(scope, heading, p))
+        observe_vectors(
+            document[p["page_no"] - 1],
+            _bounds(scope, heading, p),
+            original_frame=panel_bounds(scope["panel"], heading)
+            if scope.get("version") == 4
+            else None,
+        )
         for p in scope["pages"]
     ]
     observation = {

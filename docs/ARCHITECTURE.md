@@ -1,5 +1,44 @@
 # X-PatentSAR architecture
 
+## Physical enclosure owns its declaration window
+
+`heading_panel_scope` shares the existing grid observer and call-local page memo;
+it never invents left/right page lanes. A unique closed original content cell
+larger than the text-heading window carries both400/600dpi complete original
+pixel packets, the same four-edge/gap policy and8M-pixel/1MiB proof bounds.
+This is enclosure, not a text inset: every raw pixel survives, with no new OCR,
+ink removal or model. Short heading decorations keep the ordinary source path.
+
+The one `declaration_window` policy is used by observation and saved readback.
+Panel declaration4 bounds one actual page/cell; ordinary declaration3 is the
+unchanged no-panel adapter. Complete page line/drawing inventories stay in both.
+Only the geometric declaration window is narrowed; outside candidates are not
+deleted. Crossing lines/crops, multiple unconnected own-cell drawings, ambiguous
+or unproved/over-budget frames remain explicit refusals. Actual panel pixels are
+replayed against the original without re-OCR. Pixel memoization is immutable,
+call-local only, not another persisted source or acceptance cache.
+
+If complete panel pixels exceed the unchanged serialized region budget, the
+existing digest raises typed `SourceEvidenceLimit` (still a ValueError). The
+index refuses that entire panel proof with `refusal: region_budget`, retains
+the original PDF/full page inventory, releases its cached pixel payload and
+does not re-render it. It cannot trim evidence into a singleton; independent
+qualified panels can still be processed. Other malformed evidence is not
+downgraded, and an oversized page inventory still obeys its original hard bound.
+
+Native reaction roles use the same panel bounds. `reaction_frame` can recognize
+only the exact opaque unfilled rectangle stroke of that already proved frame,
+within one240dpi grid pixel. It never excludes an interior rectangle, its area,
+extra path item, fill, transparency or unsupported/raster ink. The same original
+vector observation/terminal/replay authority remains; scanned reaction roles
+are not inferred from a panel boundary.
+
+Binding55/binder66 refresh derived source admission and its normal cache identity.
+Original PDFs/OCR/OCSR assets, Activity38/extractor49/coverage20, visible26,
+SMILES5, manual audit, model/rescue/LLM/environment/API/SQL/SAR and potency policy
+are unchanged. Old records remain history, never retagged as new acceptance.
+These controls do not close all-format recall or chemical-recognition defects.
+
 ## Reference structure workspace
 
 `MolecularImage` is the single passive image/load/focus boundary shared by
