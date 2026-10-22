@@ -1,5 +1,22 @@
 # X-PatentSAR architecture
 
+## Lossless catalog wire pooling
+
+`StudyResults.catalog` still uses the sole receipt-bound current projection.
+The frontend opts into `?compact=true`; `study_catalog_wire` pools complete
+fragment entries and exact ordered member lists in a request-local typed
+`catalog-pooled`/wire1 envelope. Same IDs with different fields never coalesce.
+Every region/reference remains in order. Inherited DTO fields prevent a second
+metadata allowlist; the additive serializer retains legacy output when pooling
+would be larger. Default GET clients keep the original `catalog` format.
+
+`sarCatalogWire` accepts only the known identity, validates indices and counts
+projected UTF-8 bytes against the existing32MiB report bound before expanding
+uses. The existing catalog domain decoder then applies the same source/context/
+membership conservation checks. No analysis, scientific normalization, result
+cache, queue, model, raw asset, SQL/scientific schema or epoch changes. This is
+read-side transport optimization, not evidence of extraction or SAR accuracy.
+
 ## Passive study drawing reads
 
 `StudyResults.drawings` validates one receipt-bound report for at most32 distinct

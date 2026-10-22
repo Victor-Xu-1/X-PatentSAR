@@ -267,7 +267,7 @@ describe('authenticated, bounded study API adapter', () => {
       signal = new AbortController().signal;
     await api.profile(sarDataset.id, 2, signal);
     await api.overview(studyJob.id, sarDataset.id, signal);
-    expect(String(transport.mock.calls.at(-1)?.[0])).toContain('/study/catalog');
+    expect(String(transport.mock.calls.at(-1)?.[0])).toContain('/study/catalog?compact=true');
     await api.rows(
       studyJob.id,
       sarDataset.id,

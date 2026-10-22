@@ -46,13 +46,18 @@ class StudyResults:
             job=job, report=report.model_copy(update={"rows": []}), activity_basis=basis
         )
 
-    def catalog(self, identifier: str):
+    def catalog(self, identifier: str, *, compact: bool = False):
         from .study_catalog_models import StudyCatalog
 
         job, report, basis = self.current(identifier, catalog=True)
-        return StudyCatalog(
+        result = StudyCatalog(
             job=job, report=report.model_copy(update={"rows": []}), activity_basis=basis
         )
+        if compact:
+            from .study_catalog_wire import pooled_catalog
+
+            return pooled_catalog(result)
+        return result
 
     def region(self, identifier: str, region_id: str):
         from .study_catalog_models import StudyRegionDetail

@@ -1,5 +1,24 @@
 # Operations and troubleshooting
 
+## Complete study catalogs over the passive read interface
+
+New UI reads request `/api/v1/sar/jobs/{job}/study/catalog?compact=true` without
+additional user choices. A repeated catalog can return `detail: catalog-pooled`,
+`wire_version: 1`, `fragment_pool` and `molecule_id_pool`; region fragments and
+fragment members reference those respective zero-based arrays. Full entry
+identity includes membership order, count, reference flag and representation,
+not just fragment ID. Small/unique catalogs may keep the known legacy format;
+default reads are unchanged for loaded old clients. No region/member is sampled.
+
+Invalid/out-of-range indices, unknown formats/versions and expansion beyond the
+existing32MiB logical report limit fail explicitly. The ordinary scientific
+decoder still refuses inconsistent counts, source/context identities or foreign
+members. Focused checks compare full legacy/pooled conservation, malformed and
+amplified inputs, independent decoded instances and the installed normal UI.
+Real saved-report byte/timing observations are passive diagnostics, not new
+scientific tasks, private calculations or chemical acceptance. Merge/latest-main/
+fresh-wheel/rollback/unchanged18765 delivery remains mandatory.
+
 ## Bounded study image transport
 
 The frontend reads `GET /api/v1/sar/jobs/{job}/study/drawings` with `kind`,

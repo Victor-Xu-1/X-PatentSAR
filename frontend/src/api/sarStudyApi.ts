@@ -54,7 +54,7 @@ export function createSARStudyApi(shared: ApiClient, rawFetch?: typeof fetch) {
       }),
     overview: (id: string, dataset: string, signal: AbortSignal) =>
       raw.readReport(
-        path(id) + '/catalog',
+        path(id) + '/catalog?compact=true',
         (v) => {
           const result = decodeStudyCatalog(v);
           checkJob(result.job, id, dataset);

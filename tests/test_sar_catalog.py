@@ -14,6 +14,38 @@ class SARCatalogTests(WebFixture, unittest.TestCase):
     start = study_support.SARStudyAPITests.start
     completed = study_support.SARStudyAPITests.completed
 
+    def test_opted_in_catalog_pools_repeated_fragments_without_changing_legacy(self):
+        with self.client() as client:
+            dataset = self.dataset(client, study_support.CSV)
+            first = self.region(client, dataset)
+            ids = [first["id"]]
+            for n in range(7):
+                response = client.post(
+                    ROOT + "/datasets/" + dataset["id"] + "/regions",
+                    json={
+                        "molecule_id": first["molecule_id"],
+                        "expected_dataset_revision": 1,
+                        "expected_graph_sha256": first["graph_sha256"],
+                        "atom_indices": first["atom_indices"],
+                        "name": f"Independent named region {n}",
+                    },
+                )
+                self.assertEqual(response.status_code, 201, response.text)
+                ids.append(response.json()["id"])
+            job, _ = self.start(client, dataset, ids)
+            self.completed(client, job)
+            path = ROOT + "/jobs/" + job["id"] + "/study"
+            legacy = client.get(path + "/catalog").json()
+            reply = client.get(path + "/catalog?compact=true")
+            self.assertEqual(reply.status_code, 200, reply.text)
+            packed = reply.json()
+            self.assertEqual(packed["detail"], "catalog-pooled")
+            self.assertEqual(packed["wire_version"], 1)
+            from test_sar_catalog_wire import expanded
+
+            self.assertEqual(expanded(packed), legacy)
+            self.assertEqual(client.get(path + "/catalog").json(), legacy)
+
     def test_native_catalog_and_region_details_conserve_full_report_and_export(self):
         with self.client() as client:
             dataset = self.dataset(client, study_support.CSV)
