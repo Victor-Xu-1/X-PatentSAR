@@ -1,5 +1,19 @@
 # X-PatentSAR architecture
 
+## Activity table execution follows original source dependencies
+
+`activity_context_geometry.table_dependency_order` is the single visitation key
+for the coordinate producer and saved table-family reader. Existing same-page
+header edges require a disjoint left source; cross-page edges require the prior
+page. Page/left/top therefore visits every possible parent before its child,
+including slightly staggered raster grid edges. This key is not source evidence
+and cannot qualify a caption, column, unit, condition, unknown header or value.
+The existing full original observations, unique source and context guards remain.
+Human-facing coverage retains its original page/top order; nothing edits source
+coordinates or uses source order as potency rank. Extractor50 refreshes derived
+activity admission; Activity38/coverage20/Binding57/SMILES6, raw assets and manual
+audits stay unchanged. No extra OCR, model, parser, cache, queue or fallback path.
+
 ## Original raster reaction directions
 
 `reaction_page_source` selects native or retained-pixel observation from actual

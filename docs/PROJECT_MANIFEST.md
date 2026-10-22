@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Activity execution order authority: `activity_context_geometry` supplies the
+  shared page/left/top dependency key to coordinate extraction and saved-family
+  replay. It orders existing permitted source edges; it does not grant an edge
+  or relax caption/column/condition/original proof. Slightly staggered grids no
+  longer visit data-only children before their header parent. Extractor50 only
+  refreshes affected derived admission; raw originals/observations/manual audit,
+  Activity38/coverage20/Binding57/SMILES6, API/SQL/SAR potency rules, environments,
+  models and default activation remain unchanged. Existing unresolved headers
+  still refuse carry. No parallel parser, cache, queue or model is introduced.
+
 - Original reaction source authority: `reaction_page_source` chooses native
   paintedv2 or whole-original pixelv3 observation from actual image layout,
   feeding the sole complete route graph and original replay. Pixel primitives

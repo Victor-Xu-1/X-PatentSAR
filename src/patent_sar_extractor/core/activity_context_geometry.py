@@ -7,6 +7,18 @@ from itertools import pairwise
 MAX_TABLES = 4096
 
 
+def table_dependency_order(page_no, box):
+    """Visit possible source parents first; this never proves a header edge.
+
+    Existing parallel carry only goes from a disjoint left table to its right;
+    adjacent carry only goes from the preceding page. Page/left/top is therefore
+    a dependency order even when raster rounding staggers nominal top edges.
+    Caption, columns, conditions and original observations still own admission.
+    Text sources have no box and keep their separate original-span validation.
+    """
+    return page_no, box[0] if box is not None else 0, box[1] if box is not None else 0
+
+
 def valid_box(box):
     return (
         isinstance(box, (list, tuple))

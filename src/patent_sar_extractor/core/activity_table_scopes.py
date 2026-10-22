@@ -2,6 +2,7 @@
 
 from dataclasses import asdict
 
+from .activity_context_geometry import table_dependency_order
 from .activity_continuation_context import continuation_context_proved
 from .activity_continuation_policy import (
     canonical_header,
@@ -117,7 +118,7 @@ def table_scope_groups(records):
     families, invalid, anchors = [], [], {}
     for record in sorted(
         records,
-        key=lambda r: (r["page_no"], (r["bbox"] or [0, 0])[1], (r["bbox"] or [0])[0]),
+        key=lambda r: table_dependency_order(r["page_no"], r["bbox"]),
     ):
         if record.get("text_scope"):
             scope = record["text_scope"]
