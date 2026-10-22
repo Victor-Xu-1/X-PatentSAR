@@ -5,12 +5,18 @@ import copy
 import fitz
 
 
-def assert_worker_checkpoint(test, *, filled=False):
+def assert_worker_checkpoint(
+    test, *, filled=False, source_setup=None, terminal="S2", unassigned=("S1",)
+):
     from test_candidate_stage import CandidateStageControls
 
     from patent_sar_extractor.artifact_io import load_json
 
-    pdf, _, _, bindings, _ = test.saved_source(filled=filled)
+    pdf, _, _, bindings, _ = test.saved_source(
+        filled=filled,
+        source_setup=source_setup,
+        terminal=terminal,
+    )
     test.output, test.pdf, test.bindings = test.root, pdf, bindings
     test.metadata_path = test.root / "structures/metadata.json"
     test.bind_path = test.root / "structure_bindings/bindings.json"
@@ -25,15 +31,17 @@ def assert_worker_checkpoint(test, *, filled=False):
     observed = load_json(state.smiles_json, {})
     test.assertEqual(
         [(r["cpd_id"], r["structure_id"]) for r in observed["records"]],
-        [("Compound 037B", "S2")],
+        [("Compound 037B", terminal)],
     )
     test.assertEqual(
         [(r["cpd_id"], r["structure_id"]) for r in observed["candidate_records"]],
-        [("", "S1")],
+        [("", identity) for identity in unassigned],
     )
 
 
-def assert_web_original(test, *, filled=False, mutate_source=None):
+def assert_web_original(
+    test, *, filled=False, mutate_source=None, source_setup=None, terminal="S2"
+):
     from patent_sar_extractor.core.ocsr.candidate_coverage import (
         candidate_coverage_errors,
     )
@@ -43,7 +51,9 @@ def assert_web_original(test, *, filled=False, mutate_source=None):
     from patent_sar_extractor.web.files import SafeFiles
 
     pdf, original_sha, metadata, bindings, observations = test.saved_source(
-        filled=filled
+        filled=filled,
+        source_setup=source_setup,
+        terminal=terminal,
     )
     files = SafeFiles(test.root)
     payloads = {"structures": metadata, "bindings": bindings, "smiles": observations}

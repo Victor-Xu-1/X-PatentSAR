@@ -5,9 +5,12 @@ from native_reaction_support import NativeReactionFixture
 
 
 class RasterReactionFixture(NativeReactionFixture):
-    def saved_source(self, *, filled=False):
+    def saved_source(self, *, filled=False, source_setup=None, terminal="S2"):
         return super().saved_source(
-            filled=filled, source_transform=self.rasterize_route
+            filled=filled,
+            source_transform=self.rasterize_route,
+            source_setup=source_setup,
+            terminal=terminal,
         )
 
     def rasterize_route(self, *, pixels_per_point=3):

@@ -1,5 +1,22 @@
 # Project governance manifest
 
+- Complete original-route authority: `reaction_steps` inventories every local
+  arrow/port; `reaction_graph.reaction_route` is the sole whole-route validator.
+  `reaction_reactants`/`reaction_operators` retain explicit native addition
+  witnesses through existing source-cell paint replay. `reaction_layout` and
+  `reaction_layout_components` retain separate source5 adjacent-row/page joins,
+  never fabricate observed endpoints or skip original candidates/gap ink.
+  All ordinary source2/3 readers share this graph without new role/wrap flags;
+  the redundant terminal-only wrapper is removed. Existing original-heading
+  replay, worker/checkpoint/finalQA/Web/product scope remain authoritative.
+  Explicit separate-scheme titles cannot borrow a previous ID, even after a
+  literal bounded paragraph locator. Binding58/binder69 refresh derived proof;
+  raw assets/observations/manual audits/history, Activity39/extractor51/coverage20,
+  SMILES6, models/dependencies/activation/API/SQL/SAR rules remain unchanged.
+  Complete2M gap work and existing drawing/arrow/source limits refuse, not trim.
+  No new model/native inference, parser, store, queue or acceptance chain exists.
+  Generated controls do not prove chemical/all-format/real-patent acceptance.
+
 - Workspace review navigation: the existing layout component owns bounded
   scroll/focus and passes one return callback to its embedded PDF reader.
   Narrow explicit original/return actions reuse both panes; fullscreen flex
