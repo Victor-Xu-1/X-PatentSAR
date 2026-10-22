@@ -108,7 +108,7 @@ for (const width of [390, 800, 1672]) {
         await source.getByRole('button', { name: copy.back, exact: true }).click();
       } else {
         await expect(page.getByRole('button', { name: copy.view, exact: true })).toHaveCount(0);
-        await expect(page.getByRole('button', { name: copy.back, exact: true })).toHaveCount(0);
+        await expect(source.getByRole('button', { name: copy.back, exact: true })).toHaveCount(0);
         const slider = page.getByRole('slider', { name: copy.resize, exact: true });
         await expect(slider).toHaveAttribute('aria-valuenow', '31');
         await slider.focus();
