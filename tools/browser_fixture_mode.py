@@ -15,6 +15,7 @@ COMMON = {
     "llm-recovery.spec.ts",  # Self-contained frontend transport; no backend execution.
     "lead-source-admission.spec.ts",
     "session-job-recovery.spec.ts",
+    "task-poll-observation.spec.ts",
     "read-poll-recovery.spec.ts",
     "topbar.spec.ts",
     "jobs-project-recovery.spec.ts",

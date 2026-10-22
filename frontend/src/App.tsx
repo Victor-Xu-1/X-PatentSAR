@@ -142,6 +142,12 @@ export default function App() {
                 !projectResource.loading &&
                 !projectResource.error
               }
+              jobPresentationVerified={
+                jobs.presentationVerified &&
+                project !== null &&
+                !projectResource.loading &&
+                !projectResource.error
+              }
               onJobChange={jobs.reload}
               onProjectReload={projectResource.reload}
               onUpload={onUpload}

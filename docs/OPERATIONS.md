@@ -21,6 +21,36 @@ supported. Keep failed attempts historical; actual extraction and resumption use
 the normal frontend, never a helper that fills or recalculates a private dataset.
 Do not deploy or duplicate a live task merely because focused tests/CI pass.
 
+## Unknown text in a closed caption cell breaks later known identifiers
+
+Do not repair this by accepting the unknown caption, inferring an ID sequence or
+removing after-table context checks. A physical-only tail3 owner can distinguish
+bounded layout padding from real glyph spill using both original400/600dpi views.
+Its support is limited to4pt and2,000,000pixels per view, with all nonwhite outside
+pixels accounted for by the existing literal closed-rule authority. Unread text
+remains unread. Actual outside ink, unqualified body text, new roles/tables and
+budget refusal still block carry; changing saved scope/frame data cannot replace
+original pixel replay. No OCR model is loaded for this physical check/readback.
+
+Binding53/binder63 invalidate derived ownership only. Raw visible-label26 and all
+original PDF/OCR/OCSR/manual revisions remain unchanged. Known tail2 history can
+be read, never relabelled as current proof or supplied invented physical owners.
+Use the normal frontend only for real extraction/resume. Never deploy, interrupt
+or duplicate a running task merely because this code or its focused checks pass.
+Preserve failed attempts; complete scientific acceptance still requires a real
+post-deployment frontend run and all existing source/chemical gates.
+
+## Progress flashes unknown during an otherwise healthy task poll
+
+Normal same-source background GET polling retains the last confirmed progress
+presentation. Task controls remain disabled until required reads finish. Actual
+read errors, explicit refresh, a new source/task and unknown history retain their
+unknown/error presentation; no write is replayed during session/read recovery.
+The view is a server observation, not proof of scientific progress or acceptance.
+Delayed-read and denied-session regressions use isolated synthetic browser state
+only. Deploy this presentation correction only after real producers are idle;
+never restart a real extraction merely to update its presentation.
+
 ## A weak declared-text line does not use the enabled auxiliary OCR
 
 The declared-text line producer now reuses the same optional paired recovery as

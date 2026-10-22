@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "de462d3ee1fa9a30663ada245ca647d0a876d496",
+  "base_sha": "b7033b76e04e33e636b0e4ed69f902b3ad90f242",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
