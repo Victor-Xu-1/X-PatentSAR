@@ -1,5 +1,13 @@
 # Project governance manifest
 
+- Workspace review navigation: the existing layout component owns bounded
+  scroll/focus and passes one return callback to its embedded PDF reader.
+  Narrow explicit original/return actions reuse both panes; fullscreen flex
+  items cannot shrink behind fixed-height content. Desktop layout, existing
+  source-jump/route authority, scientific epochs, API/SQL, user artifacts/manual
+  audit, models, environments and dependencies remain unchanged. Controlled
+  browser verification is read-only; it does not execute extraction or SAR.
+
 - Header-cell boundary authority: `activity_header_boundary` adapts the SAME
   original column reader and isolated closed-frame SDK. Raster locator overlap
   may resolve only with unchanged full source/pixels and retained literal

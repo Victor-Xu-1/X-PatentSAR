@@ -118,7 +118,7 @@ export function Workspace({
             />
           </>
         }
-        source={
+        source={(onReturnToResults) => (
           <PdfPane
             key={id}
             project={project}
@@ -131,8 +131,9 @@ export function Workspace({
             onTab={(tab) => navigateSource({ tab })}
             onSelect={selectAnnotation}
             onAttach={onAttach}
+            onReturnToResults={onReturnToResults}
           />
-        }
+        )}
         results={
           <ResultViews
             tab={route.resultTab ?? 'results'}

@@ -1,11 +1,25 @@
 import { useTranslation } from '../../i18n';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties, ReactNode } from 'react';
-import { Maximize2, Minimize2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
+import { FileText, Maximize2, Minimize2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { defaultLayout, normalizeLayout } from '../../model/layout';
 import type { LayoutState } from '../../model/layout';
 import { ResizeHandle } from '../../components/ResizeHandle';
 import { containTab } from '../../components/focus';
+
+type SourceRenderer = (onReturnToResults: () => void) => ReactNode;
+
+// Keep the source slot at a React render boundary. The DOM-owning callbacks
+// are event props here, never invoked by the layout's render phase.
+function WorkspaceSource({
+  render,
+  onReturnToResults,
+}: {
+  render: SourceRenderer;
+  onReturnToResults: () => void;
+}) {
+  return render(onReturnToResults);
+}
 
 export function WorkspaceLayout({
   layout: input,
@@ -16,7 +30,7 @@ export function WorkspaceLayout({
 }: {
   layout: LayoutState;
   onChange: (layout: LayoutState) => void;
-  source: ReactNode;
+  source: SourceRenderer;
   results: ReactNode;
   workflow?: ReactNode;
 }) {
@@ -24,8 +38,31 @@ export function WorkspaceLayout({
   const layout = normalizeLayout(input);
   const split = useRef<HTMLDivElement>(null);
   const root = useRef<HTMLDivElement>(null);
+  const sourcePane = useRef<HTMLElement>(null);
+  const resultsPane = useRef<HTMLElement>(null);
+  const pendingSourceFocus = useRef(false);
   const fullButton = useRef<HTMLButtonElement>(null);
   const [preview, setPreview] = useState<number | null>(null);
+  const focusSource = useCallback(() => {
+    sourcePane.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
+    sourcePane.current?.focus({ preventScroll: true });
+  }, []);
+  const returnToResults = useCallback(() => {
+    resultsPane.current?.scrollIntoView({ block: 'start', behavior: 'auto' });
+    resultsPane.current?.focus({ preventScroll: true });
+  }, []);
+  function viewOriginal() {
+    if (layout.pdfVisible) focusSource();
+    else {
+      pendingSourceFocus.current = true;
+      onChange({ ...layout, pdfVisible: true });
+    }
+  }
+  useEffect(() => {
+    if (!layout.pdfVisible || !pendingSourceFocus.current) return;
+    pendingSourceFocus.current = false;
+    focusSource();
+  }, [layout.pdfVisible, focusSource]);
   useEffect(() => {
     if (!layout.fullscreen) return;
     const previous = document.body.style.overflow;
@@ -58,6 +95,7 @@ export function WorkspaceLayout({
         {workflow && <section className="workflow-panel">{workflow}</section>}
         <div className="layout-toolbar" aria-label={t('工作区布局')}>
           <button
+            className="workspace-source-toggle"
             type="button"
             onClick={() => onChange({ ...layout, pdfVisible: !layout.pdfVisible })}
             aria-label={layout.pdfVisible ? t('收起原文，结果全宽') : t('展开原文')}
@@ -66,6 +104,15 @@ export function WorkspaceLayout({
           >
             {layout.pdfVisible ? <PanelLeftClose size={14} /> : <PanelLeftOpen size={14} />}
             {layout.pdfVisible ? t('收起原文') : t('展开原文')}
+          </button>
+          <button
+            className="workspace-source-link"
+            type="button"
+            onClick={viewOriginal}
+            aria-controls="workspace-source"
+          >
+            <FileText size={14} />
+            {t('查看原文')}
           </button>
           <button
             ref={fullButton}
@@ -91,9 +138,15 @@ export function WorkspaceLayout({
       >
         {layout.pdfVisible && (
           <>
-            <div id="workspace-source" className="workspace-source">
-              {source}
-            </div>
+            <section
+              id="workspace-source"
+              className="workspace-source"
+              ref={sourcePane}
+              tabIndex={-1}
+              aria-label={t('原文区域')}
+            >
+              <WorkspaceSource render={source} onReturnToResults={returnToResults} />
+            </section>
             <ResizeHandle
               className="workspace-divider"
               label={t('调整原文与结果宽度')}
@@ -116,9 +169,15 @@ export function WorkspaceLayout({
             />
           </>
         )}
-        <div id="workspace-results" className="workspace-results">
+        <section
+          id="workspace-results"
+          className="workspace-results"
+          ref={resultsPane}
+          tabIndex={-1}
+          aria-label={t('结果区域')}
+        >
           {results}
-        </div>
+        </section>
       </div>
     </div>
   );

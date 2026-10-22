@@ -1,5 +1,15 @@
 # Operations and troubleshooting
 
+## Source-review presentation verification
+
+For workspace navigation changes, use the controlled read-only source fixture:
+`source-review-navigation.spec.ts` covers 390 / 800 / 1672 px in English/Chinese,
+collapsed refresh, original/return focus, existing structure-source navigation,
+fullscreen non-overlap/Escape and desktop resize. It does not run a model,
+extraction or SAR. After exact-main deployment, inspect the corresponding real
+original/result interaction without resubmitting or modifying the failed task.
+UI acceptance does not promote historical source/chemical proof to accepted.
+
 ## Padded header locators versus original cell ownership
 
 A wide page OCR box alone need not invalidate a readable closed table header.
