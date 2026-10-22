@@ -15,6 +15,22 @@ from patent_sar_extractor.core.ocsr.generation import (
 
 
 class GenerationPacketTests(unittest.TestCase):
+    def test_missing_end_with_an_internal_control_is_not_retryable_truncation(self):
+        for token in ("<start>", "<end>", "<pad>", "<unk>"):
+            with self.subTest(token=token):
+                encoded, packet, _bounds = observe_generation(
+                    ["<start>", "C", token, "N"]
+                )
+                # The SDK's unchanged digit codec maps literal angle brackets.
+                # Preserve that raw output; never erase a middle control token.
+                raw = encoded.replace("<", "4").replace(">", "5")
+                self.assertFalse(
+                    truncated_observation(
+                        {"status": "failed", "raw_smiles": raw, "generation": packet}
+                    )
+                )
+                self.assertEqual(packet["reason"], "unexpected_special")
+
     def test_only_literal_failed_missing_end_can_use_existing_retry(self):
         packet = observe_generation(["<start>", "C", "C", "O"])[1]
         row = {"status": "failed", "raw_smiles": "CCO", "generation": packet}

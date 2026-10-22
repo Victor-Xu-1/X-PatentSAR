@@ -50,6 +50,8 @@ class RawOCSRObservationTests(unittest.TestCase):
                     *(raw or ""),
                     *(["<end>"] if mode == "complete" else []),
                 ]
+                if mode == "control_truncation":
+                    words = ["<start>", "C", "<pad>", "N"]
                 generation = observe_generation(words)[1] if raw else None
                 if mode == "forged":
                     generation = {**generation, "status": "complete", "reason": None}
@@ -150,6 +152,26 @@ class RawOCSRObservationTests(unittest.TestCase):
                 )
                 self.assertEqual(len(calls), 1)
                 self.assertEqual(result["OCSR_status"], "all_engines_failed")
+
+    def test_internal_control_plus_missing_end_cannot_trigger_a_normalized_retry(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            item = self.fixture(root)
+            original = Path(item["image_path"]).read_bytes()
+            converter, calls = self.converter(
+                ["C4pad5N", "CCO"],
+                retry=True,
+                completion=["control_truncation", "complete"],
+            )
+            result = converter.convert_one(item, preprocess_dir=str(root / "inputs"))
+            self.assertEqual(len(calls), 1)
+            self.assertEqual(result["OCSR_status"], "all_engines_failed")
+            self.assertEqual(result["raw_smiles"], "C4pad5N")
+            self.assertEqual(result["generation"]["reason"], "unexpected_special")
+            self.assertEqual(
+                result["generation"]["tokens"], ["<start>", "C", "<pad>", "N"]
+            )
+            self.assertEqual(Path(item["image_path"]).read_bytes(), original)
 
     def test_cached_missing_or_forged_completion_is_reinferred_not_promoted(self):
         from patent_sar_extractor.contracts import OCSR_OBSERVATION_VERSION

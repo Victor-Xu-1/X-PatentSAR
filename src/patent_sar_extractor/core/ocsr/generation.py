@@ -36,12 +36,12 @@ def observe_generation(words):
     reason = (
         "missing_start"
         if not start
-        else "missing_end"
-        if stop == len(words)
         else "empty_content"
         if not content
         else "unexpected_special"
         if any(re.fullmatch(r"<[^>]*>", word) for word in content)
+        else "missing_end"
+        if stop == len(words)
         else None
     )
     return (

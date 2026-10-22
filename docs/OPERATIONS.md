@@ -16,6 +16,8 @@ reply can use the same one-image retry as other recognition failures. This
 changes only presentation of the same retained source, keeps both raw outputs
 and never appends an end token or repairs a molecule. No new retry/engine chain
 is introduced; missing/forged metadata never qualifies for that retry.
+An internal control token still refuses retry when the end sentinel is also
+missing; retain both defects in the unchanged token sequence, not a repair.
 
 Current contracts are DECIMER adapter2, raw observation3 and SMILES schema5.
 An old raw-v2 cache cannot establish completion. It stays unchanged at its

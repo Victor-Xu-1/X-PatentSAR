@@ -23,6 +23,8 @@ existing single normalized-image retry. Both raw attempts remain; missing or
 forged packets, broken start/control tokens and other engine failures cannot
 request this recovery. A second incomplete result is still failed, never fixed
 by editing a SMILES string or increasing the existing retry budget.
+Internal reserved tokens take precedence over a missing end sentinel: a
+combined malformed generation cannot masquerade as retryable truncation.
 Rescue proof2 retains the complete primary generation separately from the
 MolScribe candidate; the original eight-item/graph/source rules remain in force.
 
