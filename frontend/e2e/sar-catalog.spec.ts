@@ -147,6 +147,10 @@ test('pooled full-network transport conserves every region and member without ex
   await page
     .getByRole('combobox', { name: 'Interface language', exact: true })
     .selectOption('zh-CN');
-  await expect(report.getByRole('button', { name: '变化区域', exact: true })).toBeVisible();
+  await expect(
+    page
+      .getByRole('region', { name: '研究报告', exact: true })
+      .getByRole('button', { name: '变化区域', exact: true }),
+  ).toBeVisible();
   expect(errors).toEqual([]);
 });
