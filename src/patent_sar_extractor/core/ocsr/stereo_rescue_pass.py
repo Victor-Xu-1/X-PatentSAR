@@ -6,12 +6,13 @@ import re
 from pathlib import Path
 
 from .engines.molscribe_engine import MolScribeEngine
+from .generation import completed_observation, validate_generated_raw
 from .smiles_cache import compute_image_sha256
 from .smiles_qc import qc_smiles
 from .stereo_evidence import observe_stereo_symbols, source_checked_qc
 from .stereo_rescue import validate_stereo_rescue
 
-RESCUE_VERSION = 1
+RESCUE_VERSION = 2
 MAX_RESCUES = 8
 
 
@@ -23,6 +24,7 @@ def eligible(record: dict) -> bool:
     evidence = record.get("stereochemistry")
     return (
         not record.get("candidate_source_id")
+        and completed_observation(record)
         and record.get("OCSR_engine") == "decimer"
         and record.get("OCSR_status") == "review_required"
         and record.get("OCSR_quality_flag") == "stereochemistry_not_retained"
@@ -80,6 +82,7 @@ def apply_stereo_rescue(
                 "version": RESCUE_VERSION,
                 "primary_engine": "decimer",
                 "primary_raw_smiles": record["raw_smiles"],
+                "primary_generation": record["generation"],
                 "primary_model_fingerprint": record.get("model_fingerprint"),
                 "candidate_model_fingerprint": candidate.get("model_fingerprint"),
                 "source_image_sha256": record["image_hash"],
@@ -132,6 +135,9 @@ def apply_stereo_rescue(
                 model_confidence=candidate.get("model_confidence"),
                 stereo_rescue_proof=proof,
             )
+            # DECIMER tokens belong to the retained primary proof/attempt, not
+            # to the accepted MolScribe candidate's different raw observation.
+            record.pop("generation", None)
             record["engine_attempts"] = [
                 *record["engine_attempts"],
                 {
@@ -162,6 +168,7 @@ def validate_rescue_proof(record: dict) -> None:
         "version",
         "primary_engine",
         "primary_raw_smiles",
+        "primary_generation",
         "primary_model_fingerprint",
         "candidate_model_fingerprint",
         "source_image_sha256",
@@ -185,6 +192,7 @@ def validate_rescue_proof(record: dict) -> None:
             raise ValueError("Local rescue model identity is invalid")
     if proof["candidate_model_fingerprint"] != record.get("model_fingerprint"):
         raise ValueError("Local rescue candidate fingerprint differs")
+    validate_generated_raw(proof["primary_generation"], proof["primary_raw_smiles"])
     decision = validate_stereo_rescue(
         proof["primary_raw_smiles"],
         record.get("raw_smiles"),

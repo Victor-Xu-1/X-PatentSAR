@@ -1,5 +1,42 @@
 # Operations and troubleshooting
 
+## DECIMER returns a parseable prefix without completing generation
+
+Inspect the retained `generation.tokens`, `status` and `reason`, not only whether
+RDKit accepts `raw_smiles`. Missing start/end, empty content, internal reserved
+tokens, false completion flags and a decoded molecule that differs from the
+retained tokens cannot be accepted. Valid incomplete output remains visible as
+failed raw evidence; a healthy JSONL child is reused rather than restarted for
+each incomplete molecule. Protocol corruption still uses bounded restart limits.
+This includes literal raw/token disagreement even when the packet says
+`missing_end`; keep its bounded raw reply but stop the child, without granting
+normalized retry or resetting the existing failure budget.
+With normalization retry already enabled, a literal protocol-valid missing-end
+reply can use the same one-image retry as other recognition failures. This
+changes only presentation of the same retained source, keeps both raw outputs
+and never appends an end token or repairs a molecule. No new retry/engine chain
+is introduced; missing/forged metadata never qualifies for that retry.
+An internal control token still refuses retry when the end sentinel is also
+missing; retain both defects in the unchanged token sequence, not a repair.
+
+Current contracts are DECIMER adapter2, raw observation3 and SMILES schema5.
+An old raw-v2 cache cannot establish completion. It stays unchanged at its
+source, is not promoted by transport, and cannot be made current by changing a
+version label. Current exact-image/model caches require matching completed raw
+observations before reuse, followed by all existing source and chemical QC.
+An authorized normal frontend attempt performs any necessary fresh inference;
+never manufacture missing token streams or edit historical scientific outputs.
+Saved corrections and source assets remain separate, preserved authorities.
+
+The official SDK decoder still writes the raw molecule. Its digit substitutions
+are checked literally on readback, without repairing chemistry. A complete
+generation can still be chemically wrong or unrelated to the intended product.
+Native-model controls and real frontend extraction remain independent release
+and scientific acceptance gates; controlled tensors are not model accuracy.
+
+Binding54/binder65 and Activity38/extractor49/coverage20 stay current. Earlier
+sections keep release-time epoch labels; `contracts.py` owns combined versions.
+
 ## Optional OCR for original structure-column headers
 
 The already-configured on-demand auxiliary text runtime is consulted only for

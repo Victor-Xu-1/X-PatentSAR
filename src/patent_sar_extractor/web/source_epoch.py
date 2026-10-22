@@ -7,6 +7,7 @@ The existing strict source gate remains the validation authority.
 from __future__ import annotations
 
 from patent_sar_extractor import contracts as core
+from patent_sar_extractor.core.ocsr.generation import generation_record_current
 from patent_sar_extractor.core.ocsr.recognition_policy import (
     UNAVAILABLE_SOURCE_STATUSES,
 )
@@ -24,7 +25,7 @@ def record_epoch_current(record: object, *, allow_unavailable: bool = False) -> 
         and type(evidence.get("version")) is int
         and evidence["version"] == core.STEREO_EVIDENCE_VERSION
     ):
-        return True
+        return generation_record_current(record)
     # Preserve explicit failed/unavailable execution in read-only presentation.
     # This exception cannot supply chemistry or pass acceptance/checkpoint reuse.
     return bool(

@@ -18,6 +18,7 @@ from patent_sar_extractor.contracts import (
 from .candidate_inventory import validate_candidate_input
 from .engines.base_engine import BaseOCSREngine
 from .engines.decimer_engine import DECIMEREngine
+from .generation import truncated_observation
 from .image_preprocess import preprocess_structure_image
 from .label_mask import mask_visible_label as _mask_visible_label_for_ocsr
 from .recognition_source_paths import resolve_ocsr_image_path
@@ -297,6 +298,8 @@ class SmilesConverter:
         self, engine_name: str, engine, image: str, *, timeout=None
     ) -> tuple[dict, dict]:
         """Cache only exact unmodified observations under the current epoch."""
+        from .generation import completed_observation
+
         image_hash = compute_image_sha256(image)
         notes: dict = {"input_image_sha256": image_hash}
         identity = None
@@ -321,6 +324,7 @@ class SmilesConverter:
             checked = qc_smiles(cached.get("raw_smiles"))
             if (
                 cached.get("status") == "success"
+                and (engine_name != "decimer" or completed_observation(cached))
                 and cached.get("model_fingerprint") == identity
                 and (
                     _is_clean_rdkit_result(checked)
@@ -366,6 +370,13 @@ class SmilesConverter:
                 "status": "failed",
                 "raw_smiles": None,
                 "error": "Invalid SMILES response type",
+            }
+        if engine_name == "decimer" and not completed_observation(prediction):
+            prediction = {
+                **prediction,
+                "status": "failed",
+                "error": prediction.get("error")
+                or "DECIMER generated-token completion is unproved",
             }
         if self.cache and identity:
             checked = qc_smiles(prediction.get("raw_smiles"))
@@ -423,6 +434,7 @@ class SmilesConverter:
                     "elapsed_sec": prediction.get("elapsed_sec", 0),
                     "model_fingerprint": prediction.get("model_fingerprint"),
                     "token_confidence": prediction.get("token_confidence"),
+                    "generation": prediction.get("generation"),
                     "device": prediction.get("device"),
                     "peak_rss_mb": prediction.get("peak_rss_mb"),
                     "device_used": prediction.get("device_used"),
@@ -470,6 +482,7 @@ class SmilesConverter:
                         ocsr_structure_image=image,
                         model_fingerprint=prediction.get("model_fingerprint"),
                         token_confidence=prediction.get("token_confidence"),
+                        generation=prediction.get("generation"),
                         device=prediction.get("device"),
                         peak_rss_mb=prediction.get("peak_rss_mb"),
                     )
@@ -511,7 +524,11 @@ class SmilesConverter:
                 if (
                     self.retry_normalization
                     and attempt_index == 0
-                    and status == "success"
+                    and (
+                        status == "success"
+                        or engine_name == "decimer"
+                        and truncated_observation(prediction)
+                    )
                     and raw
                     and not str(checked["quality_flag"]).startswith("stereo_source_")
                     and preprocess_dir

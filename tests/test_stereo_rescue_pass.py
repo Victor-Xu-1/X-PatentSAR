@@ -12,6 +12,7 @@ from unittest.mock import patch
 from PIL import Image
 
 from patent_sar_extractor.core.ocsr.conversion_progress import ConversionProgress
+from patent_sar_extractor.core.ocsr.generation import observe_generation
 from patent_sar_extractor.core.ocsr.smiles_converter import SmilesConverter
 from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
 from patent_sar_extractor.core.ocsr.stereo_evidence import (
@@ -49,6 +50,7 @@ class RescuePassTests(unittest.TestCase):
         self.record = {
             **checked,
             "raw_smiles": PARTIAL,
+            "generation": observe_generation(["<start>", *PARTIAL, "<end>"])[1],
             "canonical_smiles": checked["canonical_smiles"],
             "OCSR_engine": "decimer",
             "OCSR_status": "review_required",
@@ -95,6 +97,10 @@ class RescuePassTests(unittest.TestCase):
         self.assertEqual(row["raw_smiles"], PAIRED)
         self.assertEqual(row["OCSR_engine"], "molscribe")
         self.assertEqual(row["stereo_rescue_proof"]["primary_raw_smiles"], PARTIAL)
+        self.assertEqual(
+            row["stereo_rescue_proof"]["primary_generation"], self.record["generation"]
+        )
+        self.assertNotIn("generation", row)
         self.assertEqual(row["engine_attempts"][0]["raw_smiles"], PARTIAL)
         self.assertEqual(self.record["raw_smiles"], PARTIAL)
         self.assertEqual(progress.payload["completed"], 1)
@@ -121,6 +127,8 @@ class RescuePassTests(unittest.TestCase):
 
     def test_normal_or_source_ambiguous_rows_never_start_second_engine(self):
         for changes in (
+            {"generation": None},
+            {"generation": observe_generation(["<start>", *PARTIAL])[1]},
             {"OCSR_quality_flag": "ok"},
             {"OCSR_engine": "other"},
             {
@@ -134,6 +142,15 @@ class RescuePassTests(unittest.TestCase):
             rows, _, factory = self.run_pass([row])
             factory.assert_not_called()
             self.assertEqual(rows[0]["raw_smiles"], PARTIAL)
+
+    def test_saved_rescue_cannot_hide_incomplete_primary_generation(self):
+        rows, _, _ = self.run_pass()
+        row = rows[0]
+        row["stereo_rescue_proof"]["primary_generation"] = observe_generation(
+            ["<start>", *PARTIAL]
+        )[1]
+        with self.assertRaises(ValueError):
+            validate_stereo_record(row)
 
     def test_wrong_graph_remains_review(self):
         def wrong(*args):
@@ -198,6 +215,7 @@ class RescuePassTests(unittest.TestCase):
         primary.predict = lambda *args, **kwargs: {
             "status": "success",
             "raw_smiles": PARTIAL,
+            "generation": observe_generation(["<start>", *PARTIAL, "<end>"])[1],
             "model_fingerprint": "a" * 64,
         }
         rescue = Engine()

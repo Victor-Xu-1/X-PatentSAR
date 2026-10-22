@@ -24,6 +24,7 @@ from patent_sar_extractor.application.stage_cache import (
 )
 from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.core.ocsr import stereo_evidence, stereo_gate
+from patent_sar_extractor.core.ocsr.generation import observe_generation
 from patent_sar_extractor.core.ocsr.smiles_cache import SmilesCache
 from patent_sar_extractor.web.acceptance import authority, current
 from patent_sar_extractor.web.analysis import AnalysisService
@@ -112,7 +113,7 @@ class SourceEpochAuthorityTests(WebFixture, unittest.TestCase):
             ),
         )
         cache = SmilesCache(str(root / "smiles/smiles_cache.sqlite"))
-        engine = "decimer:raw-v2:" + "a" * 64
+        engine = f"decimer:raw-v{core.OCSR_OBSERVATION_VERSION}:" + "a" * 64
         for key, flag in (("b" * 64, "ok"), ("c" * 64, "stereo_source_conflict")):
             cache.save_result(
                 key,
@@ -120,6 +121,9 @@ class SourceEpochAuthorityTests(WebFixture, unittest.TestCase):
                 {
                     "status": "success",
                     "raw_smiles": "C[C@H](O)F",
+                    "generation": observe_generation(
+                        ["<start>", *"C[C@H](O)F", "<end>"]
+                    )[1],
                     "model_fingerprint": "a" * 64,
                     "quality_flag": flag,
                 },

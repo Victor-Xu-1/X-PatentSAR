@@ -14,6 +14,7 @@ import os
 import pickle
 from pathlib import Path
 
+from .generation import observe_generation
 from .resource_budget import process_peak_resident_mb
 
 
@@ -81,20 +82,23 @@ class PrintedDecimerModel:
         processed = self.preprocess.decode_image(image)
         tokens, confidence = self.model(self.tf.constant(processed))
         words = [self.tokenizer.index_word[int(value)] for value in tokens[0].numpy()]
-        encoded = "".join(words).replace("<start>", "").replace("<end>", "")
+        encoded, generation, (start, stop) = observe_generation(words)
         smiles = self.codec.decoder(encoded)
         if not isinstance(smiles, str) or not smiles.strip() or len(smiles) > 12000:
             raise ValueError("DECIMER returned no bounded nonempty prediction")
-        probabilities = [
-            float(value)
-            for value in self.tf.convert_to_tensor(confidence).numpy().reshape(-1)[1:-1]
-        ]
+        confidence_values = self.tf.convert_to_tensor(confidence).numpy().reshape(-1)
+        if len(confidence_values) != len(words):
+            raise ValueError(
+                "DECIMER confidence does not align with its retained tokens"
+            )
+        probabilities = [float(value) for value in confidence_values[start:stop]]
         if probabilities and not all(
             math.isfinite(value) and 0 <= value <= 1 for value in probabilities
         ):
             raise ValueError("DECIMER returned invalid token confidence")
         return {
             "smiles": smiles,
+            "generation": generation,
             "model_fingerprint": self.identity["fingerprint"],
             "model_version": self.identity["versions"]["DECIMER"],
             "device": self.device,

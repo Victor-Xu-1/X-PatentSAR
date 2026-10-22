@@ -11,6 +11,7 @@ from unittest.mock import patch
 from PIL import Image, ImageDraw
 
 from patent_sar_extractor.core.ocsr import smiles_converter as converter_module
+from patent_sar_extractor.core.ocsr.generation import observe_generation
 from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
 from patent_sar_extractor.core.ocsr.stereo_evidence import (
     observe_stereo_symbols,
@@ -42,6 +43,7 @@ class SourceStereochemistryTests(unittest.TestCase):
                 return {
                     "status": "success",
                     "raw_smiles": raw,
+                    "generation": observe_generation(["<start>", *raw, "<end>"])[1],
                     "model_fingerprint": "a" * 64,
                 }
 

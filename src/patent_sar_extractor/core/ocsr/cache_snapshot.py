@@ -14,6 +14,7 @@ from contextlib import closing
 
 from patent_sar_extractor.contracts import OCSR_OBSERVATION_VERSION
 
+from .generation import validate_generated_raw
 from .smiles_cache import OBSERVATIONS_SQL, SmilesCache
 
 _HASH = re.compile(r"[0-9a-f]{64}\Z")
@@ -107,6 +108,8 @@ def snapshot_observations(content: bytes, *, max_bytes: int, max_records: int) -
             raw = result.get("raw_smiles")
             if raw is not None and not isinstance(raw, str):
                 raise ValueError("Raw cache prediction is invalid")
+            if engine.startswith("decimer:"):
+                validate_generated_raw(result.get("generation"), raw)
             target.execute("INSERT INTO smiles_observations VALUES (?,?,?,?)", row)
         target.commit()
         snapshot = target.serialize()

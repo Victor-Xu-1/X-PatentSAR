@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Generated-token authority: `core/ocsr/generation.py` is the single bounded
+  completion/literal-readback contract shared by the existing printed adapter,
+  JSONL/converter/cache, strict saved-source QC and Web currentness. It does not
+  write or repair molecules; the verified installed SDK decoder remains the
+  writer. DECIMER adapter2/raw observation3/SMILES5 and stereo rescue proof2
+  invalidate affected reuse without rewriting original assets, old raw results,
+  human audit or scientific acceptance. A complete sequence is not chemical
+  correctness. No model, dependency, environment, external call, activation,
+  queue, SQL/API schema or SAR ranking rule is introduced or changed.
+
 - Original structure-column headers (ruled and unruled) use the existing
   unresolved-only `role_text_capture` / paired `source_capture` path. Their
   caller authority stays8 rows/12pt without chunk admission, distinct from

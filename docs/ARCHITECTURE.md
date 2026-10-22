@@ -1,5 +1,43 @@
 # X-PatentSAR architecture
 
+## Generated-token completion is separate from chemical correctness
+
+The sole printed DECIMER adapter retains the bounded original token stream,
+including actual outer start/end sentinels and incomplete-generation reasons.
+Only those outer sentinels are removed before the unchanged installed SDK
+decoder. Confidence uses the actual content slice; a missing end sentinel must
+not discard the final chemical token's score. The literal SDK digit alphabet,
+including its non-ASCII digit symbols, remains in the raw token inventory.
+
+`ocsr.generation` owns bounded grammar and literal decoded-output readback.
+Native JSONL, the converter, exact-image/model cache transport, saved source QC,
+Web currentness and the research-only adapter share this contract. A parseable
+prefix is not a completed generation. Valid incomplete observations retain raw
+SMILES and tokens with failed execution; they neither supply accepted molecules
+nor enter restricted stereo rescue. Malformed/mismatched metadata refuses.
+The owned child checks literal raw/token agreement for both complete and
+incomplete replies before resetting its existing restart budget. A corrupt
+incomplete packet stops that child; it cannot masquerade as healthy truncation.
+Only a protocol-valid, literal missing-end reply may reuse the converter's
+existing single normalized-image retry. Both raw attempts remain; missing or
+forged packets, broken start/control tokens and other engine failures cannot
+request this recovery. A second incomplete result is still failed, never fixed
+by editing a SMILES string or increasing the existing retry budget.
+Internal reserved tokens take precedence over a missing end sentinel: a
+combined malformed generation cannot masquerade as retryable truncation.
+Rescue proof2 retains the complete primary generation separately from the
+MolScribe candidate; the original eight-item/graph/source rules remain in force.
+
+Adapter2, raw observation3 and SMILES schema5 invalidate affected reuse. Legacy
+raw/derived results remain historical at their original sources, never retagged
+with fabricated tokens or a new fingerprint. Original assets and human audit
+are untouched. Generation completion is not evidence of correct atoms, bonds,
+stereochemistry, terminal-product role, source recall or scientific acceptance.
+
+Binding54/binder65, Activity38/extractor49/coverage20, tail3 and visible26 stay
+current. Earlier implementation sections retain their release-time epoch labels;
+this section and `contracts.py` own the current combined contracts.
+
 ## Current structure-column header text recovery
 
 Ruled/unruled original structure-header producers capture exact original cell
