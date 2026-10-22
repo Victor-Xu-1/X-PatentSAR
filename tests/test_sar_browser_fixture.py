@@ -13,6 +13,17 @@ from tools.prepare_browser_fixture import prepare
 
 
 class SARBrowserFixtureTests(WebFixture, unittest.TestCase):
+    def test_task_poll_observation_is_read_only_without_task_execution(self):
+        selected = {PREFIX + "task-poll-observation.spec.ts"}
+        self.assertEqual(fixture_mode(selected), "read-only")
+        self.assertEqual(
+            fixture_mode(selected | {PREFIX + "session-job-recovery.spec.ts"}),
+            "read-only",
+        )
+        self.assertEqual(
+            fixture_mode(selected | {PREFIX + "real-workflow.spec.ts"}), "execution"
+        )
+
     def test_region_pointer_scope_uses_native_sar_without_extraction(self):
         selected = {PREFIX + "sar-region-pointer.spec.ts"}
         self.assertEqual(fixture_mode(selected), "sar")

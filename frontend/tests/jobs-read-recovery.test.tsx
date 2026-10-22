@@ -26,6 +26,7 @@ it.each(['list', 'detail'] as const)(
         await vi.advanceTimersByTimeAsync(0);
       });
       expect(result.current.verified).toBe(true);
+      expect(result.current.presentationVerified).toBe(true);
       expect(result.current.job?.id).toBe(job.id);
 
       const fault = new ApiError(0, 'network_error', 'Temporary task read failure');
@@ -37,6 +38,7 @@ it.each(['list', 'detail'] as const)(
       expect(failedRead === 'list' ? result.current.error : result.current.detailError).toBe(fault);
       expect(result.current.job?.id).toBe(job.id);
       expect(result.current.verified).toBe(false);
+      expect(result.current.presentationVerified).toBe(false);
 
       // A later bounded read must recover the same running task without a
       // manual reload, task restart, cancellation or real HTTP request.
@@ -50,6 +52,7 @@ it.each(['list', 'detail'] as const)(
         3,
       );
       expect(result.current.verified).toBe(true);
+      expect(result.current.presentationVerified).toBe(true);
       expect(result.current.job?.id).toBe(job.id);
       expect(result.current.error).toBeNull();
       expect(result.current.detailError).toBeNull();
