@@ -159,6 +159,7 @@ export function ExtractionJobs({
                     job={job}
                     ready={ready}
                     verified={verified && resource.verified}
+                    presentationVerified={verified && resource.presentationVerified}
                     onChange={resource.reload}
                     onOpenWorkspace={onOpen}
                   />

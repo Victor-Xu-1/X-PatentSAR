@@ -14,6 +14,7 @@ export function JobActions({
   job,
   ready,
   verified,
+  presentationVerified = verified,
   onChange,
   onOpenWorkspace,
   compact = false,
@@ -22,6 +23,7 @@ export function JobActions({
   job: Job | null;
   ready: boolean;
   verified: boolean;
+  presentationVerified?: boolean;
   onChange: () => void;
   onOpenWorkspace?: (id: string) => void;
   compact?: boolean;
@@ -98,8 +100,8 @@ export function JobActions({
     <div className="job-actions-wrapper">
       <div className="job-actions">
         {job && !compact && (
-          <span className={`badge job-${verified ? job.status : 'unknown'}`}>
-            {verified ? jobStatusText(job) : t('阶段状态未知')}
+          <span className={`badge job-${presentationVerified ? job.status : 'unknown'}`}>
+            {presentationVerified ? jobStatusText(job) : t('阶段状态未知')}
           </span>
         )}
         {hasWorkspace && (
@@ -171,12 +173,17 @@ export function JobActions({
       </div>
       {error && <ErrorNotice error={error} onRetry={onChange} />}
       {job && !compact && (
-        <JobRecord job={job} verified={verified} recoveryControls={recoveryControls} />
+        <JobRecord job={job} verified={presentationVerified} recoveryControls={recoveryControls} />
       )}
       {job && detailsOpen && (
         <Dialog title={t('任务详情')} onClose={() => setDetailsOpen(false)} busy={busy}>
           <div className="dialog-body">
-            <JobRecord job={job} verified={verified} expanded recoveryControls={recoveryControls} />
+            <JobRecord
+              job={job}
+              verified={presentationVerified}
+              expanded
+              recoveryControls={recoveryControls}
+            />
           </div>
         </Dialog>
       )}
