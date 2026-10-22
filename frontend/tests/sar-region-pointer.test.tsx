@@ -203,6 +203,7 @@ it('closes a chooser when its source view becomes inactive while keeping the las
   const { container, rerender } = render(
     <StudyRegionMap report={report} active onSelect={onSelect} />,
   );
+  fireEvent.load(await screen.findByRole('img', { name: sarDrawing.molecule.label }));
   const point = await screen.findByRole('button', { name: 'Atom 0 (C) · 2 variable regions' });
   await userEvent.click(point);
   expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -221,6 +222,7 @@ it('does not authorize stale source interactions during a returning read or rest
   const { container, rerender } = render(
     <StudyRegionMap report={report} active onSelect={onSelect} />,
   );
+  fireEvent.load(await screen.findByRole('img', { name: sarDrawing.molecule.label }));
   await userEvent.click(
     await screen.findByRole('button', { name: 'Atom 0 (C) · 2 variable regions' }),
   );

@@ -1,5 +1,14 @@
 # Project governance manifest
 
+- Molecular image presentation authority: `MolecularImage` shares passive SVG
+  loading/error/magnification between `StudyImage` and the original-source
+  `StudyRegionMap`. Atomic overlays depend on the loaded image; failure disposes
+  hotspots/choosers, and current resource validation still owns selection. The
+  existing focus dialog reuses the identical SVG without another read. Wide
+  reference/matrix sidebars and narrow stacked/pair views preserve every region,
+  member, source label and atom coordinate. No second renderer, science/API/SQL
+  epoch, inference chain, cache, dependency or persisted result authority is added.
+
 - Catalog serialization authority: `study_catalog_wire` is a request-local,
   opt-in typed adapter over the existing receipt-bound `StudyResults.catalog`.
   Whole fragment values and ordered member arrays share references; all region

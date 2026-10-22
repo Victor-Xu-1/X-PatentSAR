@@ -1,5 +1,24 @@
 # Operations and troubleshooting
 
+## Reference structure and comparison workspace
+
+On a wide screen, the selected reference and all recorded region choices stay
+beside the structure comparison matrix. Narrow screens retain the stacked
+reference and two-structure comparison. The complete legend remains scrollable;
+this is layout, not a reduction of regions, molecules or measurements. Core-ID
+search stays bounded on desktop and fills the available narrow-screen width.
+
+A loaded, current reference offers the same Enlarge structure control used by
+study drawings. It reuses that SVG, supports zoom/fit and Escape/focus return, and
+does not start another request or task. Loading/failed images have no floating
+atomic click targets; failed images show an explicit error. Stale/inactive views
+remain read-only and close existing dialogs. The named legend is the independent
+keyboard route to validated recorded regions; raw labels do not change with the
+interface language. No model, environment, numerical policy, data migration or
+scientific epoch changes are needed. Verify image failure, deactivation, pointer
+choices, bilingual focus and responsive geometry in the installed wheel before
+the ordinary exact-main/rollback/unchanged18765 deployment gate.
+
 ## Complete study catalogs over the passive read interface
 
 New UI reads request `/api/v1/sar/jobs/{job}/study/catalog?compact=true` without

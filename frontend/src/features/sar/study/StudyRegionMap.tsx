@@ -10,6 +10,7 @@ import { useSARResource } from '../useSARResource';
 import { safeDrawing } from '../safeDrawing';
 import { RegionLegend, RegionMap } from './RegionMap';
 import { StudyReferencePane } from './StudyReferencePane';
+import { MolecularImage } from './MolecularImage';
 
 function ReferenceMap({
   datasetId,
@@ -49,7 +50,8 @@ function ReferenceMap({
   }, [resource.data, regions]);
   // A retained same-source drawing remains viewable, not authorization to use
   // stale controls or leave a top-layer chooser open after deactivation.
-  const select = resource.validated && drawing.image && !drawing.error ? onSelect : undefined;
+  const select =
+    active && resource.validated && drawing.image && !drawing.error ? onSelect : undefined;
   return (
     <article className="sar-reference-map-card">
       <div className="sar-section-heading">
@@ -65,13 +67,22 @@ function ReferenceMap({
       {drawing.error && <SARFailure error={drawing.error} />}
       {drawing.image && resource.data && (
         <div className="sar-reference-map-image" style={{ aspectRatio: drawing.image.aspectRatio }}>
-          <img src={drawing.image.url} alt={label} />
-          <RegionMap
-            atoms={resource.data.atoms}
-            regions={regions}
-            selected={selected}
-            onSelect={select}
-          />
+          <figure className="sar-study-image sar-reference-drawing">
+            <MolecularImage
+              image={drawing.image}
+              identity={JSON.stringify(['sar:reference-drawing', datasetId, moleculeId])}
+              label={label}
+              authorized={active && resource.validated}
+              inspectable
+            >
+              <RegionMap
+                atoms={resource.data.atoms}
+                regions={regions}
+                selected={selected}
+                onSelect={select}
+              />
+            </MolecularImage>
+          </figure>
         </div>
       )}
       <RegionLegend regions={regions} selected={selected} onSelect={select} />

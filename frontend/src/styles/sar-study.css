@@ -316,9 +316,21 @@
   width: min(100%, 700px);
   margin: 0 auto;
 }
-.sar-reference-map-image > img {
+.sar-reference-map-image .sar-reference-drawing {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+.sar-reference-map-image .sar-reference-drawing > img {
   display: block;
   width: 100%;
+  height: 100%;
+  max-height: none;
+  object-fit: contain;
+}
+.sar-reference-drawing .sar-image-focus-action {
+  z-index: 2;
 }
 .sar-study-card .sar-chart-layout-donut {
   grid-template-columns: 120px minmax(0, 1fr);

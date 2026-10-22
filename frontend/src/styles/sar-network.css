@@ -5,7 +5,7 @@
   flex-wrap: wrap;
   margin: 6px 0 18px;
 }
-.sar-network-tools input {
+.sar-page .sar-network-tools input {
   width: min(320px, 100%);
 }
 .sar-network-tools select {
@@ -228,7 +228,7 @@
     left: -17px;
     width: 14px;
   }
-  .sar-network-tools input {
+  .sar-page .sar-network-tools input {
     width: 100%;
   }
 }

@@ -1,5 +1,22 @@
 # X-PatentSAR architecture
 
+## Reference structure workspace
+
+`MolecularImage` is the single passive image/load/focus boundary shared by
+`StudyImage` and `StudyRegionMap`; the latter retains its original graph-validated
+drawing request and atom coordinates. A reference overlay mounts only after that
+same image loads. A failed image removes both its overlay and open chooser; a
+deactivated or unvalidated resource cannot authorize selection or magnification.
+Enlargement reuses the exact safe SVG URL and existing `MolecularFocus`, with no
+second drawing read, graph normalization, result write or model call.
+
+Wide comparison workspaces keep the reference and complete region legend beside
+the matrix, with a bounded sticky reference viewport. Tablet/mobile views stack
+these areas and retain the existing paired matrix. Search width uses page-scoped
+specificity rather than overriding the shared form authority globally. Original
+IDs, region membership, normalized coordinates, complete matrix members and
+scientific/API/SQL/epoch contracts are unchanged.
+
 ## Lossless catalog wire pooling
 
 `StudyResults.catalog` still uses the sole receipt-bound current projection.
