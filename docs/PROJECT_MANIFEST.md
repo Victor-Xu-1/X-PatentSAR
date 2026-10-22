@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Passive study SVG transport: `study_drawings.draw_one` is the sole renderer
+  for individual and bounded batch reads. `study_drawing_models` owns the additive
+  batch DTO. Existing StudyDrawing, report preparation, receipt/source checks,
+  API authentication and scientific/SQL/raw contracts remain authoritative.
+  `sarDrawingBatch` owns pending-only frontend batching/cancellation (32items,
+  two GETs); it does not persist results or start analysis/model jobs.6MiB replies
+  refuse explicitly, with strictly decreasing subdivisions only for that budget
+  code. No dependencies, scientific epochs, environments or manual/history assets
+  change. The old individual route is only an adapter to the same renderer.
+
 - Generated-token authority: `core/ocsr/generation.py` is the single bounded
   completion/literal-readback contract shared by the existing printed adapter,
   JSONL/converter/cache, strict saved-source QC and Web currentness. It does not

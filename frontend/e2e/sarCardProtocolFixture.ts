@@ -2,6 +2,7 @@ import { expect, type Page } from '@playwright/test';
 import type { Dataset, Molecule } from '../src/api/sarTypes';
 import type { StudyRow } from '../src/api/sarStudyTypes';
 import { studyJob, studyReport, studyRow } from '../tests/sar-fixtures';
+import { catalogBody } from '../tests/sar-catalog-fixtures';
 
 /** Layout-only report DTOs; no fake record is inserted into a server job store.
  * Drawings come from the real installed RDKit dataset endpoint. Scientific
@@ -51,6 +52,7 @@ export async function cardProtocol(
   report.regions[0]!.fragments[0]!.smiles = molecule.smiles!;
   report.regions[0]!.fragments[0]!.molecule_ids = [molecule.id];
   const drawings: Array<{ kind: string; identifier: string }> = [];
+  const catalog = { ...catalogBody(report), job };
   const rowRequests: Array<Record<string, string>> = [];
   await page.route(`**/api/v1/sar/datasets/${dataset.id}/jobs`, (route) =>
     route.fulfill({ json: { items: [job], total: 1 } }),
@@ -58,14 +60,36 @@ export async function cardProtocol(
   await page.route(`**/api/v1/sar/jobs/${job.id}**`, async (route) => {
     expect(route.request().method()).toBe('GET');
     const url = new URL(route.request().url());
-    if (url.pathname.endsWith('/study/drawing')) {
-      const identifier = url.searchParams.get('identifier')!;
-      drawings.push({ kind: url.searchParams.get('kind')!, identifier });
+    if (url.pathname.endsWith('/study/drawings')) {
+      const identifiers = url.searchParams.getAll('identifier');
+      identifiers.forEach((identifier) =>
+        drawings.push({ kind: url.searchParams.get('kind')!, identifier }),
+      );
       const response = await page.request.get(
         `/api/v1/sar/datasets/${dataset.id}/molecules/${molecule.id}/drawing`,
       );
       expect(response.ok()).toBe(true);
-      await route.fulfill({ json: { id: identifier, svg: (await response.json()).svg } });
+      const svg = (await response.json()).svg;
+      await route.fulfill({
+        json: {
+          job,
+          kind: url.searchParams.get('kind'),
+          region_id: url.searchParams.get('region_id') ?? '',
+          items: identifiers.map((identifier) => ({
+            identifier,
+            result: { id: identifier, svg },
+            error: null,
+          })),
+        },
+      });
+    } else if (url.pathname.endsWith('/study/catalog')) {
+      await route.fulfill({ json: catalog });
+    } else if (url.pathname.includes('/study/regions/')) {
+      const region = report.regions.find(
+        (item) => item.region.id === decodeURIComponent(url.pathname.split('/').at(-1)!),
+      );
+      expect(region).toBeDefined();
+      await route.fulfill({ json: { job, region, activity_basis: catalog.activity_basis } });
     } else if (url.pathname.endsWith('/study/rows')) {
       const filters = Object.fromEntries(url.searchParams);
       rowRequests.push(filters);

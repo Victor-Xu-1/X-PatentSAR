@@ -14,6 +14,26 @@ from tools.prepare_browser_fixture import prepare
 
 
 class ReadOnlyVersionFixtureTests(unittest.TestCase):
+    def test_drawing_batch_uses_only_the_existing_isolated_sar_fixture(self):
+        self.assertEqual(
+            fixture_mode(
+                {
+                    "frontend/e2e/sar-drawing-batch.spec.ts",
+                    "frontend/e2e/sar-card-inspection.spec.ts",
+                }
+            ),
+            "sar",
+        )
+        self.assertEqual(
+            fixture_mode(
+                {
+                    "frontend/e2e/sar-drawing-batch.spec.ts",
+                    "frontend/e2e/unrelated.spec.ts",
+                }
+            ),
+            "execution",
+        )
+
     def test_label_scope_uses_real_pending_projection_without_models_or_jobs(self):
         from patent_sar_extractor.web.service import WorkspaceService
 
