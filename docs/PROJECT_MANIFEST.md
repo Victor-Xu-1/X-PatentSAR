@@ -788,25 +788,35 @@
   Extending these families preserves the original inner-envelope conflict guard.
   The sole refined-axis replay conserves every retained word in the final x axis.
   `plot_legend_locator` retains original graphic/text line boundaries, not a
-  stripped prefix. `cell_word_orientation` owns bounded physical word views;
+  stripped prefix. Locator2 and `plot_legend_geometry` use the existing physical
+  row SDK: complete400/600dpi source, max8rows/32pt/250k pixels, one literal cell
+  per row and uniquely matching target only. Missing/unread/duplicate/conflicting
+  rows or known preparation roles refuse; failed nominations remain explicit
+  unproved heading sources without duplicate observation. `plot_literal_cells`
+  shares the ordinary observer and parent-conservation validator, not a second
+  OCR or acceptance authority. `cell_word_orientation` owns bounded physical word views;
   `plot_axis_words` observes/replays them with the existing OCR and
   `plot_axis_refinement` coordinates the same original strip for both consumers.
   `plot_axis_identity` owns exact bounded Decimal tick identity/order only, not
   chemical IDs, activity values or units. Nomination's incomplete right edge
   cannot qualify a legend; formal proof still requires complete observed axes.
-  Proof6 uses one complete x/y source-word path, even if coarse tokens appear
+  Proof7 uses one complete x/y source-word path, even if coarse tokens appear
   numeric. A typed bounded400dpi nomination cannot replace the final400/600dpi
   observations. Physical row-frame2 conserves all words in the nearest repeated
   original vertical lane; the full mask, other original ink and known conflicts
   remain. Complete prefix spacing uses the existing literal identifier grammar,
   preserving zeros/hyphens/suffixes/annotations and original raw words.
-  Proof6 binds final stroke bounds to the existing nominal source witness with
+  Proof7 binds final stroke bounds to the existing nominal source witness with
   the same12pt margin, full outer-word extent and complete word strip. The
  1M-axis/8M-word render limits and all conflict gates stay; no anchor is duplicated.
   `plot_reference_pixels` is the sole lossless thresholded-mask codec, with bounded
-  zlib output/EOF/padding validation. Historical proofs3/4/5 remain read-only;
-  current heading proof6 and Binding30/binder39
-  change derived ownership only. RawOCR2/visible21/OCSR/preparation/stereo,
+  zlib output/EOF/padding validation. `plot_original_replay` feeds the same sole
+  worker/Web original-source reader: every retained key/axis/word/parent pixel,
+  literal native/optical frame and native context is reopened without OCR/model
+  inference. `RecognitionPlan` retains these non-molecular owners through path
+  resolution; no alternative queue or molecule list is created.
+  Historical proofs3/4/5/6 remain read-only; current proof7 and Binding57/binder68
+  change derived ownership only. Raw PDF/OCR/OCSR/visible-label/preparation/stereo,
   Activity/SAR/manual/API/SQL/models/dependencies remain independent. Existing
   source-digest/cell/word limits are not raised. No plotted measurement, new
   molecular declaration, page/ID exception, second store/queue/model or acceptance

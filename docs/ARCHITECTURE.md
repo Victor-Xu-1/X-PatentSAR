@@ -1714,9 +1714,22 @@ strip, including displaced numeric/unknown members, not merely read then omit it
 OCR line containing its graphic key. Complete original line text/bounds and its
 exact literal range remain recorded. Source masks at400/600dpi must reproduce
 the whole compact key and all remaining text; the shared cell inset supplies a
-reading window, not a string-prefix deletion. Known synthesis roles and multiple
-identifiers cannot enter this refinement. Ordinary original-cell observations
-still qualify every literal. Missing/weak/conflicting evidence stays unproved.
+reading window, not a string-prefix deletion. `plot_legend_geometry` uses the
+shared `physical_line_frame` to inventory every dark pixel of a coarse multiline
+window. Caller bounds remain32pt/250k pixels, with at most8 physical rows. Every
+row needs its own compact key and full text at both resolutions; no successful
+row subset or first/top-row selection is allowed. Key typography is bounded by
+the actual literal text-cell window, never by the key's own height.
+
+Locator2 retains each row's geometry and one ordinary literal-cell observation;
+`plot_literal_cells` is the shared observer/validator for both these rows and
+the figure's other literals. Qualified parent/native/raster contradictions remain
+vetoes. Known preparation/assay roles, unread compound-like labels and duplicate
+target rows refuse. A coarse text nomination containing multiple identifiers
+also remains unproved; separate observed rows may retain other literal compound
+labels without selecting them as the target. Missing/weak/conflicting evidence
+stays unproved. A failed graphic nomination cannot erase its original printed-ID
+occurrence from the heading ledger, or repeat the same graphic observation.
 
 `plot_axis_refinement` uses one source-first path for every nominated graph,
 including coarse rows that already appear numeric. Three detected numbers do
@@ -1749,7 +1762,7 @@ The shared cell renderer enforces each caller's equal or smaller pixel budget
 before allocating a pixmap; its default8M ceiling is unchanged.
 
 `plot_reference` is the observer; `plot_reference_proof` owns the sole saved replay.
-Current heading proof6 retains an optional original graphic/text locator and
+Current heading proof7 retains an optional original graphic/text locator and
 both complete word observations in the existing axis-refinement packet. The
 single-resolution nomination is explicitly typed and cannot replace either final
 two-resolution stroke/word observation. The final horizontal stroke band
@@ -1757,7 +1770,7 @@ is constrained by that already-witnessed nominal stroke and the same12pt margin,
 not by an OCR-success search; full outer-word horizontal bounds and the complete
 word strip are retained. Producer and saved replay derive the same window from
 the same owned anchor. No duplicated anchor or raised1M-axis/8M-word render cap
-is needed. Prior proofs3/4/5 remain historical, never retagged as current ownership.
+is needed. Prior proofs3/4/5/6 remain historical, never retagged as current ownership.
 All use the existing source-window/cell SDK and binding writer, not another
 model, queue, store or acceptance path. Thresholded masks use
 one lossless zlib-packbits encoding with bounded decompression, exact EOF/length
@@ -1765,9 +1778,17 @@ and zero padding; original PDFs/raw images remain unchanged. Existing8M cell,
 32-word and1MiB source-digest limits remain explicit. Unsupported geometry,
 multiple plausible panels or excess/ambiguous source stays unresolved.
 
-Binding30/binder39 invalidate derived ownership only. RawOCR2, visible-label21,
-OCSR/preparation/stereo, activity/SAR, models, manual audit, API and SQL retain
-their own contracts. Earlier section numbers describe previous module deliveries,
+`plot_original_replay` inventories only the existing source ledger's figure-role
+owners. The sole `RecognitionPlan` carries them through path resolution via
+dataclass replacement; no source context is reconstructed from the molecule list.
+Worker and passive Web readers use the same `original_binding_source_errors`
+entry to replay actual parent/key/axis/word pixels and native contexts, alongside
+the existing ordinary/auxiliary literal-frame replayers. Saved agreement, hashes
+or status flags do not replace the original. No OCR/model runs during readback.
+
+Binding57/binder68 invalidate derived ownership only. Raw PDF/OCR/OCSR,
+visible-label, preparation/stereo, activity/SAR, models, manual audit, API and SQL
+retain their own contracts. Earlier section numbers describe previous deliveries,
 not a second current ownership authority. Two-resolution OCR agreement is not
 statistical independence or a guarantee of original chemical identity.
 

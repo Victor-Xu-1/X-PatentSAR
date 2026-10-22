@@ -2546,7 +2546,7 @@ make unequal values agree. Raw labels stay unchanged and tiny finite values do
 not become zero through float underflow. Partial coarse rows only nominate the
 complete strip; they never satisfy final quantified extent on their own.
 
-Heading proof6 always observes both complete original axes, rather than using
+Heading proof7 always observes both complete original axes, rather than using
 an apparently ordered coarse numeric subset as a coverage certificate. The
 bounded400dpi physical nomination only locates the source; complete words and
 final strokes still need400/600dpi proof. A one-reading nomination promoted to
@@ -2568,7 +2568,22 @@ large empty gaps without raising the1M-axis/8M-word limits, adding inference or
 choosing a successful crop. Missing/changed anchors, masks, bounds or words refuse.
 The optional original graphic/text locator is explicit even when absent.
 
-Derived heading proof6 uses Binding30/binder39. Proofs3/4/5 and old ownership remain historical;
+Locator2 inventories every physical row of a coarse graphic/text window with
+the existing row/cell SDK. At most8rows,32pt and250k pixels are admitted; every
+retained row must have a compact key and a qualified full literal. The target
+must be unique, not merely first/top. Other original row labels remain recorded;
+unknown compound-like labels, preparation roles, duplicate targets, missing keys
+and native/raster conflicts stay unresolved. Over-bound inventories cannot
+fall back to a convenient single row. The source text/coordinates are not edited.
+
+The ordinary source ledger and `RecognitionPlan` retain these figure owners
+through worker/path resolution and passive Web reads. Original readback checks
+actual retained pixels, native context and literal frames without repeating OCR
+or invoking an OCSR model. A changed original or self-rehashed foreign source
+refuses. Failed graphic nominations remain visible unproved heading sources,
+never omitted to satisfy completeness or retried within that same observation.
+
+Derived heading proof7 uses Binding57/binder68. Proofs3/4/5/6 and old ownership remain historical;
 original PDF/raw observations/manual audit and independent scientific contracts
 are not rewritten. Lossless thresholded-mask compression retains the existing
 1MiB source-digest and8M cell limits, with bounded decompression and strict stream
