@@ -10,6 +10,65 @@
   correctness. No model, dependency, environment, external call, activation,
   queue, SQL/API schema or SAR ranking rule is introduced or changed.
 
+- Original structure-column headers (ruled and unruled) use the existing
+  unresolved-only `role_text_capture` / paired `source_capture` path. Their
+  caller authority stays8 rows/12pt without chunk admission, distinct from
+  characterization defaults32 rows/32pt. Native/qualified primary observations
+  do not load auxiliary OCR. Retained cell frames accompany unchanged original
+  windows; known primary/native conflicts and low auxiliary scores still refuse.
+  `role_text_sources` explicitly inventories original header owners and the
+  retained anchor page of continuations, alongside existing accepted/rejected
+  characterization owners. The same original/native/auxiliary replayers and
+  worker/Web/SAR consumers remain authoritative; no recursive artifact search,
+  second recognizer, parser, writer or queue is introduced. Binding54/binder65
+  refresh derived source admission only; Activity38/extractor49, visible26, raw
+  OCR/OCSR, manual/history assets, SQL/API, environments and activation are unchanged.
+
+- Current heading-column authority: registered original and continued sources
+  share the existing heading index, catalogue/role/row validators and original
+  replayer. Only complete proved foreign rows can exclude their own diagrams;
+  a borrowed header creates no new local title and unknown/own-ID/partial sources
+  stay ambiguous. `heading_column_replay` is an explicit nonrecursive-anchor source
+  inventory, not another recognition/acceptance chain. `HeadingPageReplay` reuses
+  actual original geometry, native/cell/auxiliary and grid checks for both parent
+  and current pages; the original-only reader block is removed. Binder64 refreshes
+  derived binding fingerprints. Binding53/heading schemas/activity38/extractor49/
+  coverage20/raw original observations/human audit/API/SQL/SAR/model/environment
+  policies remain unchanged. Earlier epoch entries below document release history.
+
+- Physical multi-row header authority: `activity_header_cells` composes at most
+  three complete physical row children per column. `activity_header_columns` uses
+  the existing ordinary observer, `activity_header_pair` retains its sole optional
+  unresolved-only adapter, and the explicit leaf inventory feeds ordinary,
+  auxiliary and paired absence source replayers. `cell_empty_proof` additionally
+  owns complete unruled-white rectangles through the existing original-pixel
+  codec/replayer: zero nonwhite ink, no ruling mask/noise bound, and unchanged
+  closed-grid count-metadata policy. Every unknown/weak child stays
+  retained; original absence is not inferred from missing OCR text. No second
+  parser/model/writer or source trimming is added. Activity38/extractor49 refresh
+  derived evidence only; coverage20/bindings/raw original observations/manual
+  audit/API/SQL/SAR/model dependencies/activation are unchanged. Existing unsupported
+  bounds remain unqualified. Earlier version entries below are release history.
+
+- Closed-caption physical authority: `caption_cell_scope` validates physical-only
+  tail3 owners independently of identifier quality; `caption_cell_pixels` shares
+  the existing renderer and literal rule-band/joint implementation. Both original
+  400/600dpi views conserve all nonwhite pixels, with at most4pt support and
+  2,000,000pixels per view. Only exact original boundary witnesses resolve; unknown
+  text never gains a label/annotation/structure claim. The existing caption and
+  auxiliary inventories/replayers remain sole source authorities. Binding53/
+  binder63 refresh derived proof; known tail2 identity history stays readable but
+  cannot be current carry evidence. Raw visible-label26, activity, original/raw
+  assets, human audit, environment/dependencies/API/SQL/SAR remain unchanged.
+  Earlier entries below document release history, not current competing epochs.
+
+- Task-read presentation is owned by the existing resource/job hooks. A successful
+  same-key background read may retain its display confirmation while pending,
+  but the existing stricter `verified` mutation gate is unchanged. Explicit
+  refresh/source changes/errors revoke display confirmation. No extra queue,
+  session policy, task API, scientific epoch, model/dependency or stored record
+  changes. Delayed GET/error recovery uses read-only synthetic browser fixtures.
+
 - Declared-line recovery uses the existing unresolved-only paired source helper
   in `activity_text_capture`; no second OCR/parser/writer is introduced. Native
   witnesses and known primary conflicts remain protected, original replay is

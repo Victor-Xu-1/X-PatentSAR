@@ -23,14 +23,15 @@ class DecimerProcessTests(unittest.TestCase):
         self.addCleanup(headroom.stop)
 
     def engine(self, root: Path, behavior: str = "success"):
-        words = ["<start>", "C", "C", "O"] + (
-            [] if behavior == "incomplete" else ["<end>"]
+        incomplete = behavior in {"incomplete", "incomplete_mismatch"}
+        words = ["<start>", "C", "C", "N" if "mismatch" in behavior else "O"] + (
+            [] if incomplete else ["<end>"]
         )
         generation = {
             "version": 1,
             "tokens": words,
-            "status": "incomplete" if behavior == "incomplete" else "complete",
-            "reason": "missing_end" if behavior == "incomplete" else None,
+            "status": "incomplete" if incomplete else "complete",
+            "reason": "missing_end" if incomplete else None,
         }
         if behavior == "missing_generation":
             generation = None
@@ -110,6 +111,28 @@ class DecimerProcessTests(unittest.TestCase):
                 self.assertEqual(result["status"], "failed")
                 self.assertEqual(result["raw_smiles"], "CCO")
                 self.assertIsNone(engine.worker_process)
+
+    def test_complete_or_incomplete_mismatched_raw_stops_the_protocol_child(self):
+        from patent_sar_extractor.core.ocsr.generation import truncated_observation
+
+        for behavior in ("incomplete_mismatch", "complete_mismatch"):
+            with self.subTest(behavior=behavior), tempfile.TemporaryDirectory() as temp:
+                engine, image = self.engine(Path(temp), behavior)
+                self.addCleanup(engine.close)
+                result = engine.predict(str(image), timeout=2)
+                self.assertEqual(result["status"], "failed")
+                self.assertEqual(result["raw_smiles"], "CCO")
+                self.assertFalse(truncated_observation(result))
+                self.assertIsNone(engine.worker_process)
+                self.assertFalse(engine.session_exhausted)
+                repeated = engine.predict(str(image), timeout=2)
+                self.assertEqual(repeated["raw_smiles"], "CCO")
+                self.assertIsNone(engine.worker_process)
+                self.assertTrue(engine.session_exhausted)
+                exhausted = engine.predict(str(image), timeout=2)
+                self.assertEqual(exhausted["status"], "failed")
+                self.assertIsNone(exhausted["raw_smiles"])
+                self.assertIn("restart budget exhausted", exhausted["error"])
 
     def test_oversized_and_mismatched_packets_fail_closed(self):
         for behavior in ("oversized", "wrong_id"):

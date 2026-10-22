@@ -9,8 +9,7 @@ import uuid
 from pathlib import Path
 
 from patent_sar_extractor.core.ocsr.generation import (
-    validate_generated_raw,
-    validate_generation,
+    validate_generation_observation,
 )
 from patent_sar_extractor.core.ocsr.resource_budget import resident_budget_mb
 from patent_sar_extractor.core.ocsr.worker_process import (
@@ -159,11 +158,9 @@ class OwnedOCSREngine(BaseOCSREngine):
                 # model, even if its later completion/metadata check refuses.
                 raw_observation = smiles
                 validate_observation_metadata(output)
-                complete = self.name != "decimer" or validate_generation(
-                    output.get("generation")
+                complete = self.name != "decimer" or validate_generation_observation(
+                    output.get("generation"), smiles
                 )
-                if self.name == "decimer" and complete:
-                    validate_generated_raw(output["generation"], smiles)
                 self._requests += 1
                 self._starts = (
                     0  # A genuine protocol success restores the bounded restart budget.

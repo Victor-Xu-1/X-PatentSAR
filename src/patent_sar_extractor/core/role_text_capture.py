@@ -1,11 +1,20 @@
 """Unresolved complete role cells use the shared paired original-text recovery."""
 
 from .activity_grid_roles import MAX_ROLE_ROW_HEIGHT, MAX_ROLE_TEXT_ROWS
+from .cell_text_scope import text_scope
 from .role_grid_windows import role_grid_shape
 from .text_ocr.source_capture import refine_source_text
 
 
-def refine_role_text(page, cells):
+def refine_role_text(
+    page,
+    cells,
+    *,
+    maximum_rows=MAX_ROLE_TEXT_ROWS,
+    maximum_row_height=MAX_ROLE_ROW_HEIGHT,
+    allow_chunks=True,
+):
+    text_scope(maximum_rows, maximum_row_height)
     shape = role_grid_shape(cells["xs"], cells["ys"])
     views = cells["observations"]
     if shape is None:
@@ -30,9 +39,9 @@ def refine_role_text(page, cells):
             page,
             bounds,
             readings,
-            maximum_rows=MAX_ROLE_TEXT_ROWS,
-            allow_chunks=True,
-            maximum_row_height=MAX_ROLE_ROW_HEIGHT,
+            maximum_rows=maximum_rows,
+            allow_chunks=allow_chunks,
+            maximum_row_height=maximum_row_height,
         )
         for view, reading in zip(views, selected, strict=True):
             view["cells"][index] = reading

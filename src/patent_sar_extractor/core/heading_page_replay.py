@@ -3,6 +3,7 @@
 from .activity_context_geometry import grid_axes
 from .cell_frame_proof import original_cell_frame_matches
 from .heading_column_captions import caption_frame_at
+from .heading_column_replay import column_header_sources
 from .heading_evidence import original_heading_lines
 from .heading_line_windows import heading_line_windows
 from .heading_page_columns import later_page_columns
@@ -10,10 +11,10 @@ from .native_cell_replay import original_native_cell_matches
 from .source_evidence_identity import proof_id
 from .source_geometry import SourceTokens, source_layout
 from .source_observations import source_cell_observation
-from .structure_column_scopes import original_column_roles
 from .structure_table_headers import aligned_column_edges
 from .table_geometry import detect_ruled_table_regions
 from .text_ocr.cell_proof import has_auxiliary_text, replay_auxiliary_cell
+from .unruled_scope import scope_roles
 
 
 def _axis_slice(expected, actual):
@@ -78,36 +79,24 @@ class HeadingPageReplay:
             caption_frame_at(page, saved["bbox"]) for saved in saved_frames
         ] != saved_frames:
             raise ValueError("Later-column title differs from original pixels")
-        if header.get("kind") == "original_ruled_columns":
-            if number not in self.grids:
-                self.grids[number] = [
-                    grid_axes(g) for g in detect_ruled_table_regions(page)
-                ]
-            expected = source["grid_axes"]
-            if not any(
-                _axis_slice(expected["xs"], actual["xs"])
-                and _axis_slice(expected["ys"], actual["ys"])
-                for actual in self.grids[number]
-            ):
-                raise ValueError("Later-column printed grid differs from the original")
-        for packet in [*header["source_observations"], *header["context_sources"]]:
-            self._native_packet(number, packet)
+        if witness["section"]["role"] == "structure_column_anchor":
+            self._grid(number, source["grid_axes"])
+        for owner, kind, observed in column_header_sources(header):
+            if kind == "page":
+                original = self.document[owner - 1]
+                if observed != [original.rect.width, original.rect.height]:
+                    raise ValueError("Later-column header page geometry differs")
+            elif kind == "grid":
+                self._grid(owner, observed)
+            elif kind == "packet":
+                self._native_packet(owner, observed)
+            else:
+                self._reading(owner, observed["bbox"], observed)
         for chunk in source["body_context"]:
             for packet in chunk["sources"]:
                 self._native_packet(number, packet)
-        header_cells = header["role_cells"]
-        for row_index, row in enumerate(header_cells["observations"]):
-            for column, reading in enumerate(row["cells"]):
-                if row["method"] != "native_cells":
-                    reading = {
-                        **reading,
-                        "source_frame": header_cells["rendered_frames"][row_index][
-                            column
-                        ],
-                    }
-                self._reading(number, reading["bbox"], reading)
         if witness["section"]["role"] == "structure_column_anchor":
-            roles = original_column_roles(header)
+            roles = scope_roles(header)
             xs, ys = source["grid_axes"]["xs"], source["grid_axes"]["ys"]
             for cell in witness["cells"]:
                 column = roles["pairs"][cell["pair"]][0]
@@ -119,6 +108,19 @@ class HeadingPageReplay:
             for cell in source["labels"]:
                 for reading in cell["observations"]:
                     self._reading(number, cell["nomination"]["window"], reading)
+
+    def _grid(self, number, expected):
+        if number not in self.grids:
+            self.grids[number] = [
+                grid_axes(g)
+                for g in detect_ruled_table_regions(self.document[number - 1])
+            ]
+        if not any(
+            _axis_slice(expected["xs"], actual["xs"])
+            and _axis_slice(expected["ys"], actual["ys"])
+            for actual in self.grids[number]
+        ):
+            raise ValueError("Later-column printed grid differs from the original")
 
     def check(self, scope, heading):
         for saved in scope["pages"]:

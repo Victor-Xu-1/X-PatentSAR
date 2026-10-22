@@ -35,14 +35,17 @@ class ActivityHeaderContinuationTests(unittest.TestCase):
         )
         return first, second
 
-    def test_repeated_original_headers_share_keys_but_keep_current_raw_header(self):
+    def test_unproved_repeated_header_does_not_borrow_keys_or_context(self):
         first, second = self.schemas()
         axes = [20, 60, 160, 260]
         combined = self.continuation(
             first, second, axes, axes, "WO2026/123456 PCT/US2026/012345"
         )
-        self.assertEqual(combined.groups, first.groups)
-        self.assertEqual(combined.context, first.context)
+        # Layout resemblance and an unresolved embedded Ymin label cannot supply
+        # original boundary/role proof or silently borrow the previous context.
+        self.assertIs(combined, second)
+        self.assertEqual(combined.groups, second.groups)
+        self.assertEqual(combined.context, second.context)
         self.assertEqual(combined.raw_headers, second.raw_headers)
 
     def test_new_caption_units_or_geometry_do_not_borrow_context(self):

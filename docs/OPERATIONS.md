@@ -8,6 +8,9 @@ tokens, false completion flags and a decoded molecule that differs from the
 retained tokens cannot be accepted. Valid incomplete output remains visible as
 failed raw evidence; a healthy JSONL child is reused rather than restarted for
 each incomplete molecule. Protocol corruption still uses bounded restart limits.
+This includes literal raw/token disagreement even when the packet says
+`missing_end`; keep its bounded raw reply but stop the child, without granting
+normalized retry or resetting the existing failure budget.
 With normalization retry already enabled, a literal protocol-valid missing-end
 reply can use the same one-image retry as other recognition failures. This
 changes only presentation of the same retained source, keeps both raw outputs
@@ -28,6 +31,107 @@ are checked literally on readback, without repairing chemistry. A complete
 generation can still be chemically wrong or unrelated to the intended product.
 Native-model controls and real frontend extraction remain independent release
 and scientific acceptance gates; controlled tensors are not model accuracy.
+
+Binding54/binder65 and Activity38/extractor49/coverage20 stay current. Earlier
+sections keep release-time epoch labels; `contracts.py` owns combined versions.
+
+## Optional OCR for original structure-column headers
+
+The already-configured on-demand auxiliary text runtime is consulted only for
+unresolved physical structure-header cells. It does not replace DECIMER or the
+default text recognizer, enable a provider/LLM, install anything, or start a
+resident service. Disabled/unavailable recovery leaves the original source
+unresolved. Header reads keep8 rows/12pt and the existing paired confidence,
+native/known-conflict and complete-original-frame checks; no larger
+characterization window is borrowed to force a match.
+
+Binding54/binder65 refresh affected derived artifacts/checkpoints through the
+existing source identities. Historical bindings are not retagged, and original
+PDF/raw OCR/OCSR/manual corrections remain preserved. Original header cells,
+including carried anchors, enter the existing source replay on their actual
+original page. Activity38/extractor49/coverage20 and other policies are unchanged.
+Acceptance includes generated scans with weak/normal/native reads,
+disabled/low-score/conflicting recovery, cross-page ownership, frame tamper and
+the actual worker-plan reader without OCR on replay. Candidate tests do not
+establish accuracy on an unrerun private patent. Do not deploy over a live
+producer; merge/current-main/rollback/18765 acceptance and subsequent frontend-only
+private retry remain separate delivery gates. Prior sections retain release-time
+epoch labels; `contracts.py` owns current versions.
+
+## A continued column crashes or pollutes a standalone heading window
+
+A registered continuation has an original ancestor, not a new `nomination` field.
+Do not fabricate that field or reuse its parent's title on the current page.
+The heading index keeps the source and its current rows; complete proved foreign
+identifier/diagram pairs can exclude those drawings from another heading without
+creating a local title boundary. Unknown rows remain candidates. The shared
+readback reopens the actual original anchor and current page, rechecks grids and
+cells and does not run OCR. A matching saved hash alone cannot grant ownership.
+
+The generated Issue209 oracle now explicitly separates two conditions. The
+original nine-image input includes two unproved right-hand drawings and stays a
+refusal with all nine observations and the missing-heading finding retained.
+A paired positive contains only independently proved neighbouring continuations:
+the original standalone-identifier assertion is retained and source coverage must
+be clean. Different identifiers and left/right placements use the same authority.
+No input from a private patent is changed to satisfy these controls.
+
+Binder64 invalidates affected derived reuse; source/raw/manual artifacts and all
+other schemas/models/activation remain unchanged. Complete acceptance still needs
+current-main installed delivery and ordinary frontend real-patent extraction/SAR.
+The absence of enough original evidence must never be repaired with nearest,
+first/rightmost drawing choices, invented captions or weaker QA.
+
+## Multi-row ruled headers lose otherwise readable column text
+
+A union crop of several header grid rows includes internal table rules. Do not
+erase those rules/ink, infer the unit, lower a score or edit saved readings to make
+it pass. Two/three-row headers now retain independent ordinary physical-cell reads
+and a bounded literal column composition. Every child, including weak/unknown
+text, survives. A blank child needs paired original absence: existing closed-grid
+rules, or complete unruled rectangles with zero nonwhite pixels in both views.
+The latter has no noise/masking tolerance and does not certify missing metadata.
+One weak unit keeps that column unverified unless the ordinary paired recovery
+qualifies it under the unchanged policy. A valid known conflict remains a veto.
+
+Original primary/auxiliary/empty-cell replay follows those same physical leaves;
+matching a saved composition or hash does not replace original-source checking.
+Activity38/extractor49 refresh only affected derived work. Coverage20, bindings,
+original/raw observations, manual audit, environment/model activation and numerical
+SAR rules do not change. Larger/unproved/merged layouts are not silently marked
+supported. Keep failed attempts historical; actual extraction and resumption use
+the normal frontend, never a helper that fills or recalculates a private dataset.
+Do not deploy or duplicate a live task merely because focused tests/CI pass.
+
+## Unknown text in a closed caption cell breaks later known identifiers
+
+Do not repair this by accepting the unknown caption, inferring an ID sequence or
+removing after-table context checks. A physical-only tail3 owner can distinguish
+bounded layout padding from real glyph spill using both original400/600dpi views.
+Its support is limited to4pt and2,000,000pixels per view, with all nonwhite outside
+pixels accounted for by the existing literal closed-rule authority. Unread text
+remains unread. Actual outside ink, unqualified body text, new roles/tables and
+budget refusal still block carry; changing saved scope/frame data cannot replace
+original pixel replay. No OCR model is loaded for this physical check/readback.
+
+Binding53/binder63 invalidate derived ownership only. Raw visible-label26 and all
+original PDF/OCR/OCSR/manual revisions remain unchanged. Known tail2 history can
+be read, never relabelled as current proof or supplied invented physical owners.
+Use the normal frontend only for real extraction/resume. Never deploy, interrupt
+or duplicate a running task merely because this code or its focused checks pass.
+Preserve failed attempts; complete scientific acceptance still requires a real
+post-deployment frontend run and all existing source/chemical gates.
+
+## Progress flashes unknown during an otherwise healthy task poll
+
+Normal same-source background GET polling retains the last confirmed progress
+presentation. Task controls remain disabled until required reads finish. Actual
+read errors, explicit refresh, a new source/task and unknown history retain their
+unknown/error presentation; no write is replayed during session/read recovery.
+The view is a server observation, not proof of scientific progress or acceptance.
+Delayed-read and denied-session regressions use isolated synthetic browser state
+only. Deploy this presentation correction only after real producers are idle;
+never restart a real extraction merely to update its presentation.
 
 ## A weak declared-text line does not use the enabled auxiliary OCR
 

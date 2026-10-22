@@ -38,6 +38,27 @@ def _role_scopes(payload):
             raise TypeError("Malformed original role-text section")
         if section.get("role") == "characterization_region":
             yield from _region_scopes(section["source_region"])
+        elif section.get("role") in {
+            "structure_column_anchor",
+            "unruled_structure_region",
+        }:
+            source = section.get("source")
+            if not isinstance(source, dict) or not isinstance(
+                source.get("header_scope"), dict
+            ):
+                raise ValueError("Missing original structure-column header owner")
+            header = source["header_scope"]
+            # Continuations retain the actual original header's page, never the
+            # current body page. No arbitrary recursive artifact search.
+            header = header.get("anchor_scope", header)
+            if header is None:
+                continue  # An explicitly unproved continuation has no text claim.
+            if not isinstance(header, dict) or header.get("kind") not in (
+                None,
+                "original_ruled_columns",
+            ):
+                raise ValueError("Unknown original structure-column header source")
+            yield header.get("page_no"), header.get("role_cells")
     coverage = payload.get("coverage")
     if coverage is not None and not isinstance(coverage, dict):
         raise TypeError("Malformed original role-text coverage owner")
