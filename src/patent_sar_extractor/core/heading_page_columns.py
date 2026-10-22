@@ -150,16 +150,25 @@ def later_page_columns(witnesses, page, heading):
             roles is None
             or roles["role"] != "compound"
             or not bounds[1] < bounds[3]
-            or scope.get("kind") not in (None, "original_ruled_columns")
+            or scope.get("kind")
+            not in (
+                None,
+                "original_ruled_columns",
+                "continued_ruled_columns",
+                "continued_unruled_columns",
+            )
         ):
-            continue  # A borrowed header is not a new local declaration boundary.
+            continue
         captions = column_caption_boxes(scope, page)
         if not valid_caption_frames(
             witness["caption_frames"], captions, page["page_size"]
         ):
             raise ValueError("Missing or changed local catalogue title pixel frames")
-        if not captions:
+        if not captions and scope.get("kind") in (None, "original_ruled_columns"):
             continue
+        # A proved continuation can own its complete current rows without a
+        # fresh local title. Its ancestor is not projected as a page boundary;
+        # the same row/identity/diagram proof below still decides exclusion.
         if section["role"] == "structure_column_anchor":
             pairs = _ruled_pairs(section, page, roles, bounds, readings)
         else:

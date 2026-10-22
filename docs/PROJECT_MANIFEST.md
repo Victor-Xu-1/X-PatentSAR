@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Current heading-column authority: registered original and continued sources
+  share the existing heading index, catalogue/role/row validators and original
+  replayer. Only complete proved foreign rows can exclude their own diagrams;
+  a borrowed header creates no new local title and unknown/own-ID/partial sources
+  stay ambiguous. `heading_column_replay` is an explicit nonrecursive-anchor source
+  inventory, not another recognition/acceptance chain. `HeadingPageReplay` reuses
+  actual original geometry, native/cell/auxiliary and grid checks for both parent
+  and current pages; the original-only reader block is removed. Binder64 refreshes
+  derived binding fingerprints. Binding53/heading schemas/activity38/extractor49/
+  coverage20/raw original observations/human audit/API/SQL/SAR/model/environment
+  policies remain unchanged. Earlier epoch entries below document release history.
+
 - Physical multi-row header authority: `activity_header_cells` composes at most
   three complete physical row children per column. `activity_header_columns` uses
   the existing ordinary observer, `activity_header_pair` retains its sole optional
