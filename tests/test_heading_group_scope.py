@@ -70,26 +70,32 @@ class HeadingGroupScopeTests(unittest.TestCase):
             payload["source_reference_scope"]["original_pdf_sha256"],
         )
 
-    def test_actual_source_context_covers_both_ids_without_using_title_order(self):
-        for raster in (False, True):
-            with self.subTest(raster=raster):
-                payload, section = self.original(raster=raster)
-                self.assertEqual(self.members(payload, section), {"17", "18"})
-                self.assertEqual(payload["source_issues"], [])
-                self.assertEqual(coverage_errors(payload), [])
-                self.assertEqual(
-                    {
-                        row["cpd"]: row["structure_id"]
-                        for row in payload["compound_catalog"]["entries"]
-                    },
-                    {"Compound 18": "S1", "Compound 17": "S2"},
-                )
+    def assert_complete_source_context(self, *, raster):
+        payload, section = self.original(raster=raster)
+        self.assertEqual(self.members(payload, section), {"17", "18"})
+        self.assertEqual(payload["source_issues"], [])
+        self.assertEqual(coverage_errors(payload), [])
+        self.assertEqual(
+            {
+                row["cpd"]: row["structure_id"]
+                for row in payload["compound_catalog"]["entries"]
+            },
+            {"Compound 18": "S1", "Compound 17": "S2"},
+        )
+
+    def test_native_source_context_covers_both_ids_without_using_title_order(self):
+        self.assert_complete_source_context(raster=False)
+
+    def test_raster_source_context_covers_both_ids_without_using_title_order(self):
+        self.assert_complete_source_context(raster=True)
 
     def test_procedure_assay_and_independent_same_row_column_do_not_lend_members(self):
         for inserted in (
             ((45, 77), "Step 1: Reaction"),
             ((45, 77), "Example 7: Biological evaluation"),
             ((45, 77), "To a solution of the reagent"),
+            ((45, 77), "Alternative product"),
+            ((45, 77), "[0042] Independent reaction"),
             ((400, 55), "Compound 99"),
         ):
             with self.subTest(inserted=inserted):

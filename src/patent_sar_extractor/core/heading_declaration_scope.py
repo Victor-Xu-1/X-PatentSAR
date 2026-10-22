@@ -19,6 +19,7 @@ from .source_evidence_identity import proof_id
 from .source_section_roles import (
     heading_list_hint,
     procedure_heading_boundary,
+    scheme_heading_boundary,
     section_heading,
 )
 
@@ -63,7 +64,14 @@ def _stop(page, heading, columns=()):
             ):
                 boundaries.append((start[3], "parallel_heading"))
             continue
-        boundaries.append((box[1], "source_boundary"))
+        boundaries.append(
+            (
+                box[1],
+                "scheme_context_boundary"
+                if scheme_heading_boundary(text)
+                else "source_boundary",
+            )
+        )
     return min(boundaries) if boundaries else None
 
 
@@ -249,4 +257,5 @@ def declaration_candidates(scope, heading):
         "parallel_heading",
         "foreign_column_boundary",
         "unproved_panel",
+        "scheme_context_boundary",
     }

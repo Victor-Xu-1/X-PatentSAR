@@ -12,7 +12,7 @@ from patent_sar_extractor.core.heading_original_replay import (
 )
 from patent_sar_extractor.core.ocsr.candidate_coverage import candidate_coverage_errors
 from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
-from patent_sar_extractor.core.reaction_graph import terminal_reaction_source
+from patent_sar_extractor.core.reaction_graph import reaction_route
 from patent_sar_extractor.core.reaction_heads import MAX_FILLED_HEADS, validate_heads
 from patent_sar_extractor.core.reaction_vectors import observe_vectors, validate_vectors
 from patent_sar_extractor.core.source_evidence_identity import proof_id
@@ -264,4 +264,7 @@ class FilledReactionHeadingTests(NativeReactionFixture, unittest.TestCase):
                     }
                     for s in self.structures
                 ]
-                self.assertEqual(terminal_reaction_source(candidates, [observed]), "S2")
+                self.assertEqual(
+                    reaction_route(candidates, [observed])["terminal_structure_id"],
+                    "S2",
+                )

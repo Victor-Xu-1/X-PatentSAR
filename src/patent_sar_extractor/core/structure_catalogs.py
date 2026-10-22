@@ -17,9 +17,9 @@ class Catalog:
 
 
 def _selected_title(text):
-    from .caption_role_semantics import _role_words
+    from .source_role_terms import role_words
 
-    text = _role_words(text)
+    text = role_words(text)
     if not re.search(
         r"\bselected\b|\bsubset\b|选定|選定|选取|選取", text, re.IGNORECASE
     ):

@@ -13,10 +13,13 @@ from .source_role_terms import (
     INTERMEDIATE_SINGULAR,
     INTERMEDIATE_TERM,
     is_intermediate_kind,
+    role_words,
 )
 
+_PARAGRAPH = r"(?:\[\s*\d{1,8}\s*\]|［\s*\d{1,8}\s*］)"
+
 _HEADING = re.compile(
-    r"^(?:\[\s*\d{1,8}\s*\]\s*)?"
+    rf"^(?:{_PARAGRAPH}\s*)?"
     r"(?P<preparation>(?:(?:Synthesis|Preparation)\s+(?:of\s+)?)?)"
     r"(?:Exemplary\s+)?"
     rf"(?P<kind>Compound|Cmpd|Cpd|Example|{INTERMEDIATE_SINGULAR}|实施例|化合物)\s*[-:.：]?\s*"
@@ -25,7 +28,7 @@ _HEADING = re.compile(
 )
 _SEPARATOR = r"\s*(?:,\s*(?:and\s+)?|and\s+|&\s*|和|及|、)\s*"
 _GROUP = re.compile(
-    r"^(?:\[\s*\d{1,8}\s*\]\s*)?"
+    rf"^(?:{_PARAGRAPH}\s*)?"
     r"(?P<preparation>(?:(?:Synthesis|Preparation)\s+(?:of\s+)?)?)"
     r"(?:Exemplary\s+)?"
     rf"(?P<kind>Compounds|Cmpds|Cpds|Examples|{INTERMEDIATE_PLURAL}|实施例|化合物)\s*[-:.：]?\s*"
@@ -34,7 +37,7 @@ _GROUP = re.compile(
     re.IGNORECASE,
 )
 _LIST_START = re.compile(
-    r"^(?:\[\s*\d{1,8}\s*\]\s*)?"
+    rf"^(?:{_PARAGRAPH}\s*)?"
     r"(?:(?:Synthesis|Preparation)\s+(?:of\s+)?)?(?:Exemplary\s+)?"
     rf"(?:Compounds?|Cmpds?|Cpds?|Examples?|{INTERMEDIATE_TERM}|实施例|化合物)\s*[-:.：]?\s*",
     re.IGNORECASE,
@@ -56,16 +59,34 @@ _INTERMEDIATE_TARGET = re.compile(
     re.IGNORECASE,
 )
 _PROCEDURE = re.compile(
-    r"^(?:\[\s*\d{1,8}\s*\]|(?:Step|Stage|步骤|中间体|Intermediate)\b|"
+    rf"^(?:{_PARAGRAPH}|(?:Step|Stage|步骤|中间体|Intermediate)\b|"
     r"[A-Z][.)]\s|To\s+(?:a|an|the)\s|A\s+(?:solution|mixture)\b|"
     r"The\s+(?:reaction|mixture)\b)",
     re.IGNORECASE,
 )
+_SCHEME_BOUNDARY = re.compile(
+    rf"^(?:{_PARAGRAPH}\s*)?"
+    r"(?:(?:Alternative|Independent|Separate|Different|Unrelated|Other)\s+"
+    r"(?:synthetic\s+)?(?:products?|routes?|schemes?|reactions?|preparations?|synthes(?:is|es))\b"
+    r"|(?:Control|Comparative)\s+(?:experiments?|reactions?|compounds?|products?)\b"
+    r"|(?:替代|备选|備選|另一(?:条|條|种|種)?|独立|獨立|单独|單獨)(?:合成)?(?:路线|路線|产物|產物|反应|反應|合成))",
+    re.IGNORECASE,
+)
+
+
+def scheme_heading_boundary(text):
+    """An explicitly separate/alternative scheme cannot borrow a previous ID."""
+    raw = str(text or "").strip()
+    return len(raw) <= 4096 and bool(
+        _SCHEME_BOUNDARY.match(role_words(identifier_width(raw)))
+    )
 
 
 def procedure_heading_boundary(text):
     """One literal procedure stop shared by single/plural original declarations."""
-    return bool(_PROCEDURE.match(str(text).strip()))
+    return bool(
+        _PROCEDURE.match(identifier_width(str(text).strip()))
+    ) or scheme_heading_boundary(text)
 
 
 def section_heading(text: object) -> dict[str, Any] | None:

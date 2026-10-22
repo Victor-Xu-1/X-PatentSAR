@@ -55,7 +55,54 @@ all still require the same complete source/visibility/readback guards. Native ra
 text keeps its original extraction order and spelling. The sole `native_page_lines`
 authority feeds observation and original replay; no second text parser or model.
 
-## Original raster reaction directions
+## Complete original reaction routes
+
+`reaction_steps` retains every local arrow, drawing and unresolved input/output
+port before the sole `reaction_graph.reaction_route` validates the whole
+declaration. A missing endpoint is not a node, an edge or a product. Ordinary
+native/pixel source2/3 readers use this same graph without additional role/layout
+permissions; the obsolete terminal-only wrapper is removed.
+
+`reaction_reactants` may group inputs only with a literal original addition
+witness before the shaft. Native vector crosses must have complete perpendicular
+axis-aligned source strokes. A literal native `+` uses `reaction_operators` and
+the existing complete-cell/paint/visibility authority. All original strokes,
+glyph cells and corridor blockers remain; raster/hidden/overpainted/unknown
+marks and an unlabelled drawing beside or above an arrow prove no role. Source4
+retains the complete reactant-group and operator inventories, not model scores.
+
+`reaction_layout_components` retains all local components, and `reaction_layout`
+may resolve only a unique open horizontal row port to the adjacent complete
+source component under the same proved declaration. Source5 explicitly separates
+`layout_joins` from the observed local ports: those ports still have a missing
+endpoint. Consecutive-page joins cannot skip empty/original pages, independent
+regions or arbitrary unowned gap ink. Complete gap work is bounded to2M original
+primitive/region checks, on top of existing arrow/drawing/proof limits. Closed
+independent routes, overlapping rows, mutually missing ends, cycles, ambiguity
+and exceeded bounds refuse rather than choosing a position or omitting a node.
+
+Explicit alternative/independent scheme titles stop the declaration as
+incomplete, including literal bounded paragraph locators and role-word
+boundaries. One shared grammar/projection serves headings and catalogue roles;
+raw labels and scientific source text stay unchanged. Malformed/over-bound
+paragraph prefixes are not repaired into metadata. Ordinary procedure boundaries
+and independently proved columns/panels retain their existing authority.
+
+The existing original heading reader re-observes the complete packet, including
+operators and layout joins, before worker/checkpoint/final QA/Web admission.
+Rehashing, deleting or downgrading a saved packet cannot supply original truth.
+Binding58/binder69 invalidate derived source admission only; raw originals and
+observations, manual audit, historical attempts, activity/SMILES/coverage epochs,
+models, dependencies, optional activation, API/SQL and SAR rules are unchanged.
+No second parser, queue, recognizer, store or chemical writer is introduced.
+
+Generated original-PDF, pixel, bounded-work and controlled-worker regressions
+are engineering evidence, not proof of chemical transformations, all-format
+detection recall or real extraction/SAR acceptance. The exhausted60OCSR and
+40RxnScribe native evaluations do not authorize new inference or default model
+integration; unproved above/below-arrow molecular roles remain unresolved.
+
+### Native and raster direction observations
 
 `reaction_page_source` selects native or retained-pixel observation from actual
 original image geometry, never from recognizer votes or product ranking. Both

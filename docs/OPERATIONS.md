@@ -62,7 +62,46 @@ Old declared-text source1 and extractor49 remain historical proof. Extractor50
 requires current source packets; original PDFs, native/raw OCR caches, historical
 observations and audited revisions are never rewritten to satisfy this gate.
 
-## Scanned and mixed-layer reaction roles
+## Complete reaction input and wrapped-source review
+
+The existing binder can retain source-proved co-reactants and uniquely continued
+rows/pages without recognizing every crop as a molecule. Inventory still covers
+all drawings; only proved numbered terminal products enter OCSR and product/SAR
+tables. An anonymous/intermediate drawing is never accepted just to complete a
+route or remove an error. No new model or user mapping step is required.
+
+Inspect source4 `reactant_groups`/`input_operators` for literal native addition
+witnesses. Inspect source5 `layout_joins` for a separate row/page interpretation
+and its original still-missing local port. Vector and qualified visible native
+glyph additions retain source geometry; raster/hidden/covered/unknown symbols
+stay unproved. A drawing above/below an arrow is not automatically a reagent or
+product. Separate schemes cannot borrow the previous heading ID, including when
+their title follows a printed paragraph locator.
+
+All candidates and original page/gap ink participate. Missing/ambiguous ports,
+overlapping/independent rows, skipped or empty pages, mutually missing ends,
+cycles and the2M source-gap-work bound refuse explicitly. Conditions inside a
+complete row remain original observations, not automatically gap blockers.
+The existing original reader replays operators, geometry, declarations and joins;
+valid JSON, a terminal flag or a self-rehashed graph is insufficient.
+
+Binding58/binder69 require ordinary frontend-derived regeneration. Preserve old
+failed attempts and current raw PDF/OCR/OCSR assets/manual revisions; do not
+retag historical proof or modify science to make it current. Activity39/
+extractor51/coverage20, SMILES6, optional-model policy, API/SQL, environment and
+SAR potency/strict graph rules stay unchanged. Existing source2/3 compatibility
+uses the same graph with no new role/layout permission. Older epoch notes below
+are release history, not competing current admission authorities.
+
+Verification uses differing generated originals, whole-source negative/budget/
+tampering controls, the actual parser and controlled worker/checkpoint/Web/table
+consumers. It does not process private patents independently or run another
+native model evaluation. The60OCSR/40RxnScribe allowances remain exhausted;
+new inference needs separate permission. Source-role coverage, chemical truth,
+low-confidence real headings/activities and frontend extraction-to-SAR scientific
+acceptance remain separate open gates. No universal/perfect extraction claim.
+
+## Scanned and mixed-layer reaction directions
 
 Readable scanned open/filled arrows can now supply original direction under a
 proved printed heading, including independently enclosed panels. Mixed pages
