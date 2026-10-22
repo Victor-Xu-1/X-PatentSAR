@@ -57,6 +57,7 @@ describe('English workbench view and live language continuity', () => {
       />,
     );
     expect(await screen.findByText(raw)).toBeVisible();
+    expect(screen.queryByRole('button', { name: 'Back to results' })).not.toBeInTheDocument();
     expect(screen.getByText('Native PDF text')).toBeVisible();
     switchTo('zh-CN');
     expect(screen.getByText(raw)).toBeVisible();
@@ -71,7 +72,7 @@ describe('English workbench view and live language continuity', () => {
       <WorkspaceLayout
         layout={defaultLayout}
         onChange={change}
-        source={<input aria-label="test-source" defaultValue="用户输入" />}
+        source={() => <input aria-label="test-source" defaultValue="用户输入" />}
         results={<div data-testid="test-results">原文编号</div>}
       />,
     );
