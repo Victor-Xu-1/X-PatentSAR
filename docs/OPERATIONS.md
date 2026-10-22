@@ -1,5 +1,38 @@
 # Operations and troubleshooting
 
+## Scanned and mixed-layer reaction roles
+
+Readable scanned open/filled arrows can now supply original direction under a
+proved printed heading, including independently enclosed panels. Mixed pages
+use the complete visible original, not hidden native paths behind an opaque
+image. Unknown raster ink never triggers a fallback to hidden vector direction.
+No model download, activation, extra user selection or OCR rerun is required
+for this graphic-source observer; ordinary heading OCR retains its own policy.
+
+Inspect reaction version3/status `observed_pixel_reaction`, its source mask/RGB
+identity and complete400/600dpi detail inventory. Version2 remains the native
+paint observation. Retained image pixel axes and derived positive uncertainty
+must survive. A saved terminal flag, shortened window, invented/changed enclosing
+frame, missing detail or rehashed evidence cannot authorize acceptance. Literal
+panel edges may be distinguished from other ink only through their original
+closed-frame authority. An unknown stroke joining a border stays unresolved.
+
+Long clear gaps are checked against the complete declaration corridor rather
+than a shaft-length heuristic. Low-resolution/short-shaft uncertainty, rival
+drawings, crossing ink, broken/reversible arrows, orphan/cyclic routes and budget
+limits still refuse; do not weaken these checks to increase accepted counts.
+The8M-pixel/20k-component/100k-arrow-pixel/4096-image and existing1MiB evidence
+bounds remain explicit. No source pixels are removed to fit them.
+
+Binding56/binder67 require normal derived regeneration, never retagging historical
+records. All private extraction/SAR tasks still start through the frontend.
+Original assets, failed evidence and manual revisions remain untouched. Focused
+controls cover differing generated originals, native/pixel/mixed sources,
+physical panels, invalid geometry/tampering/budget, normal binder, worker,
+checkpoint, installed artifact/cache/Web and affected browser consumers. Worker
+model adapters are controlled simulations, not native OCSR accuracy evaluation.
+The separate60-image native OCSR allowance is exhausted and is not expanded.
+
 ## Separate original content panels
 
 Two same-page compound preparation panels with independently closed original
@@ -24,7 +57,8 @@ unverified, preserving its original PDF and complete page candidate inventory.
 No retry or pixel trimming is used to obtain acceptance, and other qualified
 panels continue. Missing/refused pixels cannot be reflagged as accepted evidence.
 
-Binding55/binder66 require normal regeneration of affected derived work. Do not
+The panel release used Binding55/binder66; current Binding56/binder67 require
+normal regeneration of affected derived work. Do not
 edit old artifacts, relabel historical evidence, relax QA or invoke private PDF
 processing outside the frontend. Raw/model/cache/manual history and activity/
 SAR numerical policies stay unchanged. Verification covers generated native/

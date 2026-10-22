@@ -1,5 +1,41 @@
 # X-PatentSAR architecture
 
+## Original raster reaction directions
+
+`reaction_page_source` selects native or retained-pixel observation from actual
+original image geometry, never from recognizer votes or product ranking. Both
+adapters feed the same complete directed graph and original-source replay.
+Native painted primitives remain version2. Pixel observations retain complete
+200dpi nonwhite masks, original RGB/window identities and400/600dpi whole-arrow
+support windows. Their version3 binary primitives contain geometry only: no
+invented RGB, opacity or stroke fields. Bare binary geometry is not authority.
+
+`raster_reaction_pixels` conserves every connected component: proved direction,
+independently owned drawing, literal enclosing rule or blocking/unknown ink.
+`reaction_pixel_frame` reuses only the caller's already-proved original panel
+edges and existing rule/joint policy, never its interior or an arbitrary edge
+band. Unknown marks attached to rules, clipped components, disconnected/cyclic
+routes, multiple terminals and missing/budget/source contradictions refuse.
+Protected drawing crossings cannot disappear through crop suppression.
+
+`raster_reaction_shapes` accounts for the complete shaft/head pixels and requires
+continuous original support; `raster_reaction_heads` proves open or solid heads.
+The actual original image pixel axes bound directional information. Source and
+device pixel supports compose for paint coverage, not for invented resolution.
+Derived uncertainty propagates through `reaction_connections` as a widening
+analytic corridor: chosen-drawing interior, rivals, source limits and blocking
+ink must all agree. The complete declaration ray replaces the old one-shaft-
+length connection cutoff for both adapters. It does not choose the nearest ID.
+
+Source/detail observation stays bounded to8M pixels,20k components,100k pixels
+per proposed arrow and4096 image instances, with the existing1MiB proof limit.
+Full source replay re-observes the same original window/frame without OCR/model
+agreement shortcuts. No second graph, queue, writer, recognition model or
+scientific acceptance authority is added. Binding56/binder67 refresh affected
+derived admission; raw PDFs/OCR/OCSR, human audits, activity/SMILES/model/rescue/
+LLM/environment/API/SQL/SAR and potency policy remain unchanged. Generated
+source/worker/browser checks do not prove all-format recall or chemical truth.
+
 ## Physical enclosure owns its declaration window
 
 `heading_panel_scope` shares the existing grid observer and call-local page memo;
@@ -33,7 +69,8 @@ extra path item, fill, transparency or unsupported/raster ink. The same original
 vector observation/terminal/replay authority remains; scanned reaction roles
 are not inferred from a panel boundary.
 
-Binding55/binder66 refresh derived source admission and its normal cache identity.
+The original panel release used Binding55/binder66; current raster admission
+uses Binding56/binder67 and the same normal cache identity.
 Original PDFs/OCR/OCSR assets, Activity38/extractor49/coverage20, visible26,
 SMILES5, manual audit, model/rescue/LLM/environment/API/SQL/SAR and potency policy
 are unchanged. Old records remain history, never retagged as new acceptance.

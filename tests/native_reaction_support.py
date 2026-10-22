@@ -116,7 +116,7 @@ class NativeReactionFixture:
         self.molecule("S1", 70, 100)
         self.molecule("S2", 280, 100)
 
-    def saved_source(self, *, filled=False):
+    def saved_source(self, *, filled=False, source_transform=None):
         from recognition_source_support import complete_observation_artifact
 
         from patent_sar_extractor import contracts
@@ -126,6 +126,8 @@ class NativeReactionFixture:
 
         self.pair()
         self.arrow((180, 145), (250, 145), filled=filled)
+        if source_transform is not None:
+            source_transform()
         pdf = self.root / "original.pdf"
         pdf.write_bytes(self.document.tobytes(no_new_id=True))
         original_sha = hashlib.sha256(pdf.read_bytes()).hexdigest()

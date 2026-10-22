@@ -33,7 +33,7 @@ def assert_worker_checkpoint(test, *, filled=False):
     )
 
 
-def assert_web_original(test, *, filled=False):
+def assert_web_original(test, *, filled=False, mutate_source=None):
     from patent_sar_extractor.core.ocsr.candidate_coverage import (
         candidate_coverage_errors,
     )
@@ -57,7 +57,9 @@ def assert_web_original(test, *, filled=False):
     changed = copy.deepcopy(bindings)
     for source in changed["compound_catalog"]["entries"]:
         packet = source["original_heading_structure_evidence"]["reaction_source"]
-        if filled:
+        if mutate_source is not None:
+            mutate_source(packet)
+        elif filled:
             packet["pages"][0]["filled_heads"][0]["points"][0][0] += 1
         else:
             packet["pages"][0]["segments"][0][0] += 1

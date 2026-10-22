@@ -39,7 +39,7 @@ def validate_vectors(observation):
     size = observation["page_size"]
     if (
         type(observation["version"]) is not int
-        or observation["version"] != 2
+        or observation["version"] not in {2, 3}
         or type(observation["page_no"]) is not int
         or not 1 <= observation["page_no"] <= 20000
         or not isinstance(size, list)
@@ -66,7 +66,9 @@ def validate_vectors(observation):
             raise ValueError("Malformed native reaction segment")
     if any(not valid_rectangle(box, size) for box in observation["blockers"]):
         raise ValueError("Malformed native reaction blocker")
-    validate_heads(observation["filled_heads"], size)
+    validate_heads(
+        observation["filled_heads"], size, geometry_only=observation["version"] == 3
+    )
 
 
 def observe_vectors(page, bounds, *, original_frame=None):
