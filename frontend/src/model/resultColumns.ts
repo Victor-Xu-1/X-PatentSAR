@@ -80,7 +80,8 @@ export function resultColumns(activities: TableActivityColumn[] = []): ResultCol
     ...METRIC_SPECS.map((spec) =>
       column(`property:${spec.key}`, spec.label, 'prediction-column', 88, 64, 180),
     ),
-    column('source', t('原文'), 'source-column', 88, 88, 180),
+    // Reserve the menu and label together, including at the keyboard minimum.
+    column('source', t('原文'), 'source-column', 96, 96, 180),
     column('edit', t('修正'), 'edit-column frozen-column frozen-edit', 64, 40, 120),
   ];
 }

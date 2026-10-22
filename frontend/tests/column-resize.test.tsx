@@ -23,7 +23,7 @@ describe('result column width changes preserve real row behavior', () => {
   it.each([
     ['原文编号', 120, 88, 480],
     ['结构', 136, 88, 480],
-    ['原文', 88, 88, 180],
+    ['原文', 96, 96, 180],
   ])(
     'resizes the %s column independently without changing selection',
     async (label, initial, min, max) => {

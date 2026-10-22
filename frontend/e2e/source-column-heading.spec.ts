@@ -7,10 +7,12 @@ async function expectShortLabel(th: Locator, state: string) {
     range.selectNodeContents(label);
     return {
       label: label.textContent,
+      available: label.parentElement!.clientWidth,
+      font: getComputedStyle(label).font,
       lines: new Set([...range.getClientRects()].map((rect) => Math.round(rect.y))).size,
     };
   });
-  expect.soft(measured.lines, `${state}: ${measured.label} must not split`).toBe(1);
+  expect.soft(measured.lines, `${state}: ${JSON.stringify(measured)} must not split`).toBe(1);
 }
 
 // Existing original records only. No extraction, correction, export or analysis.
