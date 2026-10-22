@@ -9,9 +9,14 @@
     "frontend/e2e/candidate-observations.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
+    "frontend/src/features/pdf/PageCanvas.tsx",
+    "frontend/src/features/pdf/PdfPane.tsx",
     "frontend/src/features/results/ResultsPane.tsx",
     "frontend/src/features/workspace/Workspace.tsx",
+    "frontend/src/i18n/catalogs/pdf.ts",
     "frontend/src/i18n/catalogs/table.ts",
+    "frontend/src/model/compoundLabel.ts",
+    "frontend/tests/record-kind-contract.test.ts",
     "frontend/tests/table-query-workspace.test.tsx",
     "src/patent_sar_extractor/application/stage_smiles.py",
     "src/patent_sar_extractor/contracts.py",
@@ -81,7 +86,8 @@
   "frontend_tests": [
     "frontend/tests/table-query-workspace.test.tsx",
     "frontend/tests/results-workspace.test.tsx",
-    "frontend/tests/record-kind-contract.test.ts"
+    "frontend/tests/record-kind-contract.test.ts",
+    "frontend/tests/identifier-labels.test.tsx"
   ],
   "browser_tests": [
     "frontend/e2e/candidate-observations.spec.ts"

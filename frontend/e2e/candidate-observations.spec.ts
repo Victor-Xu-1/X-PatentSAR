@@ -47,6 +47,8 @@ for (const width of [390, 1672]) {
     await expect(annotation).toHaveCount(1);
     const source = await annotation.getAttribute('data-annotation');
     expect(source).toMatch(/^source-structure:/);
+    await expect(annotation).toHaveText('Unassigned drawing 1');
+    await expect(page.getByText(/source-structure:/)).toHaveCount(0);
     await annotation.click();
     await expect(annotation).toHaveClass(/selected/);
     expect(queries).not.toContain(source);
@@ -62,6 +64,7 @@ for (const width of [390, 1672]) {
       .getByRole('combobox', { name: 'Interface language', exact: true })
       .selectOption('zh-CN');
     await expect(page.getByText('暂无已确认的编号终产物', { exact: true })).toBeVisible();
+    await expect(annotation).toHaveText('未归属结构 1');
     await expect(rows).toHaveCount(0);
     await page.screenshot({ path: test.info().outputPath(`candidate-zh-${width}.png`) });
     await page.getByRole('combobox', { name: '界面语言', exact: true }).selectOption('en');

@@ -2,8 +2,19 @@ import { describe, expect, it } from 'vitest';
 import { decodeCompound, decodeProject, decodeResults } from '../src/api/decoders';
 import { ContractError } from '../src/api/validation';
 import { compound, project, results } from './fixtures';
+import { isUnassignedSourceId, sourceAnnotationLabel } from '../src/model/compoundLabel';
 
 describe('explicit result record kinds', () => {
+  it('compacts only internal source references without changing printed IDs or join keys', () => {
+    const source = `source-structure:${'a'.repeat(32)}`;
+    expect(isUnassignedSourceId(source)).toBe(true);
+    expect(sourceAnnotationLabel(source, 1)).not.toContain(source);
+    for (const printed of ['I-255', 'Example 001A', '化合物 8B', 'source-structure:literal']) {
+      expect(isUnassignedSourceId(printed)).toBe(false);
+      expect(sourceAnnotationLabel(printed, 2)).toBe(printed);
+    }
+    expect(source).toBe(`source-structure:${'a'.repeat(32)}`);
+  });
   it.each(['structure_activity', 'structure_only', 'activity_only'])(
     'retains the backend-provided %s classification',
     (record_kind) => {

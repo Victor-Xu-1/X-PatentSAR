@@ -63,9 +63,7 @@ describe('the existing route is the sole source of global column queries', () =>
       />,
     );
     fireEvent.load(await screen.findByRole('img', { name: '原始专利 PDF 第 4 页' }));
-    await userEvent.click(
-      await screen.findByRole('button', { name: `定位化合物 ${sourceId}，证据未确认` }),
-    );
+    await userEvent.click(await screen.findByRole('button', { name: '查看未归属结构 1' }));
     expect(onQuery).not.toHaveBeenCalled();
     expect(navigate).toHaveBeenLastCalledWith(
       expect.objectContaining({ compoundId: sourceId, tableQuery: routed }),

@@ -1,6 +1,15 @@
 import type { Compound } from '../api/types';
 import { t } from '../i18n';
 
+export function isUnassignedSourceId(id: string): boolean {
+  return /^source-structure:[a-f0-9]{32}(?::\d+)?$/.test(id);
+}
+
+/** Compact application annotation; the original internal key is never rewritten. */
+export function sourceAnnotationLabel(id: string, index: number): string {
+  return isUnassignedSourceId(id) ? t('未归属结构 {index}', { index }) : id;
+}
+
 /** Recognize only application-owned references, never source/manual identifiers. */
 export function generatedCompoundReference(row: Compound): string | null {
   const correction = row.correction;
@@ -14,7 +23,7 @@ export function generatedCompoundReference(row: Compound): string | null {
     row.flags.includes('unassociated_structure') &&
     row.flags.includes('structure_number_unconfirmed') &&
     !literalOverride &&
-    /^source-structure:[a-f0-9]{32}(?::\d+)?$/.test(row.id)
+    isUnassignedSourceId(row.id)
   ) {
     const reference = row.structure_id || row.id.split(':').at(-1)!.slice(-8);
     if (row.display_id === `编号待确认 ${reference}`) return reference;

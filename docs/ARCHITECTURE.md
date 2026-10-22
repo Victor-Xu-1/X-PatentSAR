@@ -1190,6 +1190,8 @@ for review. All raw ledger rows, source images, annotations and audits remain;
 the existing original annotation selection no longer searches for an anonymous
 source in the product table. Empty product views distinguish unproved ownership
 from an empty original document, in English and Chinese.
+Original annotation labels shorten only the application's exact internal source
+namespace; literal patent labels and underlying route/join keys stay unchanged.
 The shared structure detail shows two previews only when a redraw is usable;
 otherwise the original remains the single preview with a compact withholding
 status. Empty not-run property blocks are omitted, but actual values, warnings,
