@@ -8,11 +8,12 @@ from .heading_declaration_scope import (
     MAX_DECLARATION_PAGES,
     MAX_DECLARATION_STRUCTURES,
     _page_valid,
-    _stop,
     declaration_candidates,
+    declaration_window,
 )
 from .heading_line_windows import heading_line_windows
 from .heading_page_columns import capture_column_cells, later_page_columns
+from .heading_panel_scope import observe_panel
 from .source_evidence_identity import proof_id
 
 
@@ -28,6 +29,7 @@ class HeadingDeclarationIndex:
         *,
         source_sections=(),
         source_cells=(),
+        grids_for_page=None,
     ):
         self.doc, self.lines_for_page, self.original_sha = (
             doc,
@@ -37,6 +39,8 @@ class HeadingDeclarationIndex:
         self.structures, self.pages = defaultdict(list), {}
         self.column_sources = defaultdict(list)
         self.later_witnesses = {}
+        self.grids_for_page, self.panel_grids = grids_for_page, {}
+        self.panel_pixels = {}
         self.source_cells = defaultdict(list)
         for cell in source_cells:
             if cell.column_ownership is not None:
@@ -88,6 +92,23 @@ class HeadingDeclarationIndex:
 
     def observe(self, heading):
         pages, later_columns, stop = [], [], None
+        first_page = self.doc[heading["page_no"] - 1]
+        if first_page.number not in self.panel_grids:
+            if self.grids_for_page is not None:
+                grids = self.grids_for_page(first_page)
+            else:
+                from .table_geometry import detect_ruled_table_regions
+
+                grids = detect_ruled_table_regions(
+                    first_page, dpi=240, minimum_columns=1
+                )
+            self.panel_grids[first_page.number] = grids
+        panel = observe_panel(
+            first_page,
+            heading,
+            self.panel_grids[first_page.number],
+            pixel_cache=self.panel_pixels,
+        )
         column_sources = self.column_sources[heading["page_no"]]
         columns = independent_columns(
             column_sources, self._page(heading["page_no"]), heading
@@ -121,7 +142,9 @@ class HeadingDeclarationIndex:
                 current_columns = later_page_columns(witnesses, page, heading)
             else:
                 current_columns = columns
-            boundary = _stop(page, heading, current_columns)
+            boundary, _cell, _complete = declaration_window(
+                page, heading, current_columns, panel
+            )
             if boundary:
                 stop = {"kind": boundary[1], "page_no": number, "y": boundary[0]}
             elif number == len(self.doc):
@@ -140,7 +163,7 @@ class HeadingDeclarationIndex:
                 "y": page["page_size"][1],
             }
         scope = {
-            "version": 3,
+            "version": 4 if panel is not None else 3,
             "status": "observed_declaration",
             "original_pdf_sha256": self.original_sha,
             "heading_source_id": proof_id(heading),
@@ -149,6 +172,7 @@ class HeadingDeclarationIndex:
             "column_sources": column_sources,
             "later_columns": later_columns,
             "stop": stop,
+            **({"panel": panel} if panel is not None else {}),
         }
         declaration_candidates(scope, heading)
         return scope

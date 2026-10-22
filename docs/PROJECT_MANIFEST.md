@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Original enclosure authority: `heading_panel_scope` shares original grid and
+  pixel SDKs, source budgets and call-local memoization. It bounds a declaration
+  only to a unique physically closed content cell, keeping complete page drawing/
+  line inventories and every raw pixel. Declaration4 is the panel adapter to the
+  same `declaration_window`/saved reader as ordinary declaration3. Unknown/open/
+  crossing/multiple/over-budget source stays refused. `HeadingPageReplay` checks
+  original pixels with no OCR. `reaction_frame` distinguishes only the exact
+  proved opaque rectangle stroke, never its interior/unsupported ink. There is
+  no second source detector, model, queue, writer or acceptance authority.
+  Binding55/binder66 refresh derived source proof; originals/raw/manual audits,
+  activity/SMILES/models/rescue/environment/API/SQL/SAR are unchanged.
+
 - Molecular image presentation authority: `MolecularImage` shares passive SVG
   loading/error/magnification between `StudyImage` and the original-source
   `StudyRegionMap`. Atomic overlays depend on the loaded image; failure disposes

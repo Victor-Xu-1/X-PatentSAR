@@ -7,6 +7,7 @@ from .heading_column_replay import column_header_sources
 from .heading_evidence import original_heading_lines
 from .heading_line_windows import heading_line_windows
 from .heading_page_columns import later_page_columns
+from .heading_panel_scope import replay_panel
 from .native_cell_replay import original_native_cell_matches
 from .source_evidence_identity import proof_id
 from .source_geometry import SourceTokens, source_layout
@@ -123,6 +124,8 @@ class HeadingPageReplay:
             raise ValueError("Later-column printed grid differs from the original")
 
     def check(self, scope, heading):
+        if scope.get("version") == 4:
+            replay_panel(self.document[heading["page_no"] - 1], scope["panel"], heading)
         for saved in scope["pages"]:
             number = saved["page_no"]
             page = self.document[number - 1]

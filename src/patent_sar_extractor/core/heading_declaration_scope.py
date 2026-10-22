@@ -14,6 +14,7 @@ from .heading_column_sources import (
     independent_columns,
 )
 from .heading_page_columns import later_page_columns
+from .heading_panel_scope import panel_candidate, panel_page
 from .source_evidence_identity import proof_id
 from .source_section_roles import (
     heading_list_hint,
@@ -64,6 +65,18 @@ def _stop(page, heading, columns=()):
             continue
         boundaries.append((box[1], "source_boundary"))
     return min(boundaries) if boundaries else None
+
+
+def declaration_window(page, heading, columns=(), panel=None):
+    if panel is None:
+        return _stop(page, heading, columns), None, True
+    cell, owned, complete = panel_page(page, heading, panel)
+    if owned is None:
+        return (heading["nomination"]["bbox"][3], "unproved_panel"), None, False
+    boundary = _stop(owned, heading)
+    if boundary is None:
+        boundary = (cell[3], "physical_panel_boundary")
+    return boundary, cell, complete
 
 
 def _page_valid(page):
@@ -129,8 +142,9 @@ def declaration_candidates(scope, heading):
             "later_columns",
             "stop",
         }
+        | ({"panel"} if scope.get("version") == 4 else set())
         or type(scope["version"]) is not int
-        or scope["version"] != 3
+        or scope["version"] not in {3, 4}
         or scope["status"] != "observed_declaration"
         or not isinstance(scope["original_pdf_sha256"], str)
         or not _SHA.fullmatch(scope["original_pdf_sha256"])
@@ -145,6 +159,9 @@ def declaration_candidates(scope, heading):
     ):
         raise ValueError("Malformed original heading declaration scope")
     proof_id(scope)  # Keep the existing one-MiB original-region bound unchanged.
+    panel = scope.get("panel")
+    if scope["version"] == 4 and (panel is None or len(scope["pages"]) != 1):
+        raise ValueError("Original panel must bound one complete physical page")
     if not _page_valid(scope["pages"][0]):
         raise ValueError("Malformed original heading first page")
     columns = independent_columns(scope["column_sources"], scope["pages"][0], heading)
@@ -172,7 +189,10 @@ def declaration_candidates(scope, heading):
                 raise ValueError("Original later-column page identity differs")
             current_columns = later_page_columns(witness["sources"], page, heading)
         excluded = {d["id"] for column in current_columns for d in column["diagrams"]}
-        boundary = _stop(page, heading, current_columns)
+        boundary, cell, panel_complete = declaration_window(
+            page, heading, current_columns, panel
+        )
+        ambiguous_flow |= not panel_complete
         lower = heading["nomination"]["bbox"][3] if offset == 0 else 0
         upper = boundary[0] if boundary else page["page_size"][1]
         for structure in page["structures"]:
@@ -184,7 +204,15 @@ def declaration_candidates(scope, heading):
                 raise ValueError(
                     "Original heading structure inventory exceeds its bound"
                 )
-            if box[3] > lower and box[1] < upper and sid not in excluded:
+            included, inside = (
+                panel_candidate(box, lower, upper, cell)
+                if cell is not None
+                else (
+                    box[3] > lower and box[1] < upper,
+                    lower <= box[1] < box[3] <= upper,
+                )
+            )
+            if included and sid not in excluded:
                 ambiguous_flow |= offset == 0 and ambiguous_column_flow(
                     box, heading, columns
                 )
@@ -192,7 +220,7 @@ def declaration_candidates(scope, heading):
                     {
                         **structure,
                         "page_no": number,
-                        "inside": lower <= box[1] < box[3] <= upper,
+                        "inside": inside,
                     }
                 )
         if boundary:
@@ -220,4 +248,5 @@ def declaration_candidates(scope, heading):
         "page_limit",
         "parallel_heading",
         "foreign_column_boundary",
+        "unproved_panel",
     }

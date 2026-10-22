@@ -1,5 +1,32 @@
 # Operations and troubleshooting
 
+## Separate original content panels
+
+Two same-page compound preparation panels with independently closed original
+boundaries need not become one ambiguous page-wide heading. The binder retains
+each readable original declaration, all page candidates and its actual enclosing
+cell. Native and scanned standalone panels use the same physical proof. No user
+column split, guessed numbering order or new recognition model is required.
+
+Inspect the nested declaration4 `panel` inventory/cell/retained pixel packet and
+the stop reason. Unproved/ambiguous/budget frames use `unproved_panel`; open frames
+do not authorize a guessed lane. A crop/text crossing a boundary or multiple
+unconnected own-cell diagrams stays unresolved. Outside candidates are retained
+in the complete page inventory. Short heading-label boxes still use their normal
+heading observer. Same-source original replay checks pixels, not OCR agreement.
+Native panel reaction arrows additionally use the same source window and full
+route validator; only a proved exact opaque boundary rectangle can be distinguished
+from interior blocking ink. This does not solve scanned reaction-role inference.
+
+Binding55/binder66 require normal regeneration of affected derived work. Do not
+edit old artifacts, relabel historical evidence, relax QA or invoke private PDF
+processing outside the frontend. Raw/model/cache/manual history and activity/
+SAR numerical policies stay unchanged. Verification covers generated native/
+scanned panels, differing IDs/leading zeros, missing/open/crossing/rival/budget/
+tampered frames, original readback, worker/shared-artifact/Web consumers and the
+directly related ordinary heading/continuation/reaction contracts only. Native
+OCSR evaluation authorization is separate and is not consumed or expanded here.
+
 ## Reference structure and comparison workspace
 
 On a wide screen, the selected reference and all recorded region choices stay

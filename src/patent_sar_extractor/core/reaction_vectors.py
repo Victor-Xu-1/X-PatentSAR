@@ -7,6 +7,7 @@ reader neither recognizes chemistry nor assigns a compound or reaction role.
 import math
 from itertools import pairwise
 
+from .reaction_frame import original_frame_path
 from .reaction_heads import MAX_FILLED_HEADS, observe_triangle, validate_heads
 from .source_geometry import overlaps
 
@@ -68,13 +69,15 @@ def validate_vectors(observation):
     validate_heads(observation["filled_heads"], size)
 
 
-def observe_vectors(page, bounds):
+def observe_vectors(page, bounds, *, original_frame=None):
     """Read current original paths once; never substitute raster absence for proof."""
     import fitz
 
     size = [page.rect.width, page.rect.height]
     if not valid_rectangle(bounds, size):
         raise ValueError("Invalid native reaction source window")
+    if original_frame is not None and not valid_rectangle(original_frame, size):
+        raise ValueError("Invalid original reaction frame")
     segments, blockers, heads = [], [], []
 
     def block(rectangle):
@@ -96,6 +99,8 @@ def observe_vectors(page, bounds):
     if len(paths) > MAX_VECTOR_SEGMENTS:
         raise ValueError("Native reaction path bound exceeded")
     for path in paths:
+        if original_frame_path(path, page, original_frame):
+            continue  # Only the proved boundary stroke, never its interior ink.
         items, color = path.get("items", []), path.get("color")
         triangle = observe_triangle(path, page.rotation_matrix)
         if triangle is not None:
