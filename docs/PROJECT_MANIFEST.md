@@ -1,5 +1,19 @@
 # Project governance manifest
 
+- Original structure-column headers (ruled and unruled) use the existing
+  unresolved-only `role_text_capture` / paired `source_capture` path. Their
+  caller authority stays8 rows/12pt without chunk admission, distinct from
+  characterization defaults32 rows/32pt. Native/qualified primary observations
+  do not load auxiliary OCR. Retained cell frames accompany unchanged original
+  windows; known primary/native conflicts and low auxiliary scores still refuse.
+  `role_text_sources` explicitly inventories original header owners and the
+  retained anchor page of continuations, alongside existing accepted/rejected
+  characterization owners. The same original/native/auxiliary replayers and
+  worker/Web/SAR consumers remain authoritative; no recursive artifact search,
+  second recognizer, parser, writer or queue is introduced. Binding54/binder65
+  refresh derived source admission only; Activity38/extractor49, visible26, raw
+  OCR/OCSR, manual/history assets, SQL/API, environments and activation are unchanged.
+
 - Current heading-column authority: registered original and continued sources
   share the existing heading index, catalogue/role/row validators and original
   replayer. Only complete proved foreign rows can exclude their own diagrams;

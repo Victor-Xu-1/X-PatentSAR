@@ -1,5 +1,28 @@
 # Operations and troubleshooting
 
+## Optional OCR for original structure-column headers
+
+The already-configured on-demand auxiliary text runtime is consulted only for
+unresolved physical structure-header cells. It does not replace DECIMER or the
+default text recognizer, enable a provider/LLM, install anything, or start a
+resident service. Disabled/unavailable recovery leaves the original source
+unresolved. Header reads keep8 rows/12pt and the existing paired confidence,
+native/known-conflict and complete-original-frame checks; no larger
+characterization window is borrowed to force a match.
+
+Binding54/binder65 refresh affected derived artifacts/checkpoints through the
+existing source identities. Historical bindings are not retagged, and original
+PDF/raw OCR/OCSR/manual corrections remain preserved. Original header cells,
+including carried anchors, enter the existing source replay on their actual
+original page. Activity38/extractor49/coverage20 and other policies are unchanged.
+Acceptance includes generated scans with weak/normal/native reads,
+disabled/low-score/conflicting recovery, cross-page ownership, frame tamper and
+the actual worker-plan reader without OCR on replay. Candidate tests do not
+establish accuracy on an unrerun private patent. Do not deploy over a live
+producer; merge/current-main/rollback/18765 acceptance and subsequent frontend-only
+private retry remain separate delivery gates. Prior sections retain release-time
+epoch labels; `contracts.py` owns current versions.
+
 ## A continued column crashes or pollutes a standalone heading window
 
 A registered continuation has an original ancestor, not a new `nomination` field.

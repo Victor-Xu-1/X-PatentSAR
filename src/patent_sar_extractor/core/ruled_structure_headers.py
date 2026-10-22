@@ -9,6 +9,7 @@ from .activity_context_geometry import (
     validate_grid_axes,
 )
 from .activity_grid_role_observation import observe_role_cells
+from .role_text_capture import refine_role_text
 from .source_cell_tokens import cell_text
 from .source_observations import source_observation_status
 from .source_window_chunks import observe_window_sources
@@ -28,10 +29,17 @@ def observe_ruled_header(page, tokens, grid, original_sha, *, grids=None):
         "context_geometry"
     ]
     reading = observe_role_cells(
-        page, {"xs": xs, "ys": ys[:2]}, tokens, retain_frames=True
+        page,
+        {"xs": xs, "ys": ys[:2]},
+        tokens,
+        retain_frames=True,
+        attach_source_frames=True,
     )
     if reading is None:
         raise ValueError("Original ruled structure header exceeds its reading budget")
+    refine_role_text(
+        page, reading, maximum_rows=8, maximum_row_height=12, allow_chunks=False
+    )
     return {
         "kind": "original_ruled_columns",
         "version": 1,
