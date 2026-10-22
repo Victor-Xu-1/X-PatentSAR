@@ -92,3 +92,56 @@ for (const width of [390, 800, 1672]) {
     expect(foreignWrites).toEqual([]);
   });
 }
+
+test('pooled full-network transport conserves every region and member without extra user choices', async ({
+  page,
+}) => {
+  test.skip(process.env.PATENTSAR_E2E_SAR_MUTATIONS !== 'synthetic-isolated-state');
+  const errors: string[] = [];
+  page.on('pageerror', (error) => errors.push(error.message));
+  const received = page.waitForResponse((response) => {
+    const url = new URL(response.url());
+    return url.pathname.endsWith('/study/catalog') && url.searchParams.get('compact') === 'true';
+  });
+  const csv =
+    'id,smiles,IC50 (nM),t_half (h),target,assay,cell_line,duration\n' +
+    Array.from(
+      { length: 32 },
+      (_, n) =>
+        `${n + 1},${['COc1ccc(Cl)cc1', 'CCOc1ccc(Cl)cc1', 'COc1ccc(Br)cc1', 'CCCOc1ccc(Cl)cc1'][n % 4]},${n + 1},1,T,controlled,C,1h\n`,
+    ).join('');
+  const { job, report } = await createNetwork(page, 1672, csv, false, true);
+  const response = await received;
+  expect(response.status()).toBe(200);
+  const packed = await response.json();
+  expect(packed.detail).toBe('catalog-pooled');
+  expect(packed.wire_version).toBe(1);
+  const legacyResponse = await page.request.get(`/api/v1/sar/jobs/${job}/study/catalog`);
+  expect(legacyResponse.status()).toBe(200);
+  const legacy = await legacyResponse.json();
+  const { wire_version: _version, fragment_pool, molecule_id_pool, ...body } = packed;
+  const expanded = {
+    ...body,
+    detail: 'catalog',
+    report: {
+      ...body.report,
+      regions: body.report.regions.map((region: { fragments: number[] }) => ({
+        ...region,
+        fragments: region.fragments.map((index) => ({
+          ...fragment_pool[index],
+          molecule_ids: molecule_id_pool[fragment_pool[index].molecule_ids],
+        })),
+      })),
+    },
+  };
+  expect(expanded).toEqual(legacy);
+  expect(Buffer.byteLength(JSON.stringify(packed))).toBeLessThan(
+    Buffer.byteLength(JSON.stringify(legacy)),
+  );
+  await expect(report.getByRole('button', { name: 'Variable regions', exact: true })).toBeVisible();
+  await page
+    .getByRole('combobox', { name: 'Interface language', exact: true })
+    .selectOption('zh-CN');
+  await expect(report.getByRole('button', { name: '变化区域', exact: true })).toBeVisible();
+  expect(errors).toEqual([]);
+});

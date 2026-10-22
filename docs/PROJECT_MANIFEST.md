@@ -1,5 +1,14 @@
 # Project governance manifest
 
+- Catalog serialization authority: `study_catalog_wire` is a request-local,
+  opt-in typed adapter over the existing receipt-bound `StudyResults.catalog`.
+  Whole fragment values and ordered member arrays share references; all region
+  uses/metadata survive. The legacy GET format remains compatible and is used
+  when smaller. `sarCatalogWire` bounds indices/projected UTF-8 expansion before
+  the same existing catalog domain/source/conservation decoder. No alternate
+  report producer, scientific/cache/queue authority, raw/manual/history edits,
+  schema/epoch, dependency/model or environment activation changes are added.
+
 - Passive study SVG transport: `study_drawings.draw_one` is the sole renderer
   for individual and bounded batch reads. `study_drawing_models` owns the additive
   batch DTO. Existing StudyDrawing, report preparation, receipt/source checks,

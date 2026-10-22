@@ -1,53 +1,45 @@
 {
   "schema_version": 1,
-  "base_sha": "f1545a55f1029376b6353d370714fd4d22831616",
+  "base_sha": "a6a9de2fe4f76597d2f4a6b354476c8b90389006",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
     "docs/OPERATIONS.md",
     "docs/PROJECT_MANIFEST.md",
-    "frontend/e2e/sar-drawing-batch.spec.ts",
-    "frontend/e2e/sarCardProtocolFixture.ts",
+    "frontend/e2e/sar-catalog.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/api/sarDrawingBatch.ts",
-    "frontend/src/api/sarDrawingBatchDecoder.ts",
+    "frontend/src/api/sarCatalogWire.ts",
     "frontend/src/api/sarStudyApi.ts",
+    "frontend/src/api/sarStudyDecoders.ts",
+    "frontend/tests/sar-catalog-fixtures.ts",
+    "frontend/tests/sar-catalog-wire.test.ts",
+    "frontend/tests/sar-catalog.test.tsx",
     "frontend/tests/sar-study-api.test.tsx",
-    "frontend/tests/sar-study-drawing-batch.test.ts",
     "src/patent_sar_extractor/contracts.py",
-    "src/patent_sar_extractor/web/sar/study_drawing_models.py",
-    "src/patent_sar_extractor/web/sar/study_drawings.py",
+    "src/patent_sar_extractor/web/sar/study_catalog_wire.py",
     "src/patent_sar_extractor/web/sar/study_results.py",
     "src/patent_sar_extractor/web/sar/study_routes.py",
-    "tests/test_release_fixture.py",
-    "tests/test_sar_drawing_batch.py",
-    "tests/test_sar_drawing_batch_api.py",
-    "tools/browser_fixture_mode.py"
+    "tests/test_sar_catalog.py",
+    "tests/test_sar_catalog_wire.py"
   ],
   "python_modules": [
-    "tests.test_sar_drawing_batch",
-    "tests.test_sar_drawing_batch_api",
-    "tests.test_sar_fragment_drawing",
+    "tests.test_sar_catalog",
+    "tests.test_sar_catalog_wire",
     "tests.test_sar_report_preparation",
     "tests.test_sar_study_api",
-    "tests.test_sar_preview",
-    "tests.test_sar_hydrogen_api",
-    "tests.test_release_fixture.ReadOnlyVersionFixtureTests.test_drawing_batch_uses_only_the_existing_isolated_sar_fixture",
     "tests.test_release_policy.ReleaseNumberTests",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/sar-study-drawing-batch.test.ts",
+    "frontend/tests/sar-catalog-wire.test.ts",
+    "frontend/tests/sar-catalog.test.tsx",
     "frontend/tests/sar-study-api.test.tsx",
     "frontend/tests/sar-study-results.test.tsx",
-    "frontend/tests/sar-molecular-focus.test.tsx",
-    "frontend/tests/sar-preview-layout.test.tsx",
-    "frontend/tests/sar-catalog.test.tsx"
+    "frontend/tests/sar-molecular-focus.test.tsx"
   ],
   "browser_tests": [
-    "frontend/e2e/sar-drawing-batch.spec.ts",
-    "frontend/e2e/sar-card-inspection.spec.ts"
+    "frontend/e2e/sar-catalog.spec.ts"
   ]
 }

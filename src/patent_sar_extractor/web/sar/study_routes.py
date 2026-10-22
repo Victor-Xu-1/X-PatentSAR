@@ -14,6 +14,7 @@ from .models import SARJob
 from .preview_models import StudyPreview
 from .study_admission import profile
 from .study_catalog_models import StudyCatalog, StudyRegionDetail
+from .study_catalog_wire import PooledCatalog
 from .study_drawing_models import MAX_DRAWING_BATCH, StudyDrawingBatch
 from .study_exports import export_study
 from .study_models import (
@@ -75,10 +76,14 @@ def study_routes(service, queue) -> APIRouter:
                 reference_id,
             )
 
-    @router.get("/jobs/{identifier}/study/catalog", response_model=StudyCatalog)
-    async def catalog(identifier: str):
+    @router.get(
+        "/jobs/{identifier}/study/catalog", response_model=StudyCatalog | PooledCatalog
+    )
+    async def catalog(identifier: str, compact: bool = False):
         async with reads:
-            return await asyncio.to_thread(StudyResults(queue()).catalog, identifier)
+            return await asyncio.to_thread(
+                StudyResults(queue()).catalog, identifier, compact=compact
+            )
 
     @router.get(
         "/jobs/{identifier}/study/regions/{region_id}", response_model=StudyRegionDetail

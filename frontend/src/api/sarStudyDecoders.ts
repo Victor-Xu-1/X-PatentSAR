@@ -22,6 +22,7 @@ import {
 import { decodeConditionDeclaration } from './sarConditionDecoders';
 import { indicatorDefaults } from './sarIndicatorDecoder';
 import { decodeStudyDiscovery } from './sarStudyDiscoveryDecoder';
+import { expandCatalog } from './sarCatalogWire';
 import { decodeSARJob } from './sarJobDecoders';
 import { studyBin, studyContext, studyPolicy, studyRow } from './sarStudyRowDecoders';
 import type { Decoder } from './validation';
@@ -272,6 +273,7 @@ function overviewDecoder<R extends CatalogReport>(decode: Decoder<R>) {
 }
 export const decodeStudyOverview: Decoder<StudyOverview> = overviewDecoder(decodeStudyReport);
 export const decodeStudyCatalog: Decoder<StudyCatalog> = (v, p = '$') => {
+  v = expandCatalog(v, p);
   object({ detail: oneOf(['catalog']), activity_basis: decodeActivityBasis })(v, p);
   return overviewDecoder(decodeCatalogReport)(v, p);
 };
