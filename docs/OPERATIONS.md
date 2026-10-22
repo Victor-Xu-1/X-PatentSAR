@@ -19,6 +19,22 @@ the ordering/reader behavior, not private-scanned-header OCR correctness, univer
 patent coverage or scientific acceptance. Known/unknown original conflicts remain
 unresolved and still withhold header carry.
 
+## Complete native text windows, not clipped individual lines
+
+The original source can contain slightly overlapping native line boxes inside
+one text block. Declared-text source2 coalesces only adjacent overlapping lines
+when every word stays in original/physical order and within the existing512token
+source-cell budget. This changes the nominated observation window, not any word,
+coordinate or confidence. The same authority recomputes it from the actual PDF.
+Separate blocks, reversed/ambiguous order and oversized groups retain their
+original individual windows; outsiders, hidden/overpainted text, missing words
+and invalid source geometry still refuse. No overlap tolerance, paint/font-box
+shrink, source-token deletion, extra OCR/model or scientific-value repair.
+
+Old declared-text source1 and extractor49 remain historical proof. Extractor50
+requires current source packets; original PDFs, native/raw OCR caches, historical
+observations and audited revisions are never rewritten to satisfy this gate.
+
 ## Scanned and mixed-layer reaction roles
 
 Readable scanned open/filled arrows can now supply original direction under a

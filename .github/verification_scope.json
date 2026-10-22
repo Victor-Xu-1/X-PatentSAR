@@ -12,10 +12,16 @@
     "src/patent_sar_extractor/core/activity_context_geometry.py",
     "src/patent_sar_extractor/core/activity_coordinates.py",
     "src/patent_sar_extractor/core/activity_table_scopes.py",
-    "tests/test_activity_panel_order.py"
+    "src/patent_sar_extractor/core/source_page_lines.py",
+    "tests/test_activity_context_windows.py",
+    "tests/test_activity_continuation_ownership.py",
+    "tests/test_activity_panel_order.py",
+    "tests/test_native_text_windows.py"
   ],
   "python_modules": [
     "tests.test_activity_panel_order",
+    "tests.test_native_text_windows",
+    "tests.test_declared_text_recovery",
     "tests.test_activity_parallel_grids",
     "tests.test_declared_table_continuations",
     "tests.test_activity_continuation_ownership",

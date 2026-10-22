@@ -42,7 +42,8 @@ class ActivityPanelOrderTests(unittest.TestCase):
         self.assertTrue(all(row.table_id == "Table 28" for row in result.rows))
         self.assertTrue(all(region["status"] == "parsed" for region in result.coverage))
         self.assertEqual(
-            {row.cpd for row in result.rows}, {"7B", "19C", "25A", "31D", "42E"}
+            {row.cpd for row in result.rows},
+            {f"Compound {label}" for label in ("7B", "19C", "25A", "31D", "42E")},
         )
         self.assertEqual(
             coverage_errors(

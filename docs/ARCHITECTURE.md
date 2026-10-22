@@ -14,6 +14,15 @@ coordinates or uses source order as potency rank. Extractor50 refreshes derived
 activity admission; Activity38/coverage20/Binding57/SMILES6, raw assets and manual
 audits stay unchanged. No extra OCR, model, parser, cache, queue or fallback path.
 
+Native declared-text source2 keeps neighbouring overlapping native lines in one
+complete source window only within the same original block, the existing512word
+packet budget and identical physical/original word order. No nominal boundary or
+original paint is shrunk and no token is removed. Nonoverlap, different blocks,
+order disagreements and oversized groups retain their separate original windows;
+all still require the same complete source/visibility/readback guards. Native raw
+text keeps its original extraction order and spelling. The sole `native_page_lines`
+authority feeds observation and original replay; no second text parser or model.
+
 ## Original raster reaction directions
 
 `reaction_page_source` selects native or retained-pixel observation from actual

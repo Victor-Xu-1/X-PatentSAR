@@ -10,6 +10,13 @@
   models and default activation remain unchanged. Existing unresolved headers
   still refuse carry. No parallel parser, cache, queue or model is introduced.
 
+- Native text-window authority: `source_page_lines.native_page_lines` nominates
+  complete same-block overlapping lines for both declared-text capture and actual
+  original replay. Whole native word order/bounds and existing512token/source and
+  visibility checks remain; no ink, metric-box or paint-envelope shrink, source
+  conflict bypass or extra recognizer. Declared-text source2 and extractor50
+  invalidate old derived proof without retagging raw PDF/OCR/manual/history data.
+
 - Original reaction source authority: `reaction_page_source` chooses native
   paintedv2 or whole-original pixelv3 observation from actual image layout,
   feeding the sole complete route graph and original replay. Pixel primitives

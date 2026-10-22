@@ -3,11 +3,13 @@
 import copy
 import tempfile
 import unittest
+from contextlib import contextmanager
 from pathlib import Path
 
 import fitz
 
 from patent_sar_extractor.artifact_io import load_json
+from patent_sar_extractor.core.activity_auxiliary_replay import original_pdf_reader
 from patent_sar_extractor.core.activity_coordinates import extract_coordinate_tables
 from patent_sar_extractor.core.activity_extractor import extract
 from patent_sar_extractor.core.activity_join import activity_evidence_errors
@@ -56,10 +58,22 @@ def facade(root, mode="rows", *, header_only=False):
 
 
 class ContinuationOwnershipTests(unittest.TestCase):
+    @contextmanager
+    def source_directory(self):
+        # Keep the actual generated original alive through saved-reader checks.
+        root = self.enterContext(tempfile.TemporaryDirectory())
+        self.open_original = original_pdf_reader(Path(root) / "original.pdf")
+        yield root
+
+    def source_errors(self, payload, pages):
+        return activity_evidence_errors(
+            payload, pages, open_original=self.open_original
+        )
+
     def test_original_repeated_whitespace_header_keeps_proved_roles_on_saved_replay(
         self,
     ):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.source_directory() as temp:
             root = Path(temp)
             pdf = root / "original.pdf"
             with fitz.open() as doc:
@@ -83,7 +97,7 @@ class ContinuationOwnershipTests(unittest.TestCase):
                 doc.save(pdf)
             extract(str(pdf), {"activity_pages": [0]}, str(root / "output"))
             data = load_json(root / "output" / "activity_data.json", None)
-        self.assertEqual(activity_evidence_errors(data, [0]), [])
+        self.assertEqual(self.source_errors(data, [0]), [])
         self.assertEqual(
             [row["cpd"] for row in data["rows"]], ["Compound 7", "Compound 19"]
         )
@@ -102,13 +116,13 @@ class ContinuationOwnershipTests(unittest.TestCase):
             if region.get("layout") and region["page_no"] == 2
         )
         continued["layout"]["raw_headers"][2] = "CelllineYmax"
-        self.assertTrue(activity_evidence_errors(altered, [0]))
+        self.assertTrue(self.source_errors(altered, [0]))
 
     def test_all_legal_adjacent_modes_share_one_proved_scope(self):
         for mode in ("rows", "header", "caption"):
-            with self.subTest(mode=mode), tempfile.TemporaryDirectory() as temp:
+            with self.subTest(mode=mode), self.source_directory() as temp:
                 data = facade(Path(temp), mode)
-                self.assertEqual(activity_evidence_errors(data, [0]), [])
+                self.assertEqual(self.source_errors(data, [0]), [])
                 self.assertEqual(
                     [r["cpd"] for r in data["rows"]], ["Compound 7", "Compound 19"]
                 )
@@ -138,7 +152,7 @@ class ContinuationOwnershipTests(unittest.TestCase):
         )
 
     def test_parallel_panels_and_adjacent_panels_keep_unique_root(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.source_directory() as temp:
             root = Path(temp)
             pdf = root / "original.pdf"
             with fitz.open() as doc:
@@ -151,12 +165,12 @@ class ContinuationOwnershipTests(unittest.TestCase):
                 doc.save(pdf)
             extract(str(pdf), {"activity_pages": [0]}, str(root / "output"))
             data = load_json(root / "output" / "activity_data.json", None)
-        self.assertEqual(activity_evidence_errors(data, [0]), [])
+        self.assertEqual(self.source_errors(data, [0]), [])
         self.assertEqual(len(data["rows"]), 4)
         self.assertEqual(len(data["coverage"]["references"][0]["target_region_ids"]), 4)
 
     def test_repeated_parallel_headers_belong_to_the_same_original_caption(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.source_directory() as temp:
             root = Path(temp)
             pdf = root / "original.pdf"
             with fitz.open() as doc:
@@ -166,12 +180,12 @@ class ContinuationOwnershipTests(unittest.TestCase):
                 doc.save(pdf)
             extract(str(pdf), {"activity_pages": [0]}, str(root / "output"))
             data = load_json(root / "output" / "activity_data.json", None)
-        self.assertEqual(activity_evidence_errors(data, [0]), [])
+        self.assertEqual(self.source_errors(data, [0]), [])
         self.assertEqual(len(data["rows"]), 2)
         self.assertEqual(len(data["coverage"]["references"][0]["target_region_ids"]), 2)
 
     def test_every_grid_row_is_revalidated_even_without_a_method_reference(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.source_directory() as temp:
             original = facade(Path(temp))
         original["coverage"]["regions"] = [
             r for r in original["coverage"]["regions"] if r["status"] != "reference"
@@ -179,7 +193,7 @@ class ContinuationOwnershipTests(unittest.TestCase):
         original["coverage"]["references"] = []
         original["coverage"]["seed_pages"] = [1]
         original["coverage"]["discovered_pages"] = [1]
-        self.assertEqual(activity_evidence_errors(original, [1]), [])
+        self.assertEqual(self.source_errors(original, [1]), [])
         for field, value in (
             ("physical_column", 0),
             ("bbox", [40, 90, 70, 114]),
@@ -187,13 +201,13 @@ class ContinuationOwnershipTests(unittest.TestCase):
             data = copy.deepcopy(original)
             data["rows"][-1]["activity_sources"][0]["cells"][1][field] = value
             with self.subTest(field=field):
-                self.assertTrue(activity_evidence_errors(data, [1]))
+                self.assertTrue(self.source_errors(data, [1]))
         data = copy.deepcopy(original)
         data["rows"].pop()
-        self.assertTrue(activity_evidence_errors(data, [1]))
+        self.assertTrue(self.source_errors(data, [1]))
 
     def test_malformed_header_layout_is_a_controlled_validation_failure(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.source_directory() as temp:
             original = facade(Path(temp), header_only=True)
         for layout in ({}, {"ys": []}, "foreign", {"data_start": True}):
             data = copy.deepcopy(original)
@@ -202,10 +216,10 @@ class ContinuationOwnershipTests(unittest.TestCase):
             )
             grid["layout"] = layout
             with self.subTest(layout=layout), self.assertRaises(ValueError):
-                activity_evidence_errors(data, [0])
+                self.source_errors(data, [0])
 
     def test_unknown_or_missing_saved_cell_proof_cannot_be_promoted(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.source_directory() as temp:
             original = facade(Path(temp))
         for field, value in (
             ("cells", "foreign"),
@@ -217,7 +231,7 @@ class ContinuationOwnershipTests(unittest.TestCase):
             data["rows"][0]["activity_sources"][0][field] = value
             with self.subTest(field=field):
                 try:
-                    errors = activity_evidence_errors(data, [0])
+                    errors = self.source_errors(data, [0])
                 except (ValueError, TypeError):
                     continue
                 self.assertTrue(errors)
@@ -231,7 +245,10 @@ class ContinuationOwnershipTests(unittest.TestCase):
 
         self.assertTrue(
             _activity_acceptance_errors(
-                data, _extract_active_cpds(data), classified_activity_pages=[0]
+                data,
+                _extract_active_cpds(data),
+                classified_activity_pages=[0],
+                open_original=self.open_original,
             )
         )
 
@@ -239,7 +256,7 @@ class ContinuationOwnershipTests(unittest.TestCase):
         from patent_sar_extractor.core.activity_coverage import source_record
         from patent_sar_extractor.core.activity_table_scopes import layout_scope_errors
 
-        with tempfile.TemporaryDirectory() as temp:
+        with self.source_directory() as temp:
             data = facade(Path(temp))
         template = next(
             r
@@ -266,7 +283,7 @@ class ContinuationOwnershipTests(unittest.TestCase):
         self.assertEqual(layout_scope_errors(regions), [])
 
     def test_same_number_but_independent_caption_context_remains_ambiguous(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.source_directory() as temp:
             root = Path(temp)
             pdf = root / "original.pdf"
             with fitz.open() as doc:
@@ -284,7 +301,7 @@ class ContinuationOwnershipTests(unittest.TestCase):
             ["JAK", "BET"],
         )
         self.assertEqual(data["coverage"]["references"][0]["status"], "ambiguous")
-        self.assertTrue(activity_evidence_errors(data, [0]))
+        self.assertTrue(self.source_errors(data, [0]))
 
     def test_source_gate_is_shared_by_web_and_application_consumers(self):
         from patent_sar_extractor.application.activity_policy import (
@@ -294,41 +311,54 @@ class ContinuationOwnershipTests(unittest.TestCase):
         from patent_sar_extractor.web.acceptance import authority
         from tests.test_web_acceptance import complete_payloads
 
-        with tempfile.TemporaryDirectory() as temp:
+        with self.source_directory() as temp:
             data = facade(Path(temp))
         active = _extract_active_cpds(data)
         self.assertEqual(
-            _activity_acceptance_errors(data, active, classified_activity_pages=[0]), []
+            _activity_acceptance_errors(
+                data,
+                active,
+                classified_activity_pages=[0],
+                open_original=self.open_original,
+            ),
+            [],
         )
         data["rows"][-1]["activity_sources"][0]["cells"][1]["physical_column"] = 0
         self.assertTrue(
-            _activity_acceptance_errors(data, active, classified_activity_pages=[0])
+            _activity_acceptance_errors(
+                data,
+                active,
+                classified_activity_pages=[0],
+                open_original=self.open_original,
+            )
         )
         payloads = complete_payloads()
         payloads["activity"] = {**data, "active_cpds": active}
-        result, _ = authority(payloads, pdf_verified=True, marker=None)
+        result, _ = authority(
+            payloads, pdf_verified=True, marker=None, open_original=self.open_original
+        )
         self.assertEqual(result.state, "failed")
         self.assertIn("grid row and cell", str(result.errors))
 
     def test_header_only_start_needs_actual_connected_result_rows(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.source_directory() as temp:
             data = facade(Path(temp), header_only=True)
-        self.assertEqual(activity_evidence_errors(data, [0]), [])
+        self.assertEqual(self.source_errors(data, [0]), [])
         self.assertEqual([r["cpd"] for r in data["rows"]], ["Compound 19"])
         self.assertTrue(
             any(r["status"] == "header" for r in data["coverage"]["regions"])
         )
 
     def test_new_caption_creates_independent_source_and_never_inherits_target(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.source_directory() as temp:
             data = facade(Path(temp), "new_caption")
-        self.assertEqual(activity_evidence_errors(data, [0]), [])
+        self.assertEqual(self.source_errors(data, [0]), [])
         self.assertEqual(data["rows"][1]["activity_sources"][0]["target"], "BET")
         self.assertEqual(data["rows"][1]["table_id"], "Table 92")
         self.assertEqual(len(data["coverage"]["references"][0]["target_region_ids"]), 1)
 
     def test_serialized_prefix_origin_and_geometry_cannot_forge_a_continuation(self):
-        with tempfile.TemporaryDirectory() as temp:
+        with self.source_directory() as temp:
             original = facade(Path(temp))
         for field, value in (
             ("prefix", "Example 92: New binding assay"),
@@ -341,7 +371,7 @@ class ContinuationOwnershipTests(unittest.TestCase):
             selected = grids[0] if field == "suffix" else grids[-1]
             selected["layout"][field] = value
             with self.subTest(field=field), self.assertRaises(ValueError):
-                activity_evidence_errors(data, [0])
+                self.source_errors(data, [0])
 
     def test_changed_columns_caption_and_page_gap_are_not_continuations(self):
         for mode in ("width", "caption", "gap"):
