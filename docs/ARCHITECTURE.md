@@ -1,5 +1,32 @@
 # X-PatentSAR architecture
 
+## Physical grid cells compose multi-row headers
+
+`activity_header_columns` reads each physical cell of a two/three-row header
+through the existing ordinary observer. `activity_header_cells` owns a bounded
+column composition, not a fabricated whole-band OCR frame. It retains every
+child's original coordinates, raw text, quality, detector/native constraints and
+source window. Empty children require paired original absence: the existing
+closed-grid proof or an entirely white complete unruled rectangle. The latter
+uses the same retained-pixel codec/replayer, forbids all nonwhite ink and does
+not widen count-metadata admission. Empty OCR text alone never proves a blank.
+A weak unit/qualifier child cannot disappear when the column is assembled.
+
+The existing header parser/context/field gates consume that literal composition.
+`activity_header_pair` refines only unresolved physical children through its sole
+paired auxiliary adapter. Complete primaries/proved blanks do not acquire a model,
+and known conflicts cannot be rescued by agreement. The same explicit leaf
+inventory feeds original primary/auxiliary/empty-cell replay and serialized header
+validation. No arbitrary nested traversal, new recognizer, parser, queue or writer
+is introduced. Readback loads no OCR model and rechecks changed original pixels.
+
+Activity38/extractor49 invalidate affected derived proof; coverage20, binding53/
+binder63, visible-label26, raw PDF/OCR/OCSR, human audit, models/dependencies and
+activation stay unchanged. Existing larger/unproved layouts retain their prior
+bounded unresolved behavior; the new composition does not waive the three-row
+proof limit or claim merged-cell/all-format coverage. Narrow generated cases are
+not a complete real-patent scientific acceptance result.
+
 ## Unresolved caption text keeps a separate physical boundary proof
 
 The existing caption writer can retain a physical-only last-row owner when a

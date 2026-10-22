@@ -1,5 +1,26 @@
 # Operations and troubleshooting
 
+## Multi-row ruled headers lose otherwise readable column text
+
+A union crop of several header grid rows includes internal table rules. Do not
+erase those rules/ink, infer the unit, lower a score or edit saved readings to make
+it pass. Two/three-row headers now retain independent ordinary physical-cell reads
+and a bounded literal column composition. Every child, including weak/unknown
+text, survives. A blank child needs paired original absence: existing closed-grid
+rules, or complete unruled rectangles with zero nonwhite pixels in both views.
+The latter has no noise/masking tolerance and does not certify missing metadata.
+One weak unit keeps that column unverified unless the ordinary paired recovery
+qualifies it under the unchanged policy. A valid known conflict remains a veto.
+
+Original primary/auxiliary/empty-cell replay follows those same physical leaves;
+matching a saved composition or hash does not replace original-source checking.
+Activity38/extractor49 refresh only affected derived work. Coverage20, bindings,
+original/raw observations, manual audit, environment/model activation and numerical
+SAR rules do not change. Larger/unproved/merged layouts are not silently marked
+supported. Keep failed attempts historical; actual extraction and resumption use
+the normal frontend, never a helper that fills or recalculates a private dataset.
+Do not deploy or duplicate a live task merely because focused tests/CI pass.
+
 ## Unknown text in a closed caption cell breaks later known identifiers
 
 Do not repair this by accepting the unknown caption, inferring an ID sequence or
