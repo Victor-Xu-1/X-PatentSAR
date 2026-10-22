@@ -21,11 +21,12 @@ function tableProps() {
 
 describe('result column width changes preserve real row behavior', () => {
   it.each([
-    ['原文编号', 120, 88],
-    ['结构', 136, 88],
+    ['原文编号', 120, 88, 480],
+    ['结构', 136, 88, 480],
+    ['原文', 96, 96, 180],
   ])(
     'resizes the %s column independently without changing selection',
-    async (label, initial, min) => {
+    async (label, initial, min, max) => {
       const props = tableProps();
       render(<ResultsTable {...props} />);
       expect(screen.getAllByRole('slider')).toHaveLength(
@@ -40,7 +41,7 @@ describe('result column width changes preserve real row behavior', () => {
       await userEvent.keyboard('{Home}');
       expect(resize).toHaveAttribute('aria-valuenow', String(min));
       await userEvent.keyboard('{End}');
-      expect(resize).toHaveAttribute('aria-valuenow', '480');
+      expect(resize).toHaveAttribute('aria-valuenow', String(max));
       fireEvent.doubleClick(resize);
       expect(resize).toHaveAttribute('aria-valuenow', String(initial));
       expect(screen.getByLabelText(`选择化合物 ${compound.display_id}`)).toBeChecked();

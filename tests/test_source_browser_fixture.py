@@ -11,6 +11,18 @@ from tools.browser_fixture_mode import fixture_mode
 
 
 class SourceBrowserFixtureTests(unittest.TestCase):
+    def test_source_column_heading_needs_only_existing_read_only_results(self):
+        selected = {"frontend/e2e/source-column-heading.spec.ts"}
+        self.assertEqual(fixture_mode(selected), "read-only")
+        self.assertEqual(
+            fixture_mode(selected | {"frontend/e2e/product-version.spec.ts"}),
+            "read-only",
+        )
+        self.assertEqual(
+            fixture_mode(selected | {"frontend/e2e/candidate-observations.spec.ts"}),
+            "candidate-observations",
+        )
+
     def test_source_review_navigation_uses_only_read_only_original_fixture(self):
         selected = {"frontend/e2e/source-review-navigation.spec.ts"}
         self.assertEqual(fixture_mode(selected), "read-only")
