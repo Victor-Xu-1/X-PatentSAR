@@ -1162,6 +1162,8 @@ terminal product. General reaction-role/continuation ambiguities stay unresolved
 No second recognizer, store, execution queue or resident model is introduced.
 Existing exact-image/model raw cache identity remains unchanged; current original
 ownership, source pixels and chemistry must be revalidated before reuse.
+The owned batch cleanup also encloses input/option validation: a preflight refusal
+cannot leave an already-owned primary child resident or start candidate inference.
 
 SMILES schema6 and inventory2 declare `proved_numbered_products_only`. Formal,
 supplemental and reprint groups retain actual model observations; the existing

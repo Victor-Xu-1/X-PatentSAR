@@ -95,6 +95,19 @@ class TerminalRecognitionScopeTests(CandidateStageControls, unittest.TestCase):
             self.assertEqual(converter.engines["decimer"].calls, [])
             converter.close()
 
+    def test_batch_preflight_refusal_reaps_owned_engine_without_predictions(self):
+        for parameters in (
+            {"items": [self.plan().candidates[0]]},
+            {"items": [self.owner], "only_bound": False},
+            {"items": [self.owner], "jobs": "invalid"},
+        ):
+            converter = self.converter()
+            self.addCleanup(converter.close)
+            with self.subTest(parameters=parameters), self.assertRaises(ValueError):
+                converter.convert_batch(**parameters)
+            self.assertEqual(converter.engines["decimer"].calls, [])
+            self.assertTrue(converter.engines["decimer"].closed)
+
     def test_standalone_worker_does_not_probe_or_construct_models_for_empty_selection(
         self,
     ):

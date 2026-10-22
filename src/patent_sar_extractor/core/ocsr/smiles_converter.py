@@ -598,19 +598,19 @@ class SmilesConverter:
         """Bounded parallel image preparation feeding one owned model queue."""
         from .conversion_progress import ConversionProgress
 
-        if only_bound is not True:
-            raise ValueError("Unbound model execution is not supported")
-        filtered = list(items)
-        for item in filtered:
-            require_numbered_model_input(item)
-        if limit > 0:
-            filtered = filtered[:limit]
-        jobs = max(1, min(int(jobs or 1), 8))
-        progress = ConversionProgress(progress_path, len(filtered))
-        results = []
-        source_paths = []
-        started = time.monotonic()
         try:
+            if only_bound is not True:
+                raise ValueError("Unbound model execution is not supported")
+            filtered = list(items)
+            for item in filtered:
+                require_numbered_model_input(item)
+            if limit > 0:
+                filtered = filtered[:limit]
+            jobs = max(1, min(int(jobs or 1), 8))
+            progress = ConversionProgress(progress_path, len(filtered))
+            results = []
+            source_paths = []
+            started = time.monotonic()
             with ThreadPoolExecutor(max_workers=jobs) as executor:
                 # Only one small window is prepared ahead; inference is never duplicated.
                 for offset in range(0, len(filtered), jobs):
