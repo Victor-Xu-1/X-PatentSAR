@@ -14,6 +14,7 @@ from PIL import Image, ImageDraw
 
 from patent_sar_extractor.application.smiles_policy import _smiles_acceptance_errors
 from patent_sar_extractor.core.caption_source_windows import caption_read_window
+from patent_sar_extractor.core.ocsr.generation import observe_generation
 from patent_sar_extractor.core.ocsr.label_mask import MAX_BYTES, source_geometry
 from patent_sar_extractor.core.ocsr.run_smiles import (
     resolve_image_paths,
@@ -328,6 +329,8 @@ class OCSRLabelPreservationTests(unittest.TestCase):
             **prepared["result"],
             **source_checked_qc(qc_smiles("CCO"), prepared["stereo_evidence"]),
             "raw_smiles": "CCO",
+            "OCSR_engine": "decimer",
+            "generation": observe_generation(["<start>", "C", "C", "O", "<end>"])[1],
         }
         self.assertEqual(
             validate_stereo_record(record)["image_sha256"], record["image_hash"]
@@ -355,6 +358,8 @@ class OCSRLabelPreservationTests(unittest.TestCase):
             **prepared["result"],
             **source_checked_qc(qc_smiles("CCO"), prepared["stereo_evidence"]),
             "raw_smiles": "CCO",
+            "OCSR_engine": "decimer",
+            "generation": observe_generation(["<start>", "C", "C", "O", "<end>"])[1],
             "OCSR_quality_flag": "ok",
             "OCSR_status": "success",
             "model_fingerprint": "a" * 64,

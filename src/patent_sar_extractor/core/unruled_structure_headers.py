@@ -6,6 +6,7 @@ from itertools import pairwise
 from .activity_context_geometry import valid_box
 from .activity_grid_role_observation import observe_role_cells
 from .logical_column_partitions import context_captions, header_partitions
+from .role_text_capture import refine_role_text
 from .ruled_continuation_context import validate_page_grid
 from .source_geometry import SourceTokens
 from .source_observations import source_observation_status
@@ -63,9 +64,18 @@ def observe_unruled_header(page, tokens, nomination, original_pdf_sha256, *, gri
     groups = nomination["groups"]
     xs, ys = header_windows(groups, size, nomination["selection"], nomination["band"])
     bounds = [0, ys[0], size[0], ys[-1]]
-    reading = observe_role_cells(page, {"xs": xs, "ys": ys}, tokens, retain_frames=True)
+    reading = observe_role_cells(
+        page,
+        {"xs": xs, "ys": ys},
+        tokens,
+        retain_frames=True,
+        attach_source_frames=True,
+    )
     if reading is None:
         return None
+    refine_role_text(
+        page, reading, maximum_rows=8, maximum_row_height=12, allow_chunks=False
+    )
     return {
         "version": 1,
         "original_pdf_sha256": original_pdf_sha256,

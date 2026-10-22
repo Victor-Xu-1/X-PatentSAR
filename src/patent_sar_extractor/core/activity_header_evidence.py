@@ -16,6 +16,7 @@ from patent_sar_extractor.contracts import (
 )
 
 from .activity_context_geometry import validate_header_context_geometry
+from .activity_header_cells import empty_header_cell, header_leaf_cells
 from .activity_header_identity import detector_header_conflict
 from .activity_header_proof import valid_header_proof
 from .activity_models import ActivityRow
@@ -91,7 +92,13 @@ def validate_header_evidence(payload: dict) -> list[str]:
             ) and not valid_header_proof(proof):
                 raise ValueError("Unproved original header column contract")
             for observation in proof.get("observations", []):
-                for column in observation.get("columns", []):
+                for column in (
+                    cell
+                    for owner in observation.get("columns", [])
+                    for cell in header_leaf_cells(owner)
+                ):
+                    if empty_header_cell(column):
+                        continue  # Existing paired original absence, not missing text.
                     physical = "physical_header_lines" in column or any(
                         isinstance(part, dict)
                         and part.get("method") == "physical_header_line"

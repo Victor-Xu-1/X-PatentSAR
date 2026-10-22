@@ -8,6 +8,9 @@ import time
 import uuid
 from pathlib import Path
 
+from patent_sar_extractor.core.ocsr.generation import (
+    validate_generation_observation,
+)
 from patent_sar_extractor.core.ocsr.resource_budget import resident_budget_mb
 from patent_sar_extractor.core.ocsr.worker_process import (
     JsonLineWorker,
@@ -125,6 +128,7 @@ class OwnedOCSREngine(BaseOCSREngine):
             )
         with self._lock:
             started = time.monotonic()
+            raw_observation = None
             try:
                 self._start()
                 request_id = uuid.uuid4().hex
@@ -150,13 +154,23 @@ class OwnedOCSREngine(BaseOCSREngine):
                     raise WorkerProtocolError(
                         "OCSR prediction model fingerprint mismatch"
                     )
+                # Preserve only a bounded reply from this request and verified
+                # model, even if its later completion/metadata check refuses.
+                raw_observation = smiles
                 validate_observation_metadata(output)
+                complete = self.name != "decimer" or validate_generation_observation(
+                    output.get("generation"), smiles
+                )
                 self._requests += 1
                 self._starts = (
                     0  # A genuine protocol success restores the bounded restart budget.
                 )
                 return self._make_result(
-                    status="success",
+                    status="success" if complete else "failed",
+                    error=None
+                    if complete
+                    else "DECIMER token generation did not complete: "
+                    + output["generation"]["reason"],
                     raw_smiles=smiles,
                     elapsed_sec=time.monotonic() - started,
                     **{
@@ -168,6 +182,7 @@ class OwnedOCSREngine(BaseOCSREngine):
                             "model_confidence",
                             "device",
                             "peak_rss_mb",
+                            "generation",
                         )
                     },
                 )
@@ -182,4 +197,12 @@ class OwnedOCSREngine(BaseOCSREngine):
                 self._stop()
                 if isinstance(exc, TimeoutError):
                     return self._make_timeout_result(timeout)
-                return self._make_failed_result(self._last_failure)
+                return self._make_result(
+                    status="failed",
+                    error=self._last_failure,
+                    raw_smiles=raw_observation,
+                    model_fingerprint=self._identity["fingerprint"]
+                    if raw_observation is not None
+                    else None,
+                    elapsed_sec=time.monotonic() - started,
+                )

@@ -8,6 +8,7 @@ from typing import Any
 
 from patent_sar_extractor.contracts import STEREO_EVIDENCE_VERSION
 
+from .generation import validate_generation_observation
 from .label_mask_proof import validate_mask_proof
 from .smiles_qc import qc_smiles
 from .stereo_evidence import check_source_stereochemistry
@@ -55,6 +56,12 @@ def validate_stereo_observation(
     raw = record.get("raw_smiles")
     if not isinstance(raw, str) or not 0 < len(raw) <= 10000:
         raise ValueError("Source stereochemistry has no bounded raw model observation")
+    if record.get("OCSR_engine") not in {"decimer", "molscribe"}:
+        raise ValueError("Source observation has no supported native engine identity")
+    if record.get("OCSR_engine") == "decimer":
+        complete = validate_generation_observation(record.get("generation"), raw)
+        if not complete and record.get("OCSR_status") != "all_engines_failed":
+            raise ValueError("Incomplete DECIMER output cannot supply a molecule")
     qc = qc_smiles(raw)
     from .stereo_rescue_pass import validate_rescue_proof
 

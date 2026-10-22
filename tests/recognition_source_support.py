@@ -3,6 +3,7 @@
 import hashlib
 from pathlib import Path
 
+from patent_sar_extractor.core.ocsr.generation import observe_generation
 from patent_sar_extractor.core.ocsr.recognition_source_paths import (
     resolve_ocsr_image_path,
 )
@@ -23,6 +24,7 @@ def observation(binding, raw="CCO"):
         "ocsr_source_structure_id": binding.get("source_structure_id")
         or binding["structure_id"],
         "raw_smiles": raw,
+        "generation": observe_generation(["<start>", *raw, "<end>"])[1],
         "image_hash": hashlib.sha256(image.read_bytes()).hexdigest(),
         "ocsr_original_input": str(image),
         "source_image_path": str(image),

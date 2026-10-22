@@ -9,6 +9,7 @@ import selectors
 import subprocess
 import time
 
+from .generation import validate_generation
 from .resource_budget import resident_budget_mb, worker_resident_mb
 
 
@@ -17,6 +18,13 @@ class WorkerProtocolError(RuntimeError):
 
 
 def validate_observation_metadata(value: dict) -> None:
+    if "generation" in value:
+        try:
+            validate_generation(value["generation"])
+        except (TypeError, ValueError) as error:
+            raise WorkerProtocolError(
+                "OCSR returned invalid generated-token completion"
+            ) from error
     peak = value.get("peak_rss_mb")
     if peak is not None and (
         type(peak) not in {int, float}

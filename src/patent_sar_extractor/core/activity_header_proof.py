@@ -3,6 +3,7 @@
 import math
 from itertools import pairwise
 
+from .activity_header_cells import is_grid_column, valid_header_grid_column
 from .activity_header_identity import (
     compact_header,
     context_conflict,
@@ -22,6 +23,10 @@ def _score(value):
 
 
 def valid_header_column(column, index, header, band, dpi):
+    if is_grid_column(column):
+        return valid_header_grid_column(
+            column, index, header, band, dpi, valid_header_column
+        )
     if (
         not isinstance(column, dict)
         or type(column.get("physical_column")) is not int

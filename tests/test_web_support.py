@@ -248,6 +248,7 @@ def artifact_run(
             ],
         }
     )
+    from patent_sar_extractor.core.ocsr.generation import observe_generation
     from patent_sar_extractor.core.ocsr.smiles_qc import qc_smiles
     from patent_sar_extractor.core.ocsr.stereo_evidence import (
         observe_stereo_symbols,
@@ -266,6 +267,8 @@ def artifact_run(
             OCSR_quality_flag=screened["quality_flag"],
             OCSR_status="success",
             raw_smiles=record["smiles"],
+            OCSR_engine="decimer",
+            generation=observe_generation(["<start>", *record["smiles"], "<end>"])[1],
             image_hash=screened["stereochemistry"]["image_sha256"],
         )
     # This is genuine syntax/risk-screen contract data for an explicit controlled

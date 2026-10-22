@@ -90,7 +90,12 @@ def printed_model_identity(model_home: Path | None = None) -> dict:
         "adapter_version": DECIMER_ADAPTER_VERSION,
         "adapter": [
             (name, _digest(Path(__file__).parent / name))
-            for name in ("printed_model.py", "model_identity.py", "resource_budget.py")
+            for name in (
+                "printed_model.py",
+                "generation.py",
+                "model_identity.py",
+                "resource_budget.py",
+            )
         ]
         + [
             (
