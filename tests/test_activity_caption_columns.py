@@ -162,7 +162,7 @@ class CaptionColumnOwnershipTests(unittest.TestCase):
         )
         self.assertEqual(activity_evidence_errors(original, [0]), [])
         old, proof = next(iter(original["header_observations"].items()))
-        self.assertEqual(proof["column_contract"], 4)
+        self.assertEqual(proof["column_contract"], 5)
         self.assertEqual(proof["original_source"]["schema_version"], 3)
         for invalid in (None, "foreign", []):
             altered = {**proof, "original_source": invalid}

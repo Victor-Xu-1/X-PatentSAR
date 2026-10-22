@@ -57,7 +57,7 @@ class HeaderGridConsumerTests(unittest.TestCase):
             resolved = refine_scanned_header(
                 self.document[0], self.region, original, tokens=self.source_tokens
             )
-        self.assertEqual(resolved.header_resolution["column_contract"], 4)
+        self.assertEqual(resolved.header_resolution["column_contract"], 5)
         self.assertEqual(
             resolved.header_resolution["status"], "observed_header_consensus"
         )

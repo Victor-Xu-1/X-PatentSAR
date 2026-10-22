@@ -101,7 +101,7 @@ def refine_scanned_header(
 
     def resolution(status, **extra):
         evidence = {
-            "column_contract": 4 if captured_sources is not None else 1,
+            "column_contract": 5 if captured_sources is not None else 1,
             "status": status,
             "original_headers": list(original.raw_headers) if original else [],
             "original_context": original.context.raw_context if original else "",

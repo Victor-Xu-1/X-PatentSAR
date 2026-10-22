@@ -3,7 +3,12 @@
 import math
 from itertools import pairwise
 
-from .activity_header_cells import is_grid_column, valid_header_grid_column
+from .activity_header_boundary import header_boundary_matches, valid_header_boundary
+from .activity_header_cells import (
+    header_leaf_cells,
+    is_grid_column,
+    valid_header_grid_column,
+)
 from .activity_header_identity import (
     compact_header,
     context_conflict,
@@ -36,6 +41,7 @@ def valid_header_column(column, index, header, band, dpi):
         or type(column.get("render_dpi")) is not int
         or column.get("coordinate_space") != "original_pdf_points"
         or column.get("crosses_boundary") is not False
+        or not valid_header_boundary(column)
         or not _score(column.get("confidence"))
         or column.get("raw_text") != header
         or column.get("text") != header
@@ -89,12 +95,19 @@ def valid_header_column(column, index, header, band, dpi):
 
 def valid_header_proof(proof):
     """Recompute fields/units/columns/caption and original contradictions."""
-    if not valid_physical_discovery(proof, valid_header_column):
+
+    def discovery_column(column, *args):
+        return (
+            proof.get("column_contract") == 5 or "boundary_source" not in column
+        ) and valid_header_column(column, *args)
+
+    if not valid_physical_discovery(proof, discovery_column):
         return False
     if type(proof.get("column_contract")) is not int or proof[
         "column_contract"
-    ] not in {1, 2, 3, 4}:
+    ] not in {1, 2, 3, 4, 5}:
         return False
+    has_snapshot = proof["column_contract"] != 1
     if proof["column_contract"] == 1 and "original_source" in proof:
         return False
     source = proof.get("original_source")
@@ -103,7 +116,7 @@ def valid_header_proof(proof):
         return False
     if proof["column_contract"] == 3 and source_version != 2:
         return False
-    if proof["column_contract"] == 4 and source_version != 3:
+    if proof["column_contract"] in {4, 5} and source_version != 3:
         return False
     if (
         proof.get("conflicting_columns") != []
@@ -164,6 +177,20 @@ def valid_header_proof(proof):
         if candidate is None or candidate.first_data_row != len(matrix):
             return False
         candidates.append(candidate)
+        original_columns = source.get("columns") if isinstance(source, dict) else None
+        if has_snapshot and (
+            not isinstance(original_columns, list)
+            or len(original_columns) != len(columns)
+        ):
+            return False
+        for index, column in enumerate(columns):
+            for cell in header_leaf_cells(column):
+                if has_snapshot and not header_boundary_matches(
+                    cell, original_columns[index]
+                ):
+                    return False
+                if proof["column_contract"] != 5 and "boundary_source" in cell:
+                    return False  # Older contracts cannot lend new boundary authority.
     first, second = candidates
     if (
         tuple(map(compact_header, first.raw_headers))
@@ -172,7 +199,7 @@ def valid_header_proof(proof):
         or tuple(g.id_column for g in first.groups)
         != tuple(g.id_column for g in second.groups)
         or not first.context.table_id
-        and proof["column_contract"] not in {3, 4}
+        and proof["column_contract"] not in {3, 4, 5}
         or compact_header(first.context.raw_caption)
         != compact_header(second.context.raw_caption)
     ):
@@ -203,7 +230,7 @@ def valid_header_proof(proof):
             for candidate in candidates
         ):
             return False
-    if proof["column_contract"] in {2, 3, 4}:
+    if proof["column_contract"] in {2, 3, 4, 5}:
         for candidate in candidates:
             checked = header_source_conflicts(
                 proof.get("original_source"), band, originals, context, candidate

@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from itertools import pairwise
 
 from .activity_grid_cells import crosses_cell
+from .activity_header_boundary import resolve_header_boundary
 from .activity_header_cells import (
     MAX_HEADER_GRID_ROWS,
     compose_header_column,
@@ -98,20 +99,25 @@ def observe_header_columns(
             and detector_header_conflict(reading.detection_parts, reading.raw_text)
         )
         columns.append(
-            {
-                **reading.evidence(dpi, bounds),
-                "native_text": native_cell_text(tokens, bounds),
-                "physical_column": column,
-                "crosses_boundary": crossing,
-                **(
-                    {"detector_conflict": conflict}
-                    if reading.physical_header_lines is not None
-                    else {}
-                ),
-            }
+            resolve_header_boundary(
+                {
+                    **reading.evidence(dpi, bounds),
+                    "native_text": native_cell_text(tokens, bounds),
+                    "physical_column": column,
+                    "crosses_boundary": crossing,
+                    **(
+                        {"detector_conflict": conflict}
+                        if reading.physical_header_lines is not None
+                        else {}
+                    ),
+                },
+                tokens,
+            )
         )
         headers.append(reading.raw_text)
-        verified.append(bool(reading.value) and not crossing and not conflict)
+        verified.append(
+            bool(reading.value) and not columns[-1]["crosses_boundary"] and not conflict
+        )
     # The complete band has one source per column. Keep its original physical
     # row boundary instead of interpreting joined header lines as data rows.
     matrix = [[""] * len(headers) for _ in range(limit - 1)] + [headers]
