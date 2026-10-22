@@ -13,11 +13,8 @@ from patent_sar_extractor.core.activity_auxiliary_replay import (
 from patent_sar_extractor.core.activity_text import extract_text_tables
 from patent_sar_extractor.core.activity_text_capture import capture_text_page
 from patent_sar_extractor.core.activity_text_sources import text_page_qualified
-from patent_sar_extractor.core.source_geometry import source_layout
-from patent_sar_extractor.core.source_page_lines import (
-    native_page_lines,
-    observed_page_text,
-)
+from patent_sar_extractor.core.source_geometry import native_lines, source_layout
+from patent_sar_extractor.core.source_page_lines import observed_page_text
 from patent_sar_extractor.core.text_ocr.process import TextOCRCancelled
 from tests.test_auxiliary_cell_evidence import ControlledAuxiliary, primary
 from tests.test_declared_text_original import TEXT
@@ -34,7 +31,12 @@ class DeclaredTextRecoveryTests(unittest.TestCase):
         with fitz.open() as native:
             page = native.new_page(width=480, height=240)
             page.insert_text((40, 60), TEXT, fontsize=9)
-            self.proposals = native_page_lines(source_layout(page))
+            # Simulate the independent raster locator's original line boxes,
+            # not the native-source window partition being verified.
+            self.proposals = [
+                {"text": line["text"], "bbox": line["bbox"]}
+                for line in native_lines(source_layout(page))
+            ]
             image = page.get_pixmap(matrix=fitz.Matrix(3, 3), alpha=False)
             self.document.new_page(width=480, height=240).insert_image(
                 page.rect, stream=image.tobytes("png")

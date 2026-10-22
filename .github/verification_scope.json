@@ -16,6 +16,7 @@
     "tests/test_activity_context_windows.py",
     "tests/test_activity_continuation_ownership.py",
     "tests/test_activity_panel_order.py",
+    "tests/test_declared_text_recovery.py",
     "tests/test_native_text_windows.py"
   ],
   "python_modules": [
