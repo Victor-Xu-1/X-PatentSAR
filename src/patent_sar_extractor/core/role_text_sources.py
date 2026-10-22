@@ -84,7 +84,8 @@ def _role_scopes(payload):
             yield observation.get("page_no"), cells
 
 
-def _framed_cell(scope, view_index, cell_index, cell):
+def framed_role_cell(scope, view_index, cell_index, cell):
+    """Attach the one retained original frame, also for figure literal owners."""
     if "rendered_frames" not in scope:
         return cell
     frames = scope["rendered_frames"]
@@ -157,7 +158,7 @@ def role_text_cells(payload):
                     or (box[1], box[3]) not in y_cells
                 ):
                     raise ValueError("Original text leaves its original role cell")
-                cell = _framed_cell(scope, view_index, cell_index, cell)
+                cell = framed_role_cell(scope, view_index, cell_index, cell)
                 if (
                     scope.get("version") == CHARACTERIZATION_ROLE_SCHEMA_VERSION
                     and method != "native_cells"

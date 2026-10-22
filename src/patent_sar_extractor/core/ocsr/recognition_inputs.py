@@ -11,6 +11,7 @@ from patent_sar_extractor.core.catalog_reader import (
     read_catalog_entries,
 )
 from patent_sar_extractor.core.pipeline_rules import _label_key
+from patent_sar_extractor.core.plot_original_replay import plot_reference_sources
 from patent_sar_extractor.core.role_text_sources import role_text_cells
 
 _SOURCE_INPUT_FIELDS = (
@@ -42,6 +43,7 @@ class RecognitionPlan:
     supplemental: list[dict]
     reprints: list[dict]
     role_text: tuple[tuple[int, dict], ...] = ()
+    plot_references: tuple[dict, ...] = ()
 
     @property
     def work_items(self) -> list[dict]:
@@ -103,6 +105,7 @@ def recognition_inputs(payload: dict[str, Any]) -> RecognitionPlan:
         supplemental,
         reprints,
         role_text=tuple(role_text_cells(payload)),
+        plot_references=tuple(plot_reference_sources(payload)),
     )
 
 

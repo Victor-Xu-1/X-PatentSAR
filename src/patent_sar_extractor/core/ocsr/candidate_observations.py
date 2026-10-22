@@ -1,7 +1,7 @@
 """One source plan conserves detected images without inventing compound labels."""
 
 from collections import defaultdict
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from patent_sar_extractor.contracts import MAX_RECOGNITION_SOURCES
 
@@ -119,7 +119,9 @@ def build_candidate_plan(
     inventory["identity"] = inventory_digest(inventory)
     validate_candidate_scope(inventory)
     return CandidatePlan(
-        RecognitionPlan(*groups, role_text=proven.role_text), candidates, inventory
+        replace(proven, formal=groups[0], supplemental=groups[1], reprints=groups[2]),
+        candidates,
+        inventory,
     )
 
 

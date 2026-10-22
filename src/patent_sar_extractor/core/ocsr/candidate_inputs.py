@@ -29,13 +29,18 @@ def load_source_observation_plan(
     )
 
     if original_binding_sources(
-        plan.proven.work_items, role_text=plan.proven.role_text
+        plan.proven.work_items,
+        role_text=plan.proven.role_text,
+        plot_references=plan.proven.plot_references,
     ):
         import fitz
 
         with fitz.open(pdf_path) as document:
             errors = original_binding_source_errors(
-                document, plan.proven.work_items, role_text=plan.proven.role_text
+                document,
+                plan.proven.work_items,
+                role_text=plan.proven.role_text,
+                plot_references=plan.proven.plot_references,
             )
         if errors:
             raise ValueError(

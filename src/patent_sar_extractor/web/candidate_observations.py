@@ -98,13 +98,18 @@ def read_source_observations(files, payloads, original_sha, *, open_original=Non
         )
 
         if original_binding_sources(
-            plan.proven.work_items, role_text=plan.proven.role_text
+            plan.proven.work_items,
+            role_text=plan.proven.role_text,
+            plot_references=plan.proven.plot_references,
         ):
             if open_original is None:
                 raise ValueError("Original PDF is required for binding/source replay")
             with open_original() as document:
                 if original_binding_source_errors(
-                    document, plan.proven.work_items, role_text=plan.proven.role_text
+                    document,
+                    plan.proven.work_items,
+                    role_text=plan.proven.role_text,
+                    plot_references=plan.proven.plot_references,
                 ):
                     raise ValueError("Original binding/source replay failed")
     except (OSError, ValueError, TypeError, KeyError, OverflowError, WebError):
