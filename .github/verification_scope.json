@@ -1,45 +1,41 @@
 {
   "schema_version": 1,
-  "base_sha": "a6a9de2fe4f76597d2f4a6b354476c8b90389006",
+  "base_sha": "ea9f3c49b8e155cb6cf83fc877d3fe4b6ee8796a",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
     "docs/OPERATIONS.md",
     "docs/PROJECT_MANIFEST.md",
-    "frontend/e2e/sar-catalog.spec.ts",
+    "frontend/e2e/sar-local-comparison.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/api/sarCatalogWire.ts",
-    "frontend/src/api/sarStudyApi.ts",
-    "frontend/src/api/sarStudyDecoders.ts",
-    "frontend/tests/sar-catalog-fixtures.ts",
-    "frontend/tests/sar-catalog-wire.test.ts",
-    "frontend/tests/sar-catalog.test.tsx",
-    "frontend/tests/sar-study-api.test.tsx",
-    "src/patent_sar_extractor/contracts.py",
-    "src/patent_sar_extractor/web/sar/study_catalog_wire.py",
-    "src/patent_sar_extractor/web/sar/study_results.py",
-    "src/patent_sar_extractor/web/sar/study_routes.py",
-    "tests/test_sar_catalog.py",
-    "tests/test_sar_catalog_wire.py"
+    "frontend/src/features/sar/study/MolecularImage.tsx",
+    "frontend/src/features/sar/study/StudyImage.tsx",
+    "frontend/src/features/sar/study/StudyRegionMap.tsx",
+    "frontend/src/styles/sar-matrix.css",
+    "frontend/src/styles/sar-network.css",
+    "frontend/src/styles/sar-study.css",
+    "frontend/tests/sar-reference-focus.test.tsx",
+    "frontend/tests/sar-region-pointer.test.tsx",
+    "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
-    "tests.test_sar_catalog",
-    "tests.test_sar_catalog_wire",
-    "tests.test_sar_report_preparation",
-    "tests.test_sar_study_api",
     "tests.test_release_policy.ReleaseNumberTests",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/sar-catalog-wire.test.ts",
-    "frontend/tests/sar-catalog.test.tsx",
-    "frontend/tests/sar-study-api.test.tsx",
+    "frontend/tests/sar-reference-focus.test.tsx",
+    "frontend/tests/sar-reference-pane.test.tsx",
+    "frontend/tests/sar-region-pointer.test.tsx",
+    "frontend/tests/sar-region-map-interaction.test.tsx",
+    "frontend/tests/sar-preview-layout.test.tsx",
     "frontend/tests/sar-study-results.test.tsx",
-    "frontend/tests/sar-molecular-focus.test.tsx"
+    "frontend/tests/sar-molecular-focus.test.tsx",
+    "frontend/tests/sar-matrix.test.tsx"
   ],
   "browser_tests": [
-    "frontend/e2e/sar-catalog.spec.ts"
+    "frontend/e2e/sar-region-pointer.spec.ts",
+    "frontend/e2e/sar-local-comparison.spec.ts"
   ]
 }

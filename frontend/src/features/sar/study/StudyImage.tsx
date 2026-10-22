@@ -1,14 +1,12 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Expand } from 'lucide-react';
+import { useCallback, useMemo } from 'react';
 import { sarStudyApi } from '../../../api/sarStudyApi';
 import { ContractError } from '../../../api/validation';
 import type { StudyDrawing, StudyDrawingKind } from '../../../api/sarStudyTypes';
 import { Loading } from '../../../components/Feedback';
-import { useTranslation } from '../../../i18n';
 import { SARFailure } from '../SARFailure';
 import { safeDrawing } from '../safeDrawing';
 import { useSARResource } from '../useSARResource';
-import { MolecularFocus } from './MolecularFocus';
+import { MolecularImage } from './MolecularImage';
 export function StudyImage({
   jobId,
   kind,
@@ -33,10 +31,6 @@ export function StudyImage({
   /** A receipt-validated paired layout, using the same passive image/focus authority. */
   providedDrawing?: StudyDrawing;
 }) {
-  const { t } = useTranslation(),
-    [failed, setFailed] = useState<string | null>(null),
-    [loaded, setLoaded] = useState<string | null>(null),
-    [expanded, setExpanded] = useState<{ identity: string; url: string } | null>(null);
   const identity = JSON.stringify([
     'sar:study-drawing',
     jobId,
@@ -61,28 +55,6 @@ export function StudyImage({
       return { value: null, error: error as Error };
     }
   }, [source, providedDrawing, identifier]);
-  const ready = Boolean(
-    inspectable &&
-    active &&
-    (providedDrawing ? providedDrawing.id === identifier : resource.validated) &&
-    image.value &&
-    loaded === image.value.url &&
-    failed !== image.value.url,
-  );
-  // Drop ownership before commit: returning to a view must not reopen an old dialog.
-  if (expanded && (!ready || expanded.identity !== identity)) setExpanded(null);
-  const drawing = image.value && failed !== image.value.url && (
-    <img
-      src={image.value.url}
-      alt={label}
-      style={{ aspectRatio: image.value.aspectRatio }}
-      onLoad={inspectable ? () => setLoaded(image.value!.url) : undefined}
-      onError={() => setFailed(image.value!.url)}
-    />
-  );
-  function expand() {
-    if (ready && image.value) setExpanded({ identity, url: image.value.url });
-  }
   return (
     <figure className="sar-study-image">
       {!providedDrawing && resource.loading && <Loading />}
@@ -90,41 +62,16 @@ export function StudyImage({
         <SARFailure error={resource.error} onRetry={resource.reload} />
       )}
       {image.error && <SARFailure error={image.error} />}
-      {drawing &&
-        (inspectable && inspectionTrigger === 'image' ? (
-          <button
-            type="button"
-            className="sar-image-focus-trigger"
-            aria-label={t('放大结构 {identifier}', { identifier: label })}
-            disabled={!ready}
-            onClick={expand}
-          >
-            {drawing}
-          </button>
-        ) : (
-          drawing
-        ))}
-      {ready && image.value && inspectionTrigger === 'control' && (
-        <button
-          type="button"
-          className="icon-button sar-image-focus-action"
-          aria-label={t('放大结构 {identifier}', { identifier: label })}
-          onClick={expand}
-        >
-          <Expand size={17} />
-        </button>
-      )}
-      {ready && expanded?.identity === identity && expanded.url === image.value?.url && (
-        <MolecularFocus
-          key={identity}
-          url={expanded.url}
-          label={label}
-          onClose={() => setExpanded(null)}
-        />
-      )}
-      {image.value && failed === image.value.url && (
-        <p role="alert">{t('RDKit 结构图加载失败。')}</p>
-      )}
+      <MolecularImage
+        image={image.value}
+        identity={identity}
+        label={label}
+        authorized={
+          active && (providedDrawing ? providedDrawing.id === identifier : resource.validated)
+        }
+        inspectable={inspectable}
+        inspectionTrigger={inspectionTrigger}
+      />
     </figure>
   );
 }

@@ -28,6 +28,33 @@ for (const width of [390, 800, 1672]) {
     await expect(
       matrix.getByRole('table', { name: 'Structure comparison', exact: true }),
     ).toBeVisible();
+    const map = network.locator('.sar-reference-map-image');
+    await page.waitForFunction(() => {
+      const image = document.querySelector<HTMLImageElement>('.sar-reference-map-image img');
+      return image?.complete && image.naturalWidth > 0;
+    });
+    const label = (await map.locator('img').getAttribute('alt'))!;
+    const source = await map.locator('img').getAttribute('src');
+    const enlarge = map.getByRole('button', { name: 'Enlarge structure ' + label, exact: true });
+    await enlarge.click();
+    const focus = page.getByRole('dialog', { name: 'Molecular preview · ' + label, exact: true });
+    await expect(focus.getByRole('img', { name: label, exact: true })).toHaveAttribute(
+      'src',
+      source!,
+    );
+    await focus.press('Escape');
+    await expect(enlarge).toBeFocused();
+    if (width > 1000) {
+      const left = await network.locator('.sar-reference-map-card').boundingBox();
+      const right = await matrix.boundingBox();
+      expect(left!.x + left!.width).toBeLessThan(right!.x);
+      expect(Math.abs(left!.y - right!.y)).toBeLessThan(30);
+      expect(
+        await network
+          .getByRole('textbox', { name: 'Find a core ID', exact: true })
+          .evaluate((node) => node.getBoundingClientRect().width),
+      ).toBeLessThanOrEqual(320);
+    }
     await expect.poll(() => lastSelections?.getAll('molecule_id').length ?? 0).toBeGreaterThan(0);
     const ids = lastSelections!.getAll('molecule_id'),
       regions = lastSelections!.getAll('region_id');
