@@ -1,5 +1,22 @@
 # Operations and troubleshooting
 
+## Padded header locators versus original cell ownership
+
+A wide page OCR box alone need not invalidate a readable closed table header.
+Inspect its retained `boundary_source` and unchanged source window: only the
+existing isolated four-sided original frame can resolve that geometric warning.
+An open/touching/unknown frame, native witness, known scientific disagreement or
+weak final text still refuses. No spelling repair or confidence threshold change
+is involved. Configured auxiliary OCR may use its existing bounded unresolved
+path; complete primary cells do not load it to vote.
+
+Current activity evidence is schema39/extractor51 with column contract5.
+Historical raw PDF/OCR/model assets and manual corrections remain intact; never
+retag an old activity artifact or alter a failed task to claim current acceptance.
+The new boundary witness must match the complete original snapshot and normal
+original-pixel replay. Generated source checks are not model-accuracy or private
+patent acceptance. Actual extraction and SAR acceptance still use the frontend.
+
 ## Parallel activity sources execute after their original parent
 
 The coordinate producer and saved-family reader now share page/left/top source

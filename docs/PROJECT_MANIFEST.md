@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- Header-cell boundary authority: `activity_header_boundary` adapts the SAME
+  original column reader and isolated closed-frame SDK. Raster locator overlap
+  may resolve only with unchanged full source/pixels and retained literal
+  `boundary_source`; native, qualified claim, open/attached/malformed/budget and
+  text-quality refusals stay active. Column contract5 replays every leaf against
+  the original header snapshot, including witness omission/downgrade rejection.
+  Activity39/extractor51 refresh derived proof only. Existing raw observations,
+  human audit, coverage20/Binding57/SMILES6, queues, APIs/SQL, models, optional
+  activation, dependencies and SAR potency rules remain unchanged. Older entries
+  below are release history; no parallel parser, source store or recognizer exists.
+
 - Activity execution order authority: `activity_context_geometry` supplies the
   shared page/left/top dependency key to coordinate extraction and saved-family
   replay. It orders existing permitted source edges; it does not grant an edge

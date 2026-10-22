@@ -1,5 +1,24 @@
 # X-PatentSAR architecture
 
+## Closed original header-cell boundaries
+
+`activity_header_boundary` is the existing column reader's optional geometric
+adapter. A raster page locator that overlaps a cell edge is retained verbatim in
+`boundary_source`; it may cease to block that column only when the SAME full
+original cell has a proved isolated four-sided text frame. It never changes
+source words, scores, boxes, physical rows or pixels. Qualified centre-owned
+endpoint/unit/context claims and native witnesses still constrain the full-cell
+read. Unproved/open/attached frames and malformed sources remain unresolved.
+
+Column contract5 compares each leaf witness with the projection of the existing
+original header snapshot. JSON/rehashed flags, omitted witnesses or a downgrade
+to an older contract cannot manufacture boundary authority. Ordinary and
+optional auxiliary observations retain the same frame and original-pixel replay;
+no additional recognizer, inference pass or evidence store is introduced. Activity39 and
+extractor51 refresh affected derived evidence; old raw observations, original
+assets, manual audit, Binding57/SMILES6/coverage20 and SAR policies are unchanged.
+Confidence remains an admission gate, not a calibrated correctness guarantee.
+
 ## Activity table execution follows original source dependencies
 
 `activity_context_geometry.table_dependency_order` is the single visitation key
