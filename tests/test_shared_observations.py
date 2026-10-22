@@ -1,6 +1,7 @@
 """Same original/model/image reuses raw observations, never old QA or properties."""
 
 import hashlib
+import unittest
 from pathlib import Path
 from unittest.mock import patch
 
@@ -205,3 +206,13 @@ class SharedObservationTests(ExistingCompoundCompletionTests):
         self.assertEqual(
             self.service.effective_compound(self.project.id, "Compound 8").smiles, "CCO"
         )
+
+
+def load_tests(_loader, _tests, _pattern):
+    # Keep every cache-specific case; its fixture's completion scenarios are
+    # already selected through test_existing_compound_completion.
+    return unittest.TestSuite(
+        SharedObservationTests(name)
+        for name in sorted(SharedObservationTests.__dict__)
+        if name.startswith("test_")
+    )

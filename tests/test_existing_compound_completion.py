@@ -586,19 +586,6 @@ def load_tests(loader, _tests, _pattern):
             "test_ci_version_check_precedes_dependencies_and_stays_read_only"
         )
     )
-    # Only this cache class's six own cases; do not duplicate its inherited
-    # completion scenarios or imported TestCases through module discovery.
-    for method in (
-        "test_import_does_not_write_compounds_audit_or_acceptance",
-        "test_exact_key_conflict_cannot_overwrite_existing_raw_observation",
-        "test_foreign_model_and_symlink_cache_are_rejected",
-        "test_import_busy_guard_uses_same_workspace_lease",
-        "test_per_original_cache_isolation_and_cli_contract",
-        "test_auto_published_raw_cache_reuses_next_project_without_model_loading",
-    ):
-        suite.addTests(
-            loader.loadTestsFromName(
-                "test_shared_observations.SharedObservationTests." + method
-            )
-        )
+    # Shared cache cases have their own explicitly selected module. Do not
+    # import/repeat them here under a second module identity.
     return suite
