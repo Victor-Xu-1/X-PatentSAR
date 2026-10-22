@@ -157,10 +157,15 @@ class CaptionColumnOwnershipTests(unittest.TestCase):
                 coverage_errors(changed, [0], rows=parsed.rows)
 
     def test_saved_header_cannot_forge_a_shared_span_or_downgrade_its_contract(self):
-        original = (
-            test_activity_context_windows.ActivityContextWindowTests().raster_artifact()
+        fixture = test_activity_context_windows.ActivityContextWindowTests()
+        self.addCleanup(fixture.doCleanups)
+        original = fixture.raster_artifact()
+        self.assertEqual(
+            activity_evidence_errors(
+                original, [0], open_original=fixture.raster_original
+            ),
+            [],
         )
-        self.assertEqual(activity_evidence_errors(original, [0]), [])
         old, proof = next(iter(original["header_observations"].items()))
         self.assertEqual(proof["column_contract"], 5)
         self.assertEqual(proof["original_source"]["schema_version"], 3)

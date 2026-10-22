@@ -7,14 +7,22 @@ regressions, not native model accuracy evaluation or private PDF processing.
 import copy
 import json
 import unittest
+from contextlib import nullcontext
 from itertools import cycle
 from unittest.mock import patch
 
 import fitz
 
+from patent_sar_extractor.core.activity_auxiliary_replay import (
+    original_activity_source_errors,
+)
 from patent_sar_extractor.core.activity_header_columns import (
     HeaderColumns,
     observe_header_columns,
+)
+from patent_sar_extractor.core.activity_header_evidence import (
+    proof_id,
+    validate_header_evidence,
 )
 from patent_sar_extractor.core.activity_header_observation import refine_scanned_header
 from patent_sar_extractor.core.activity_header_pair import observe_header_pair
@@ -36,9 +44,21 @@ class HeaderBoundaryFrameTests(unittest.TestCase):
         if frame:
             for left, right in zip(self.region["xs"], self.region["xs"][1:]):
                 page.draw_rect(fitz.Rect(left, 70, right, 112), width=0.4)
+                page.draw_rect(fitz.Rect(left, 112, right, 145), width=0.4)
         if attached:
             page.draw_line((90, 88), (116, 88), width=0.4)
-        return page
+        return self.scan(page)
+
+    def scan(self, page):
+        # This is a raster observation: every consumer receives its actual scan,
+        # not an empty native-witness declaration over a native-text document.
+        scan = self.enterContext(fitz.open())
+        original = scan.new_page(width=300, height=200)
+        original.insert_image(
+            original.rect,
+            stream=page.get_pixmap(matrix=fitz.Matrix(4, 4)).tobytes("png"),
+        )
+        return original
 
     def locators(self, text="Unknown", confidence=0.2, *, native=False):
         observed = token(text, confidence, 135, 86)
@@ -147,7 +167,10 @@ class HeaderBoundaryFrameTests(unittest.TestCase):
                 context_from_text("Table 9. Binding assay"), [["No.", "Unknown"]]
             )
             result = refine_scanned_header(page, self.region, original, tokens=tokens)
-        return page, json.loads(json.dumps(result.header_resolution))
+        proof = json.loads(json.dumps(result.header_resolution))
+        proof["page_no"] = 1
+        proof["table_bbox"] = [20, 70, 250, 145]
+        return page, proof
 
     def test_complete_saved_proof_and_original_replay_preserve_the_boundary_witness(
         self,
@@ -157,6 +180,41 @@ class HeaderBoundaryFrameTests(unittest.TestCase):
         self.assertTrue(valid_header_proof(proof))
         for view in proof["observations"]:
             self.assertTrue(original_cell_frame_matches(view["columns"][1], page))
+
+    def test_saved_source_inventory_replays_new_boundary_proof_against_actual_scan(
+        self,
+    ):
+        page, proof = self.proof()
+        payload = {
+            "header_observations": {proof_id(proof): proof},
+            "rows": [],
+            "coverage": {
+                "regions": [
+                    {
+                        "page_no": 1,
+                        "bbox": proof["table_bbox"],
+                        "grid_axes": self.region,
+                    }
+                ]
+            },
+        }
+
+        def read():
+            return nullcontext(page.parent)
+
+        self.assertEqual(validate_header_evidence(payload), [])
+        self.assertEqual(
+            original_activity_source_errors(payload, open_original=read), []
+        )
+        self.assertIn(
+            "Original PDF is required",
+            " ".join(original_activity_source_errors(payload)),
+        )
+        page.draw_line((150, 74), (150, 108), width=0.5)
+        self.assertIn(
+            "original page pixels",
+            " ".join(original_activity_source_errors(payload, open_original=read)),
+        )
 
     def test_missing_changed_or_old_contract_boundary_witness_cannot_be_rehashed(self):
         _, proof = self.proof()
@@ -234,6 +292,7 @@ class HeaderBoundaryFrameTests(unittest.TestCase):
         for left, right in zip(self.region["xs"], self.region["xs"][1:]):
             for top, bottom in ((70, 98), (98, 124)):
                 page.draw_rect(fitz.Rect(left, top, right, bottom), width=0.4)
+        page = self.scan(page)
         parts = list(self.locators()) + [token("nM", 0.99, 124, 112)]
         tokens = source_tokens(parts)
         replies = cycle(("No.", "IC50", "nM"))
