@@ -15,6 +15,17 @@ INTERMEDIATE_TERM = rf"(?:Intermediates?|{INTERMEDIATE_CJK})"
 CATALOG_COMPOUND_CJK = r"(?:化合物|实施例|實施例|実施例|终产物|終產物|最終生成物)"
 
 _KIND = re.compile(INTERMEDIATE_TERM, re.IGNORECASE)
+_CASE_BOUNDARY = re.compile(r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
+
+
+def role_words(text: str) -> str:
+    """Expose literal case boundaries for roles; do not repair source characters.
+
+    The shared projection does not extend identifier/measurement grammar or
+    segment unknown lower-case strings with a guessed vocabulary. Raw text is
+    retained by each existing source owner, never replaced by this projection.
+    """
+    return _CASE_BOUNDARY.sub(" ", text)
 
 
 def is_intermediate_kind(value: object) -> bool:

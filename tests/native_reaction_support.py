@@ -116,7 +116,9 @@ class NativeReactionFixture:
         self.molecule("S1", 70, 100)
         self.molecule("S2", 280, 100)
 
-    def saved_source(self, *, filled=False, source_transform=None):
+    def saved_source(
+        self, *, filled=False, source_transform=None, source_setup=None, terminal="S2"
+    ):
         from recognition_source_support import complete_observation_artifact
 
         from patent_sar_extractor import contracts
@@ -124,21 +126,25 @@ class NativeReactionFixture:
         from patent_sar_extractor.core.binding_artifacts import write_binding_result
         from patent_sar_extractor.core.structure_inventory import inventory_packet
 
-        self.pair()
-        self.arrow((180, 145), (250, 145), filled=filled)
+        if source_setup is None:
+            self.pair()
+            self.arrow((180, 145), (250, 145), filled=filled)
+        else:
+            source_setup()
         if source_transform is not None:
             source_transform()
         pdf = self.root / "original.pdf"
         pdf.write_bytes(self.document.tobytes(no_new_id=True))
         original_sha = hashlib.sha256(pdf.read_bytes()).hexdigest()
-        binding = self.assert_product("S2")
+        binding = self.assert_product(terminal)
+        count = len(self.structures)
         payload = write_binding_result(
             self.root / "structure_bindings",
             patent_id="Synthetic",
             bindings=[binding],
             detected_style="native_original_route",
             include_intermediates=False,
-            total_structures=2,
+            total_structures=count,
             total_compound_blocks=1,
             table_pages=[],
             table_covered_count=0,
@@ -152,7 +158,7 @@ class NativeReactionFixture:
             **contracts.artifact_identity(
                 contracts.STRUCTURES_SCHEMA, contracts.STRUCTURES_SCHEMA_VERSION
             ),
-            "total_structures": 2,
+            "total_structures": count,
             "structures": [
                 {
                     "structure_id": s["id"],
@@ -169,7 +175,7 @@ class NativeReactionFixture:
                         "page_no": 1,
                         "status": "detected",
                         "scope": "full_page",
-                        "candidates": 2,
+                        "candidates": count,
                     }
                 ],
             ),

@@ -2,7 +2,7 @@
 
 import re
 
-from .source_role_terms import CATALOG_COMPOUND_CJK, INTERMEDIATE_CJK
+from .source_role_terms import CATALOG_COMPOUND_CJK, INTERMEDIATE_CJK, role_words
 from .source_table_markers import TABLE_CAPTION_START, caption_table_marker
 
 _NONFINAL = re.compile(
@@ -15,7 +15,6 @@ _COMPOUNDS = re.compile(
     rf"|{CATALOG_COMPOUND_CJK}",
     re.IGNORECASE,
 )
-_CASE_BOUNDARY = re.compile(r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
 _NEGATION = re.compile(
     r"\b(?:not|no|without|except|excluding)\s+"
     r"(?:(?:a|an|any|the|these|those|such)\s+)?$"
@@ -25,19 +24,8 @@ _NEGATION = re.compile(
 )
 
 
-def _role_words(text):
-    """Expose literal case boundaries; never replace characters or source text.
-
-    PDF word extraction and OCR may join title words without changing their
-    case. Only observable lower/upper or acronym/title-case boundaries qualify;
-    unknown lower-case strings are not segmented with a guessed vocabulary.
-    This projection is catalogue-only, not identifier or measurement repair.
-    """
-    return _CASE_BOUNDARY.sub(" ", text)
-
-
 def nonfinal_catalog_text(text):
-    return bool(isinstance(text, str) and _NONFINAL.search(_role_words(text)))
+    return bool(isinstance(text, str) and _NONFINAL.search(role_words(text)))
 
 
 def continuation_title(text):
@@ -68,7 +56,7 @@ def catalog_title_role(text):
     if start is None:
         return "unknown"
     marker = caption_table_marker(text)
-    title = _role_words(text[marker.end() if marker else start.end() :])
+    title = role_words(text[marker.end() if marker else start.end() :])
     nonfinal = tuple(_NONFINAL.finditer(title))
     compounds = tuple(_COMPOUNDS.finditer(title))
     # A negative category is not positive evidence for either admission or
@@ -101,7 +89,7 @@ def catalog_title_namespace(text):
     """
     if catalog_title_role(text) != "compound":
         return ""
-    words = _role_words(text)
+    words = role_words(text)
     namespaces = set()
     if re.search(r"\bcompounds?\b|化合物", words, re.IGNORECASE):
         namespaces.add("compound")

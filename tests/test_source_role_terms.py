@@ -10,6 +10,8 @@ from patent_sar_extractor.core.source_cell_claims import cell_source_conflict
 from patent_sar_extractor.core.source_section_roles import (
     heading_list_hint,
     nonfinal_original_label,
+    procedure_heading_boundary,
+    scheme_heading_boundary,
     section_heading,
 )
 from patent_sar_extractor.web.sar.csv_inputs import mapped_inputs
@@ -20,6 +22,36 @@ INTERMEDIATE_LABELS = ("中间体", "中間体", "中間體")
 
 
 class SourceRoleTermTests(unittest.TestCase):
+    def test_explicitly_separate_schemes_are_literal_context_boundaries(self):
+        for text in (
+            "Alternative product",
+            "AlternativeProduct",
+            "IndependentReaction",
+            "Alternative synthetic route",
+            "Independent reaction",
+            "Separate preparation",
+            "Comparative experiment",
+            "另一条合成路线",
+            "替代产物",
+        ):
+            with self.subTest(text=text):
+                self.assertTrue(scheme_heading_boundary(text))
+                self.assertTrue(procedure_heading_boundary(text))
+                self.assertIsNone(section_heading(text))
+
+    def test_context_words_inside_a_statement_are_not_fabricated_headings(self):
+        for text in (
+            "DMF, 80 C, 2 h",
+            "An alternative product was not observed",
+            "The alternative route is discussed below",
+            "Alternative conditions: 40 C",
+            "Other solvents",
+            "Compound I-255",
+            "Separate" * 1000,
+        ):
+            with self.subTest(text=text):
+                self.assertFalse(scheme_heading_boundary(text))
+
     def test_mixed_catalogue_keeps_explicit_final_categories_instead_of_excluding_all(
         self,
     ):

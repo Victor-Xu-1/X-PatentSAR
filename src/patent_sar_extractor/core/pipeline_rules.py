@@ -427,7 +427,7 @@ def annotate_binding_accuracy(binding: dict[str, Any]) -> dict[str, Any]:
         )
     elif exact_original_heading:
         reasons.append(
-            "exact original heading and complete native reaction terminal proof"
+            "exact original heading and complete replayed reaction-source interpretation"
             if rule == "original_heading_reaction_product"
             else "exact original heading and unique standalone diagram before procedure"
         )
