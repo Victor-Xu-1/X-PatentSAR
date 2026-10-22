@@ -108,7 +108,14 @@ class HeadingPanelScopeTests(LateralStructureControls, unittest.TestCase):
             )
             self.assertFalse(original_frame_path(path, page, None))
 
-    def panel_source(self, labels=("I-017B", "205"), *, raster=False, variant=None):
+    def panel_source(
+        self,
+        labels=("I-017B", "205"),
+        *,
+        raster=False,
+        variant=None,
+        mutate_panels=None,
+    ):
         def original_panels(document, records):
             page = document.new_page(width=660, height=720)
             for left, label in zip((40, 360), labels, strict=True):
@@ -155,6 +162,8 @@ class HeadingPanelScopeTests(LateralStructureControls, unittest.TestCase):
                 records[-2]["bbox_pdf"][2] = 310
             elif variant == "crossing_text":
                 page.insert_text((285, 240), "Unresolved extra text", fontsize=10)
+            if mutate_panels is not None:
+                mutate_panels(page, records)
 
         return self.run_case(mutate_document=original_panels, raster=raster)
 

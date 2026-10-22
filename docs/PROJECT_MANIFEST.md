@@ -1,5 +1,20 @@
 # Project governance manifest
 
+- Original reaction source authority: `reaction_page_source` chooses native
+  paintedv2 or whole-original pixelv3 observation from actual image layout,
+  feeding the sole complete route graph and original replay. Pixel primitives
+  have geometry only, with full200dpi source/RGB identity and400/600dpi support
+  frames; no invented native paint or hidden-vector fallback. Actual original
+  pixel axes bound information, source/device supports bound paint and analytic
+  uncertainty corridors replace the shaft-length connection heuristic. Every
+  component/candidate survives as proved source or explicit blocker/refusal.
+  `reaction_pixel_frame` reuses only literal caller-proved enclosing rules and
+  existing joints, never removes unknown/interior ink.8M pixels/20k components/
+  100k per arrow/4096 image instances and existing1MiB proof bounds stay explicit.
+  Binding56/binder67 refresh derived source admission only. No new recognizer,
+  graph, writer, queue, dependency, activation, raw/manual/history edits, activity/
+  SMILES/model/rescue/API/SQL/SAR/potency changes or all-format accuracy claim.
+
 - Original enclosure authority: `heading_panel_scope` shares original grid and
   pixel SDKs, source budgets and call-local memoization. It bounds a declaration
   only to a unique physically closed content cell, keeping complete page drawing/
@@ -9,7 +24,8 @@
   original pixels with no OCR. `reaction_frame` distinguishes only the exact
   proved opaque rectangle stroke, never its interior/unsupported ink. There is
   no second source detector, model, queue, writer or acceptance authority.
-  Binding55/binder66 refresh derived source proof; originals/raw/manual audits,
+  Original Binding55/binder66 are superseded by current Binding56/binder67;
+  originals/raw/manual audits,
   activity/SMILES/models/rescue/environment/API/SQL/SAR are unchanged.
 
 - Molecular image presentation authority: `MolecularImage` shares passive SVG

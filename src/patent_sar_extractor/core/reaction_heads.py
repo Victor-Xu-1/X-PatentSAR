@@ -18,7 +18,7 @@ def _dark(color):
 
 def head_bounds(head, *, padding=0):
     points = head["points"]
-    pad = padding + head["stroke_width"] / 2
+    pad = padding + head.get("stroke_width", 0) / 2
     return [
         min(p[0] for p in points) - pad,
         min(p[1] for p in points) - pad,
@@ -27,13 +27,35 @@ def head_bounds(head, *, padding=0):
     ]
 
 
-def validate_heads(heads, size):
+def _native_style(head):
+    width = head["stroke_width"]
+    return bool(
+        type(width) in {int, float}
+        and math.isfinite(width)
+        and 0 <= width <= 4
+        and _dark(head["fill_color"])
+        and (
+            head["stroke_color"] is None
+            and width == 0
+            or head["stroke_color"] is not None
+            and width > 0
+            and _dark(head["stroke_color"])
+        )
+    )
+
+
+def validate_heads(heads, size, *, geometry_only=False):
     if not isinstance(heads, list) or len(heads) > MAX_FILLED_HEADS:
         raise ValueError("Native filled-head inventory exceeds its bound")
     for head in heads:
         if (
             not isinstance(head, dict)
-            or set(head) != {"points", "stroke_width", "fill_color", "stroke_color"}
+            or set(head)
+            != (
+                {"points"}
+                if geometry_only
+                else {"points", "stroke_width", "fill_color", "stroke_color"}
+            )
             or not isinstance(head["points"], list)
             or len(head["points"]) != 3
             or any(
@@ -43,16 +65,8 @@ def validate_heads(heads, size):
                 or not all(0 <= p[i] <= size[i] for i in range(2))
                 for p in head["points"]
             )
-            or type(head["stroke_width"]) not in {int, float}
-            or not math.isfinite(head["stroke_width"])
-            or not 0 <= head["stroke_width"] <= 4
-            or not _dark(head["fill_color"])
-            or (
-                head["stroke_color"] is None
-                and head["stroke_width"] != 0
-                or head["stroke_color"] is not None
-                and (not _dark(head["stroke_color"]) or head["stroke_width"] == 0)
-            )
+            or not geometry_only
+            and not _native_style(head)
         ):
             raise ValueError("Malformed native filled-head observation")
         a, b, c = head["points"]

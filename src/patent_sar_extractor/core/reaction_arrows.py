@@ -69,7 +69,7 @@ def _head(shaft, tip, tail, neighbors, segments):
     }
 
 
-def vector_arrows(observation, protected_regions):
+def vector_arrows(observation, protected_regions, *, uncertainty=None):
     """Every local visible arrow is retained, including reverse/dangling arrows."""
     segments = observation["segments"]
     heads = observation["filled_heads"]
@@ -126,6 +126,14 @@ def vector_arrows(observation, protected_regions):
                 raise ValueError("Native arrow count bound exceeded")
     arrows = coalesce_arrow_ink(arrows, heads, JOIN_TOLERANCE)
     for arrow in arrows:
+        error = max(
+            ((uncertainty or {}).get(i, 0.0) for i in arrow["segments"]), default=0.0
+        )
+        if error:
+            arrow["bounds"] = [
+                value + (-error if index < 2 else error)
+                for index, value in enumerate(arrow["bounds"])
+            ]
         if not contained(arrow["bounds"], observation["bounds"]):
             raise ValueError("Native arrow crosses the original declaration")
         if any(overlaps(arrow["bounds"], region) for region in protected_regions):
