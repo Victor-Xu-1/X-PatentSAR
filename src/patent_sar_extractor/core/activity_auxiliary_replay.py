@@ -5,10 +5,15 @@ from contextlib import AbstractContextManager
 from functools import partial
 from pathlib import Path
 
+from .activity_header_cells import header_leaf_cells
 from .activity_header_layout_proof import physical_discovery_views
 from .activity_native_sources import original_native_contexts
 from .activity_text_sources import declared_text_cells, original_text_pages_errors
-from .cell_empty_proof import EMPTY_GRID_METHOD, replay_empty_grid_cell
+from .cell_empty_proof import (
+    EMPTY_GRID_METHOD,
+    EMPTY_REGION_METHOD,
+    replay_empty_source,
+)
 from .cell_frame_proof import original_cell_frame_matches
 from .native_cell_replay import original_native_cell_matches
 from .role_original_replay import original_role_source_errors
@@ -54,7 +59,10 @@ def measurement_text_cells(payload):
         ]
         for observed in observed_columns:
             for column in observed.get("columns", []):
-                yield proof.get("page_no"), column
+                for cell in header_leaf_cells(column):
+                    yield proof.get("page_no"), cell
+                    if "empty_source" in cell:
+                        yield proof.get("page_no"), cell["empty_source"]
     for row in payload.get("rows", []):
         for source in row.get("activity_sources", []):
             yield from _row_text_cells(source)
@@ -92,6 +100,7 @@ def original_primary_cells(payload):
         if column.get("method") not in {
             "native_cell",
             EMPTY_GRID_METHOD,
+            EMPTY_REGION_METHOD,
         } and not _optical_cell(column):
             continue  # Page-token locators do not become direct original reads.
         if type(page_no) is not int or not 1 <= page_no <= 20000:
@@ -177,10 +186,10 @@ def original_activity_source_errors(
                 if page_no > len(document):
                     return ["Original activity cell page is unavailable."]
                 page = document[page_no - 1]
-                if column.get("method") == EMPTY_GRID_METHOD:
-                    if not replay_empty_grid_cell(page, column):
+                if column.get("method") in {EMPTY_GRID_METHOD, EMPTY_REGION_METHOD}:
+                    if not replay_empty_source(page, column):
                         return [
-                            "Original metadata blank differs from its original grid pixels."
+                            "Original empty cell differs from its actual source pixels."
                         ]
                     continue
                 if column.get("method") == "native_cell":

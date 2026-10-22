@@ -2,7 +2,10 @@
 
 from itertools import pairwise
 
+from .caption_cell_pixels import observe_closed_caption_scope
+from .caption_cell_scope import physical_caption_readings, valid_closed_caption_scope
 from .caption_source_windows import caption_windows
+from .cell_frame_proof import inside_box
 from .cell_identity_proof import confirmed_identity_readings
 from .source_cell_claims import cell_source_status
 from .source_evidence_identity import proof_id
@@ -23,22 +26,19 @@ def caption_source_packet(owner):
         "reading_bbox": owner["bbox"],
         "observations": owner["observations"],
         "ownership": {"kind": "ruled_caption"},
+        **({"closed_scope": owner["closed_scope"]} if "closed_scope" in owner else {}),
     }
 
 
-def validated_tail_caption_cells(cells, role):
+def validated_tail_caption_cells(cells, role, *, allow_physical=True):
     if not isinstance(cells, list) or len(cells) > 64:
         raise ValueError("Unbounded original caption-tail cell inventory")
     axes, seen = role["grid_axes"], set()
     columns = set(pairwise(axes["xs"]))
     for owner in cells:
-        if not isinstance(owner, dict) or set(owner) != {
-            "page_no",
-            "bbox",
-            "label",
-            "bare",
-            "observations",
-        }:
+        identity = {"page_no", "bbox", "label", "bare", "observations"}
+        physical = {"page_no", "bbox", "observations", "closed_scope"}
+        if not isinstance(owner, dict) or set(owner) not in (identity, physical):
             raise ValueError("Malformed original caption-tail cell")
         box, observations = owner["bbox"], owner["observations"]
         if (
@@ -49,16 +49,26 @@ def validated_tail_caption_cells(cells, role):
             or (box[0], box[2]) not in columns
             or box[1::2] != axes["ys"][-2:]
             or tuple(box) in seen
-            or type(owner["bare"]) is not bool
             or role["role"] != "compound"
-            or not isinstance(owner["label"], str)
-            or not 1 <= len(owner["label"]) <= 128
             or caption_windows(caption_source_packet(owner)) is None
-            or not confirmed_identity_readings(
-                owner["label"], observations, caption=not owner["bare"]
-            )
         ):
             raise ValueError("Unproved original caption-tail cell ownership")
+        if set(owner) == identity:
+            if (
+                type(owner["bare"]) is not bool
+                or not isinstance(owner["label"], str)
+                or not 1 <= len(owner["label"]) <= 128
+                or not confirmed_identity_readings(
+                    owner["label"], observations, caption=not owner["bare"]
+                )
+            ):
+                raise ValueError("Unproved original caption-tail identity")
+        elif (
+            not allow_physical
+            or not physical_caption_readings(observations, box)
+            or not valid_closed_caption_scope(owner["closed_scope"], box)
+        ):
+            raise ValueError("Unproved original closed-caption physical scope")
         seen.add(tuple(box))
     return cells
 
@@ -72,21 +82,21 @@ def caption_witness_keys(cells):
         if isinstance(profile := reading.get("source_observation"), dict)
         and cell_source_status(reading) != "invalid"
         for token in profile.get("tokens", [])
+        if "closed_scope" not in owner
+        or inside_box(token.get("bbox"), owner["closed_scope"]["bounds"])
     }
 
 
-def observe_tail_caption_cells(captions, role, chunks):
-    """Retain only needed, already read cells; never start another OCR pass."""
+def observe_tail_caption_cells(page, captions, role, chunks):
+    """Keep label quality separate from replayed closed-cell physical scope."""
     witnesses = {
-        _witness_key(source["origin"], token)
+        _witness_key(source["origin"], token): token
         for chunk in chunks
         for source in chunk["sources"]
         for token in source.get("boundary_tokens", [])
     }
     result = []
     for item in captions:
-        if item["review"]:
-            continue
         owner = {
             "page_no": item["page"],
             "bbox": list(item["bbox"]),
@@ -94,12 +104,33 @@ def observe_tail_caption_cells(captions, role, chunks):
             "bare": item["bare"],
             "observations": list(item["observations"]),
         }
+        matching = caption_witness_keys([owner]) & witnesses.keys()
+        if not matching:
+            continue
         try:
+            if item["review"]:
+                raise ValueError("Unresolved caption identity")
             validated_tail_caption_cells([owner], role)
         except (KeyError, TypeError, ValueError):
-            continue  # The unresolved original item remains in ordinary issues.
-        if caption_witness_keys([owner]) & witnesses:
-            result.append(owner)
+            # This records no label/annotation interpretation. Actual unknown
+            # ink outside the closed cell is refused by independent pixel views.
+            physical = {key: owner[key] for key in ("page_no", "bbox", "observations")}
+            if not physical_caption_readings(
+                physical["observations"], physical["bbox"]
+            ):
+                continue
+            scope = observe_closed_caption_scope(
+                page, physical["bbox"], [witnesses[key] for key in sorted(matching)]
+            )
+            if scope is None:
+                continue
+            physical["closed_scope"] = scope
+            try:
+                validated_tail_caption_cells([physical], role)
+            except (KeyError, TypeError, ValueError):
+                continue
+            owner = physical
+        result.append(owner)
     return result
 
 
@@ -108,8 +139,8 @@ def qualified_tail_source(packet, witnesses):
 
     The original packet is never modified or upgraded. This call-local view
     answers only whether its body lane can prove a catalogue carry. Every
-    removed neighbour must occur unchanged in a qualified closed caption's
-    original source profile; original-pixel replay still checks those cells.
+    removed neighbour must occur unchanged in a replayed closed caption's
+    original source profile. Physical-only scopes qualify no text or identity.
     """
     if (
         source_observation_status(packet, packet.get("bbox"), packet.get("text"))

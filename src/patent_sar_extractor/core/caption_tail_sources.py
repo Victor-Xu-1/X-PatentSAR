@@ -50,10 +50,14 @@ def caption_tail_source_packets(bindings):
             if (
                 not isinstance(tail, dict)
                 or type(tail.get("version")) is not int
-                or tail["version"] != CAPTION_TAIL_SOURCE_VERSION
+                or tail["version"] not in {2, CAPTION_TAIL_SOURCE_VERSION}
             ):
                 raise ValueError("Unknown original caption-tail source version")
-            for owner in validated_tail_caption_cells(tail["caption_cells"], role):
+            for owner in validated_tail_caption_cells(
+                tail["caption_cells"],
+                role,
+                allow_physical=tail["version"] == CAPTION_TAIL_SOURCE_VERSION,
+            ):
                 key = (
                     owner["page_no"],
                     proof_id({"status": "original_caption_tail_cell", "cell": owner}),

@@ -110,6 +110,7 @@ class HeaderPhysicalLineNativeTests(unittest.TestCase):
             if hybrid:
                 page.insert_text((40, 805), "Original appendix", fontsize=10)
             with doc, self.subTest(hybrid=hybrid):
+                original_bytes = doc.tobytes()
                 result = extract_coordinate_tables(doc, [0])
             self.assertEqual(len(result.rows), 1, result.coverage)
             row = result.rows[0]
@@ -133,7 +134,20 @@ class HeaderPhysicalLineNativeTests(unittest.TestCase):
                     header_observations=result.header_observations,
                 )
                 payload = json.loads((Path(root) / "activity_data.json").read_text())
-            self.assertEqual(activity_evidence_errors(payload, [0]), [])
+            self.assertIn(
+                "Original PDF is required for activity text replay.",
+                activity_evidence_errors(payload, [0]),
+            )
+            self.assertEqual(
+                activity_evidence_errors(
+                    payload,
+                    [0],
+                    open_original=lambda source=original_bytes: fitz.open(
+                        stream=source, filetype="pdf"
+                    ),
+                ),
+                [],
+            )
 
     def test_narrow_serif_and_sans_headers_preserve_all_original_lines(self):
         for font, size, widths in (

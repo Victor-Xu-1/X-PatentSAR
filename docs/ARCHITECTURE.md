@@ -1,5 +1,122 @@
 # X-PatentSAR architecture
 
+## Current structure-column header text recovery
+
+Ruled/unruled original structure-header producers capture exact original cell
+frames and then call the same unresolved-only paired text recovery used for
+roles. `refine_role_text` accepts trusted caller limits; characterization keeps
+its32-row/32pt defaults, while column headers retain the existing8-row/12pt
+validator and disallow chunks. Neither caller can widen its scientific role
+proof with a saved flag. Complete primaries and native text require no auxiliary
+runtime; unknown/low-score/conflicting reads remain unproved. The existing binder
+phase owns optional child cleanup through `owns_auxiliary_text`.
+
+`role_text_sources` explicitly includes structure-column anchors and unruled
+regions. A carried scope points to its original anchor page, not the current
+body page; identical original claims deduplicate. The shared native/ordinary/
+auxiliary source replayers independently reopen original pixels and word paint
+without recognizing text. Worker-plan admission, QA and Web/SAR source gates
+consume this same inventory. Missing owners, inconsistent frames and foreign
+page claims refuse rather than disappear. Binding54/binder65 invalidate derived
+admission; original PDFs, raw observations, chemical outputs/manual audit and
+Activity38/extractor49/coverage20/visible26/API/SQL/model/environment policies
+remain unchanged. Prior release sections below retain historical epoch labels;
+this section and `contracts.py` own the current contracts.
+
+## Current later-column ownership and original replay
+
+The single heading source index retains every later-page structure. A validated
+independent continuation may exclude only its complete proved identifier/diagram
+rows, using the same source role, row pairing and ancestry validators as the
+catalogue. Missing/unread cells, own-identifier overlap, unknown roles, changed
+parents and outside/unowned drawings cannot supply exclusion. A borrowed header
+is not a fresh local title or procedure boundary. `heading_column_captions`
+therefore does not project an earlier title onto a continued page.
+
+`heading_column_replay` inventories the explicit original anchor and current
+continuation sources on their own pages, with no arbitrary JSON traversal or new
+recognizer. The existing `HeadingPageReplay` rechecks actual page geometry, printed
+grid axes, native words/visibility, optical/auxiliary cells and current rows.
+Physical and captioned logical continuations share this readback; the old
+original-header-only block is removed rather than retained as another path.
+Unknown or changed original proof remains a refusal, not a fallback reader.
+
+Binder64 refreshes derived binding work and existing source/project fingerprints.
+Binding schema53, heading/declaration schemas, Activity38/extractor49/coverage20,
+raw PDF/OCR/OCSR, source assets, human audit, API/SQL/SAR, model/environment and
+numerical potency policies are unchanged. Historical producer evidence is never
+retagged. This proves ownership within the observed inventory, not arbitrary
+patent recall, chemical correctness or completion of real extraction-to-SAR.
+
+Earlier implementation notes below describe their release-time contracts;
+`contracts.py` and the current section above own current versions.
+
+## Physical grid cells compose multi-row headers
+
+`activity_header_columns` reads each physical cell of a two/three-row header
+through the existing ordinary observer. `activity_header_cells` owns a bounded
+column composition, not a fabricated whole-band OCR frame. It retains every
+child's original coordinates, raw text, quality, detector/native constraints and
+source window. Empty children require paired original absence: the existing
+closed-grid proof or an entirely white complete unruled rectangle. The latter
+uses the same retained-pixel codec/replayer, forbids all nonwhite ink and does
+not widen count-metadata admission. Empty OCR text alone never proves a blank.
+A weak unit/qualifier child cannot disappear when the column is assembled.
+
+The existing header parser/context/field gates consume that literal composition.
+`activity_header_pair` refines only unresolved physical children through its sole
+paired auxiliary adapter. Complete primaries/proved blanks do not acquire a model,
+and known conflicts cannot be rescued by agreement. The same explicit leaf
+inventory feeds original primary/auxiliary/empty-cell replay and serialized header
+validation. No arbitrary nested traversal, new recognizer, parser, queue or writer
+is introduced. Readback loads no OCR model and rechecks changed original pixels.
+
+Activity38/extractor49 invalidate affected derived proof; coverage20, binding53/
+binder63, visible-label26, raw PDF/OCR/OCSR, human audit, models/dependencies and
+activation stay unchanged. Existing larger/unproved layouts retain their prior
+bounded unresolved behavior; the new composition does not waive the three-row
+proof limit or claim merged-cell/all-format coverage. Narrow generated cases are
+not a complete real-patent scientific acceptance result.
+
+## Unresolved caption text keeps a separate physical boundary proof
+
+The existing caption writer can retain a physical-only last-row owner when a
+layout word box crosses a closed rule but the original glyph pixels do not.
+`caption_cell_scope` validates this bounded proof independently of identifier
+quality. `caption_cell_pixels` reuses the ordinary original raster renderer and
+literal rule-band/joint authority: both400/600dpi views must show a closed cell,
+and every nonwhite pixel outside it must belong to observed original rules.
+Support extends at most the existing4pt caption padding and2,000,000pixels per
+view; a budget refusal leaves the source unresolved, not silently accepted.
+
+Physical owners have no label or bare-ID claim. They conserve complete original
+readings and may resolve only their exact same-origin boundary witnesses. Actual
+outside text, new tables/nonfinal roles, unknown body context, page/column gaps
+and changed source remain blockers. Caption identification, structure assignment
+and annotation interpretation retain their existing independent quality gates.
+`caption_original_replay` composes the same model-free source inventory and
+recomputes support pixels/rules, rather than trusting a saved scope hash. The
+ordinary/auxiliary observation replayers remain the sole text-source authorities.
+
+Tail3/Binding53/binder63 refresh derived ownership. Known tail2 identity owners
+remain readable as history but cannot become current continuation proof; physical
+owners are never accepted under tail2. Raw visible-label observations26, activity,
+OCR/OCSR, original assets, manual audit, dependencies and activation are unchanged.
+No second reader/model, parser, queue or scientific writer is introduced. Narrow
+generated-source checks do not establish complete real-patent scientific recall.
+
+## Background task reads preserve presentation, not write authority
+
+The existing `useResource` retains `readConfirmed` only while an ordinary
+same-key poll is pending after a successful response. Initial/explicit reloads,
+source changes and errors revoke it; automatic read recovery cannot restore it
+before a successful response. `useJobs.presentationVerified` composes the list
+and matching current detail for workspace/history presentation. Existing
+`verified` checks still disable task mutations while any required read is pending
+or failed. No new poller, retry, session/authentication policy or job writer exists.
+The same JobRecord/StageStrip views render the confirmed server observation;
+unknown/error states are not converted into running, success or permission to run.
+
 ## Declared text shares the unresolved-only auxiliary source path
 
 `activity_text_capture` submits its two ordinary physical line observations to
@@ -11,14 +128,14 @@ Extractor48 refreshes derived work; source/activity schemas and admission qualit
 rules are unchanged. A correctly spelled low-score auxiliary reply still does
 not satisfy the current quality gate or become a scientific measurement.
 
-## Caption-tail witnesses retain their exact original cell owners
+## Caption-tail v2 identity owners (release history)
 
 `caption_tail_owners` composes exact original neighbour witnesses with the
 existing qualified closed-cell identity reader; `caption_tail_sources`
 inventories only those explicit owners along bounded caption-role links. The
 ordinary caption/pixel and paired auxiliary replayers remain the single
 original-read authority. Raw window status is never rewritten and no new
-inference path is added. Current derived source contracts are
+inference path is added. That release used derived source contracts
 Binding52/binder62/visible-label26; older epoch notes below remain history.
 
 ## Declared text tables share actual original-source admission
@@ -3645,23 +3762,3 @@ final reader. Failed validation never enters the weak pool. Captured objects are
 read-only inputs; current projections retain their own group/count models. This
 does not change scientific epochs, report/API/SQL contracts, file-size limits,
 publication or graph proofs, and introduces no store, task or persisted cache.
-# Structure-column header text recovery
-
-Ruled/unruled original structure-header producers capture exact original cell
-frames and then call the same unresolved-only paired text recovery used for
-roles. `refine_role_text` accepts trusted caller limits; characterization keeps
-its32-row/32pt defaults, while column headers retain the existing8-row/12pt
-validator and disallow chunks. Neither caller can widen its scientific role
-proof with a saved flag. Complete primaries and native text require no auxiliary
-runtime; unknown/low-score/conflicting reads remain unproved. The existing binder
-phase owns optional child cleanup through `owns_auxiliary_text`.
-
-`role_text_sources` explicitly includes structure-column anchors and unruled
-regions. A carried scope points to its original anchor page, not the current
-body page; identical original claims deduplicate. The shared native/ordinary/
-auxiliary source replayers independently reopen original pixels and word paint
-without recognizing text. Worker-plan admission, QA and Web/SAR source gates
-consume this same inventory. Missing owners, inconsistent frames and foreign
-page claims refuse rather than disappear. Binding53/binder63 invalidate derived
-admission; original PDFs, raw observations, chemical outputs/manual audit and
-activity/visible-label/API/SQL/model/environment policies remain unchanged.

@@ -47,5 +47,19 @@ export function useJobs(
     !list.loading &&
     !list.error &&
     (!includeDetail || !id || (detail.data !== null && !detail.loading && !detail.error));
-  return { ...list, reload, job: detail.data ?? latest, detailError: detail.error, verified };
+  const presentationVerified =
+    enabled &&
+    list.readConfirmed === true &&
+    !list.error &&
+    (!includeDetail ||
+      !id ||
+      (detail.readConfirmed === true && detail.data?.id === id && !detail.error));
+  return {
+    ...list,
+    reload,
+    job: detail.data ?? latest,
+    detailError: detail.error,
+    verified,
+    presentationVerified,
+  };
 }

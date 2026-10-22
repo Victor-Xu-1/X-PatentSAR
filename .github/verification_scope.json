@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "de462d3ee1fa9a30663ada245ca647d0a876d496",
+  "base_sha": "7f2f50d9eb469555d104d700689422839c4c0bf6",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
@@ -29,16 +29,17 @@
     "tests.test_structure_column_anchors",
     "tests.test_structure_column_anchor_proof",
     "tests.test_ruled_column_continuation",
+    "tests.test_binding_artifact_consumers",
+    "tests.test_binding_cache_identity",
+    "tests.test_source_epoch_guards",
+    "tests.test_continued_heading_captions",
+    "tests.test_lateral_column_continuation",
     "tests.test_web_acceptance",
     "tests.test_sar_source_contexts",
-    "tests.test_activity_evidence",
-    "tests.test_source_epoch_guards",
     "tests.test_release_policy.ReleaseNumberTests",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [],
-  "browser_tests": [
-    "frontend/e2e/source-completion.spec.ts"
-  ]
+  "browser_tests": ["frontend/e2e/source-completion.spec.ts"]
 }

@@ -44,7 +44,7 @@ def observe_caption_tail(
         "page_size": size,
         "window": window,
         "chunks": chunks,
-        "caption_cells": observe_tail_caption_cells(captions, role, chunks),
+        "caption_cells": observe_tail_caption_cells(page, captions, role, chunks),
         "page_grids": [
             [grid["xs"][0], grid["ys"][0], grid["xs"][-1], grid["ys"][-1]]
             for grid in regions
