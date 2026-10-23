@@ -2,12 +2,7 @@
 
 import re
 
-from ...core.source_role_terms import INTERMEDIATE_CJK
-
-_INTERMEDIATE = re.compile(
-    rf"^(?:intermediate(?=$|[\s_:.\-0-9])|interm[.\s_]|{INTERMEDIATE_CJK})",
-    re.IGNORECASE,
-)
+from ...core.source_role_terms import intermediate_source_label
 _TEMPORARY = re.compile(
     r"^(?:source-structure:|编号待确认|未关联结构|关联结构\s+[a-f0-9]{6})",
     re.IGNORECASE,
@@ -40,17 +35,18 @@ def source_exclusion(label: str, source_id: str | None = None, issues=()) -> str
     if any(ord(char) < 32 for char in label):
         return "unconfirmed_identifier"
     label = label.strip()
+    source_identity = (source_id or "").strip()
     if (
         not label
         or label.casefold() in _MISSING_NUMBER
         or len(label) > 200
         or any(ord(char) < 32 for char in label)
         or _TEMPORARY.match(label)
-        or (source_id or "").startswith("source-structure:")
+        or source_identity.startswith("source-structure:")
         or _UNCONFIRMED.intersection(issues)
     ):
         return "unconfirmed_identifier"
-    if _INTERMEDIATE.match(label) or _INTERMEDIATE.match(source_id or ""):
+    if intermediate_source_label(label) or intermediate_source_label(source_identity):
         return "intermediate"
     return None
 

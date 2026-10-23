@@ -2,11 +2,9 @@
 
 import unittest
 
-from patent_sar_extractor.core.activity_grid_roles import characterization_roles
 from patent_sar_extractor.core.binding_labels import _is_intermediate
 from patent_sar_extractor.core.caption_role_semantics import catalog_title_role
 from patent_sar_extractor.core.cpd_filter import is_intermediate
-from patent_sar_extractor.core.source_cell_claims import cell_source_conflict
 from patent_sar_extractor.core.source_section_roles import (
     heading_list_hint,
     nonfinal_original_label,
@@ -14,14 +12,86 @@ from patent_sar_extractor.core.source_section_roles import (
     scheme_heading_boundary,
     section_heading,
 )
-from patent_sar_extractor.web.sar.csv_inputs import mapped_inputs
-from patent_sar_extractor.web.sar.models import CSVMapping
 from patent_sar_extractor.web.sar.source_scope import source_exclusion
 
 INTERMEDIATE_LABELS = ("中间体", "中間体", "中間體")
 
 
 class SourceRoleTermTests(unittest.TestCase):
+    def test_literal_intermediate_record_and_sar_guards_are_consistent(self):
+        for label in (
+            "Intermediate 12",
+            "Intermediates 12",
+            "Intermediate12",
+            "interm. 12",
+            *(f"{kind}12" for kind in INTERMEDIATE_LABELS),
+        ):
+            for padding in ("", " ", "\u3000"):
+                raw = padding + label + padding
+                for field in ("prefix", "cpd_id", "cpd", "label"):
+                    record = {field: raw}
+                    with self.subTest(label=raw, field=field):
+                        self.assertTrue(is_intermediate(record))
+                        if field != "label":
+                            self.assertTrue(_is_intermediate(record))
+                        self.assertEqual(record, {field: raw})
+                with self.subTest(label=raw, consumer="sar"):
+                    self.assertEqual(source_exclusion(raw), "intermediate")
+                    self.assertEqual(
+                        source_exclusion("Compound 12", raw), "intermediate"
+                    )
+
+    def test_role_words_do_not_guess_a_numbered_namespace_or_prose_reference(self):
+        for label in (
+            "I-255",
+            "IM-12",
+            "IntermediateX1",
+            "IntermediateProtein12",
+            "Compound 12",
+            "Compound Intermediate-12",
+            "Compound 12: Synthesis from Intermediate 7",
+        ):
+            with self.subTest(label=label):
+                self.assertFalse(is_intermediate({"cpd": label}))
+                self.assertFalse(_is_intermediate({"cpd": label}))
+                self.assertIsNone(source_exclusion(label))
+                self.assertIsNone(source_exclusion("Compound 12", label))
+
+    def test_source_id_padding_cannot_hide_an_anonymous_original(self):
+        for padding in ("", " ", "\u3000"):
+            original = padding + "source-structure:original-observation" + padding
+            with self.subTest(source_id=original):
+                self.assertEqual(
+                    source_exclusion("Compound 12", original),
+                    "unconfirmed_identifier",
+                )
+
+    def test_nonfinal_product_view_and_model_admission_share_the_literal_role(self):
+        from patent_sar_extractor.core.ocsr.recognition_selection import (
+            require_numbered_model_input,
+        )
+        from patent_sar_extractor.web.models import Compound, Confidence, Source
+        from patent_sar_extractor.web.product_records import is_numbered_product
+
+        product = Compound(
+            id="Compound I-255",
+            display_id="Compound I-255",
+            structure_id="original-drawing",
+            record_kind="structure_only",
+            confidence=Confidence(level="high", reason="Controlled original owner"),
+            source=Source(source_label="I-255", page=1),
+        )
+        self.assertTrue(is_numbered_product(product))
+        for label in (" Intermediate 12", "Intermediates 12", "interm. 12"):
+            row = product.model_copy(update={"source": Source(source_label=label)})
+            with self.subTest(label=label):
+                self.assertFalse(is_numbered_product(row))
+                self.assertEqual(row.source.source_label, label)
+                with self.assertRaisesRegex(ValueError, "numbered product"):
+                    require_numbered_model_input(
+                        {"cpd": label, "bind_status": "bound"},
+                    )
+
     def test_paragraph_metadata_cannot_hide_a_literal_separate_scheme(self):
         for prefix in ("[0042] ", "[ 42 ]", "［００４２］ "):
             for title in (
@@ -83,6 +153,10 @@ class SourceRoleTermTests(unittest.TestCase):
                     )
 
     def test_characterization_identifiers_do_not_disguise_biological_measurements(self):
+        from patent_sar_extractor.core.activity_grid_roles import (
+            characterization_roles,
+        )
+
         for label in INTERMEDIATE_LABELS:
             with self.subTest(label=label):
                 matrix = [
@@ -103,6 +177,8 @@ class SourceRoleTermTests(unittest.TestCase):
                 )
 
     def test_cell_claims_and_literal_heading_groups_cannot_drop_the_role(self):
+        from patent_sar_extractor.core.source_cell_claims import cell_source_conflict
+
         for label in INTERMEDIATE_LABELS:
             with self.subTest(label=label):
                 self.assertTrue(
@@ -117,7 +193,15 @@ class SourceRoleTermTests(unittest.TestCase):
     def test_csv_keeps_original_final_ids_but_excludes_explicit_intermediate_aliases(
         self,
     ):
-        for label in INTERMEDIATE_LABELS:
+        from patent_sar_extractor.web.sar.csv_inputs import mapped_inputs
+        from patent_sar_extractor.web.sar.models import CSVMapping
+
+        for label in (
+            *INTERMEDIATE_LABELS,
+            "Intermediate ",
+            " Intermediates ",
+            "interm. ",
+        ):
             with self.subTest(label=label):
                 data = f"id,smiles,IC50 (nM)\nCompound 1,CO,10\n{label}2,CC,0.1\nI-255,CCC,1\n".encode()
                 rows, _metrics, count = mapped_inputs(

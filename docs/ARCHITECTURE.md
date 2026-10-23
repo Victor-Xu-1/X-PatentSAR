@@ -1,5 +1,18 @@
 # X-PatentSAR architecture
 
+## One literal nonfinal-label admission guard
+
+`source_role_terms.intermediate_source_label` is shared by the binder record
+filter, numbered-product result views, pre-model admission and SAR source scope.
+It recognizes literal singular/plural, supported abbreviated and Chinese labels,
+ignoring only outer presentation whitespace without changing retained originals.
+An I-prefix, a longer namespace or a reference inside a product title is not an
+intermediate declaration. Unknown ownership still needs the existing original
+source proof; passing a lexical guard never proves that a drawing is a product.
+SAR also applies its existing anonymous-source guard to the stripped source-ID
+projection. Original assets, stored IDs, manual edits and historical artifacts
+are not rewritten or deleted; no new recognition, queue, parser or policy path.
+
 ## One paragraph-locator and original table-boundary authority
 
 `source_paragraphs` owns paired, bounded literal paragraph metadata. Original

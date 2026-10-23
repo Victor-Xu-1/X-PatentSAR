@@ -120,12 +120,19 @@ class CurrentStrengthTests(unittest.TestCase):
 
     def test_numberless_and_explicit_intermediate_records_do_not_set_the_anchor(self):
         baseline, report = self.historical(["0.1"] * 9 + ["10", "100", "1000", ""])
-        for label in ("Intermediate 2", "中间体2", "中間体2", "中間體2"):
+        for label in (
+            "Intermediate 2",
+            " Intermediates 2 ",
+            "interm. 2",
+            "中间体2",
+            "中間体2",
+            "中間體2",
+        ):
             with self.subTest(label=label):
                 packet, captured = copy.deepcopy(baseline), report.model_copy(deep=True)
                 # Archive observations remain intact; the current population is scoped.
                 packet["molecules"][0]["source_compound_id"] = (
-                    "source-structure:unconfirmed"
+                    " source-structure:unconfirmed "
                 )
                 packet["molecules"][1]["label"] = label
                 captured.rows[1].label = label
@@ -306,8 +313,12 @@ class CurrentStrengthAPITests(WebFixture, unittest.TestCase):
         # Scope cannot rely only on historical issues/eligibility flags.
         unknown = molecule("unconfirmed", "CO", "0.000001")
         unknown.update(label="N/A")
+        nonfinal = molecule("nonfinal", "CO", "0.0000001")
+        nonfinal.update(label="Compound 42", source_compound_id=" Intermediates 2 ")
         packet = fixture.packet(
-            rows=[*rows, unknown], regions=1, policies=[policy(strong_threshold=1.0)]
+            rows=[*rows, unknown, nonfinal],
+            regions=1,
+            policies=[policy(strong_threshold=1.0)],
         )
         reply, captured = fixture.run_packet(packet)
         with self.client() as client:
@@ -368,7 +379,7 @@ class CurrentStrengthAPITests(WebFixture, unittest.TestCase):
             self.assertEqual(view["activity_basis"]["anchor_rank"], 10)
             self.assertEqual(
                 view["activity_basis"]["excluded_records"],
-                {"unconfirmed_identifier": 1},
+                {"unconfirmed_identifier": 1, "intermediate": 1},
             )
             self.assertEqual(view["report"]["molecule_count"], 13)
             scale = view["report"]["policies"][0]["strength_scale"]
@@ -393,6 +404,7 @@ class CurrentStrengthAPITests(WebFixture, unittest.TestCase):
             self.assertNotIn(
                 "unconfirmed", client.get(path + "/export?format=csv").text
             )
+            self.assertNotIn("nonfinal", client.get(path + "/export?format=csv").text)
             self.assertEqual((root / "report.json").read_bytes(), original_bytes)
 
 
