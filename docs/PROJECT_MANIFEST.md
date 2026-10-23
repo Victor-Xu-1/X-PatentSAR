@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Auxiliary recovery preflight authority: the existing `recovery_primary` owns
+  the conservative unsatisfiable retained-part check. The source/runtime wrapper
+  and direct complete-pair adapter use the SAME predicate before auxiliary work.
+  Existing compatible-primary/final-paired/original replay validators remain
+  unchanged; no semantic parser, recognizer, writer/store or acceptance path is
+  added. Unknown/malformed claims cannot become known conflicts. All raw readings
+  and prior failed attempts are conserved; explicit diagnostic deduplication
+  never trims original evidence. Scientific epochs, raw/manual/history, API/SQL,
+  dependencies/activation and SAR numerical policy remain unchanged. Product
+  version follows the sole existing PR generator. Isolated native/generated
+  checks remain separate from scientific/private-patent acceptance.
+
 - Heading typography authority: the existing heading geometry constants own
   capture and recovery limits. `heading_observation` passes8rows/128pt and the
   existing typed `text_scope` through the SAME primary/cell/auxiliary/replay

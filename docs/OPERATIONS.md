@@ -1,5 +1,24 @@
 # Operations and troubleshooting
 
+## Auxiliary OCR runs even though retained primary claims cannot agree
+
+`not_attempted/conflicting_retained_primary_claims` means the existing retained
+high-confidence part constraints are mutually incompatible: either both views
+freeze different part counts, or they freeze differing literals at the same
+position. Such a pair could not pass the existing final recovery validator.
+The source wrapper now stops before runtime acquisition/original re-rendering;
+direct complete-pair callers also stop before row inference. This avoids wasted
+work; it does not correct the source, select a winning spelling or accept a title.
+
+Both original readings and failed-attempt history remain saved. Unknown or
+malformed observations are not labeled known conflicts, and malformed history
+refuses rather than being replaced. Existing source/packet bounds still apply;
+no evidence is trimmed to fit. Compatible weak sources keep normal paired
+recovery and actual-original replay. Qualified primaries still do not load the
+auxiliary runtime. No new model pass/install, epoch/SQL/API, activation or SAR
+policy is needed. Focused controls include the source wrapper, direct header
+caller, heading/binder entry, saved-source readers and installed consumers.
+
 ## A large or wrapped heading fails only when auxiliary recovery is needed
 
 Keep one heading typography scope through primary400/600dpi capture, retained
