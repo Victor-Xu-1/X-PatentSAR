@@ -78,6 +78,7 @@ class SourceRoleTermTests(unittest.TestCase):
             display_id="Compound I-255",
             structure_id="original-drawing",
             record_kind="structure_only",
+            activities=[],
             confidence=Confidence(level="high", reason="Controlled original owner"),
             source=Source(source_label="I-255", page=1),
         )
