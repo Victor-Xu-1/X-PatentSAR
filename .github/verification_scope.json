@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "94febe9398b938c6c2b30f331a3720ced60788be",
+  "base_sha": "6f52196a84bb010ba815350704a38b5f24d7284a",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
@@ -39,6 +39,13 @@
     "tests.test_sar_source_contexts",
     "tests.test_binding_cache_identity",
     "tests.test_terminal_recognition_scope",
+    "tests.test_source_role_terms",
+    "tests.test_product_table_scope",
+    "tests.test_sar_csv_source_scopes",
+    "tests.test_sar_current_strength",
+    "tests.test_unproved_caption_boundary",
+    "tests.test_unproved_caption_ownership",
+    "tests.test_table_boundary_budget",
     "tests.test_release_policy.ReleaseNumberTests",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"

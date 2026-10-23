@@ -17,8 +17,9 @@ from .activity_metadata import metadata_role
 from .activity_models import ColumnGroup, GridSchema, TableContext
 from .source_paragraphs import paragraph_only, strip_paragraph_locator
 from .source_table_markers import (
-    TABLE_CAPTION_LINE,
+    TABLE_BOUNDARY_LINE,
     TABLE_MARKER,
+    caption_table_marker,
     table_marker_identity,
 )
 
@@ -114,7 +115,7 @@ def context_from_text(
     raw_caption, body_text, source = _context_parts(str(caption), str(surrounding))
     caption = strip_paragraph_locator(raw_caption)
     caption = re.sub(r"\s+", " ", caption).strip()[:300]
-    marker = TABLE_MARKER.search(caption)
+    marker = caption_table_marker(caption)
     table_id = table_marker_identity(marker.group()) if marker else ""
     values, _ = context_values(source, partial=partial)
     return TableContext(
@@ -130,10 +131,10 @@ def context_from_text(
 def _context_parts(caption: str, surrounding: str) -> tuple[str, str, str]:
     """A line-anchored caption owns context; prose references are provenance only."""
     source = surrounding or caption
-    markers = list(TABLE_CAPTION_LINE.finditer(source))
+    markers = list(TABLE_BOUNDARY_LINE.finditer(source))
     if not markers and caption and caption != source:
         source = f"{caption}\n{source}"
-        markers = list(TABLE_CAPTION_LINE.finditer(source))
+        markers = list(TABLE_BOUNDARY_LINE.finditer(source))
     if markers:
         start = markers[-1].start()
         end = source.find("\n", markers[-1].end())
@@ -156,7 +157,7 @@ def _context_parts(caption: str, surrounding: str) -> tuple[str, str, str]:
                     title,
                     re.IGNORECASE,
                 )
-                and not TABLE_CAPTION_LINE.match(title)
+                and not TABLE_BOUNDARY_LINE.match(title)
             ):
                 end = title_end
                 raw_caption = source[start:end].strip()

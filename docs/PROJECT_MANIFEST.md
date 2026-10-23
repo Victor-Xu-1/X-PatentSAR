@@ -8,10 +8,21 @@
   all prior completeness gates remain fail-closed. Actual grid geometry is
   replayed along with the existing native/optical source inventory. No second
   parser/writer/recognizer, store, queue or scientific-data correction exists.
-  Activity41/extractor53/coverage22/declared-source3 refresh derived activity
-  evidence only; raw/manual/history, Binding59/binder70/SMILES6, API/SQL, models,
+  Activity42/extractor54/coverage23/declared-source3 refresh combined derived activity
+  evidence only; raw/manual/history, Binding60/binder71/SMILES6, API/SQL, models,
   SAR and tenth-strongest/percentage/log scientific policies are unchanged.
   The source3 entry is current; older source2 entries below are release history.
+
+- Literal record-role guard: `source_role_terms.intermediate_source_label` owns
+  the shared declared intermediate-label predicate for core binding, OCSR input,
+  Web product records and SAR admission/views/exports. Outer whitespace,
+  singular/plural and already-supported abbreviations cannot make these consumers
+  disagree. Namespace/prose is not a role claim; original ownership validation
+  remains mandatory. Anonymous SAR source-ID namespace checks ignore outer
+  whitespace/case for the predicate only; C0 controls remain unconfirmed even
+  behind a numbered display label. Stored identifiers are unchanged. Original
+  ledgers, manual audit, source proof, API/SQL/SAR schemas, model/dependencies and
+  numerical activity policies are unchanged. No alternate filter authority.
 
 - Literal caption/source boundary authority: `source_paragraphs` supplies one
   paired bounded locator grammar to headings/table/context/discovery/reference
@@ -20,8 +31,13 @@
   uses the existing original activity inventory for native-paint visibility and
   the shared full400dpi/8M `cell_raster` SDK for raster-prefix replay. Omissions,
   downgrades, hidden/changed source and over-budget frames refuse. No new model,
-  parser, writer, store, queue or activation exists. Activity40/extractor52/
-  coverage21 and Binding59/binder70 refresh derived proof only; raw/manual/
+  parser, writer, store, queue or activation exists. Unproved numeric table-prefix
+  fences share the original source/physical header/title projection and stop
+  trusted prior condition/nonfinal ownership without trimming facts, repairing
+  IDs or certifying unknown roles. Prose/isotope prefixes are not table fences.
+  The boundary-only release introduced Activity41/extractor53/coverage22 and
+  Binding60/binder71; the current combined activity authority is source3/Activity42
+  above. Derived proof refresh leaves raw/manual/
   history/SMILES6/API/SQL/dependencies/SAR/potency authorities are unchanged.
   Older epoch entries below are release history, not current competing paths.
 

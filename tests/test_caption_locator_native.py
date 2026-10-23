@@ -19,7 +19,7 @@ from patent_sar_extractor.web.artifacts import _activities
 from tests.test_activity_context_windows import draw_grid, parallel_activity_page
 
 
-def caption_document(*, continued=False):
+def caption_document(*, continued=False, current_prefix="[ 42 ]"):
     document = fitz.open()
     page = document.new_page(width=500, height=600)
     if continued:
@@ -34,7 +34,7 @@ def caption_document(*, continued=False):
         )
         page.insert_text(
             (40, 120),
-            "[ 42 ] Table 9. Cellular activity\nCell line: U2OS\nDuration: 24 h",
+            f"{current_prefix} Table 9. Cellular activity\nCell line: U2OS\nDuration: 24 h",
             fontsize=9,
         )
     draw_grid(page, 220, [["No.", "IC50 (nM)"], ["17B", "2.3"]])
@@ -42,7 +42,7 @@ def caption_document(*, continued=False):
         page = document.new_page(width=500, height=600)
         page.insert_text(
             (40, 40),
-            "[ 42 ] Table 9. Cellular activity (continued)\nDuration: 24 h",
+            f"{current_prefix} Table 9. Cellular activity (continued)\nDuration: 24 h",
             fontsize=9,
         )
         draw_grid(page, 120, [["99C", "4.7"]])

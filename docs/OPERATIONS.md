@@ -16,12 +16,30 @@ context through a physically intervening grid. No confidence vote, guessed ID,
 numerical repair or new OCR engine is involved. The whole-page qualification of
 retained text is unchanged; unrelated weak-line policy is not silently relaxed.
 
-Current activity proof is Activity41/extractor53/coverage22/declared-source3;
+Current combined activity proof is Activity42/extractor54/coverage23/declared-source3;
 older activity proofs remain historical and require normal frontend production
 of fresh derived evidence. Do not rewrite old artifacts or manual revisions.
 Focused controls: `tests.test_activity_mixed_ownership`, existing declared-source
 native/recovery, text ownership, coverage and directly related consumers. A green
 generated sample is not universal OCR, extraction or chemical acceptance.
+
+## Literal intermediate labels cannot bypass product admission
+
+Record-level binding/recognition, product views and SAR share one explicit-role
+predicate. Leading/trailing spaces, `Intermediate`/`Intermediates`, existing
+`interm.` spelling and Chinese role labels have the same admission behavior.
+`I-255`, longer namespaces and intermediate references inside an otherwise
+numbered product title are not reclassified by a prefix guess. This predicate
+does not grant a final-product role; original ownership and all QA remain required.
+Padded/case-varied `source-structure:` source IDs stay anonymous even after a
+display rename. C0 controls in an original source identity remain unconfirmed;
+they cannot be hidden by a valid-looking display label. This is a predicate-only
+projection, not a rewrite of source IDs.
+Rejected records remain in the original source ledger; no raw/derived historical
+artifact, scientific value, source ID or human correction is rewritten. Current
+SAR membership/counts/exports use the existing shared source-scope consumers.
+Generated controls verify these paths; they do not prove all-format recall or
+chemical correctness. No native model, external LLM or environment install needed.
 
 ## Paragraph-prefixed captions and original continued-table boundaries
 
@@ -32,6 +50,14 @@ spelling. Only actual anchored captions set table identity/conditions; a new
 table cannot borrow the previous assay. Changed paragraph numbers alone do not
 break an explicit same-table continuation with identical known conditions.
 Unknown conditions/changed units or conditions/prose/malformed locators refuse.
+
+A numeric paragraph prefix with missing/mismatched/overlong brackets is not
+silently corrected. Its literal table boundary nominates an unresolved source,
+ends the previous table's trusted condition/role extent and preserves the whole
+raw inventory. It cannot inherit an older intermediate classification or grant
+an explicit continued-table edge. Physical headers and saved title projection
+share this rule; ordinary prose and isotope labels remain unchanged. Inspect the
+original before any manual correction, rather than editing generated artifacts.
 
 Biological method labels such as HTRF remain in metric names and raw source,
 not automatically supplied experimental conditions. Missing context stays
@@ -44,7 +70,8 @@ be excused by a correct parent header. The8M-pixel limit logs refusal and leaves
 that grid unresolved, without OCR or a larger render/retry. Actual replays do
 not start auxiliary recognition. This is source integrity, not OCR accuracy.
 
-Current derived epochs: Activity40/extractor52/coverage21; Binding59/binder70.
+Current combined epochs: Activity42/extractor54/coverage23/source3;
+Binding60/binder71. The earlier boundary-only activity41 proof remains historical.
 Old originals, raw observations, model outputs, failed attempts and audited
 corrections remain intact. Never retag or hand-fill an old result. Actual private
 regeneration/acceptance is frontend-only after reviewed-main deployment; SAR
