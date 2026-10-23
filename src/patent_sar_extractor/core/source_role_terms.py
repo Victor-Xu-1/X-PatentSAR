@@ -16,6 +16,10 @@ CATALOG_COMPOUND_CJK = r"(?:化合物|实施例|實施例|実施例|终产物|�
 
 _KIND = re.compile(INTERMEDIATE_TERM, re.IGNORECASE)
 _CASE_BOUNDARY = re.compile(r"(?<=[a-z])(?=[A-Z])|(?<=[A-Z])(?=[A-Z][a-z])")
+_INTERMEDIATE_LABEL = re.compile(
+    rf"^(?:Intermediates?(?=$|[\s_:.：\-－0-9０-９])|interm[.\s_]|{INTERMEDIATE_CJK})",
+    re.IGNORECASE,
+)
 
 
 def role_words(text: str) -> str:
@@ -30,3 +34,14 @@ def role_words(text: str) -> str:
 
 def is_intermediate_kind(value: object) -> bool:
     return bool(isinstance(value, str) and _KIND.fullmatch(value))
+
+
+def intermediate_source_label(value: object) -> bool:
+    """A literal declared label, never an I-prefix or a word inside prose.
+
+    Presentation whitespace is ignored for this predicate only; the caller's
+    original label is untouched. An English role needs a literal separator or
+    number, so a longer namespace is not silently discarded as an intermediate.
+    The already-supported SAR abbreviation is shared by every record consumer.
+    """
+    return bool(isinstance(value, str) and _INTERMEDIATE_LABEL.match(value.strip()))

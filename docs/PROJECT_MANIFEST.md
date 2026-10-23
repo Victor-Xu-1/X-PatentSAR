@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- Literal record-role guard: `source_role_terms.intermediate_source_label` owns
+  the shared declared intermediate-label predicate for core binding, OCSR input,
+  Web product records and SAR admission/views/exports. Outer whitespace,
+  singular/plural and already-supported abbreviations cannot make these consumers
+  disagree. Namespace/prose is not a role claim; original ownership validation
+  remains mandatory. Anonymous SAR source-ID namespace checks ignore outer
+  whitespace/case for the predicate only; C0 controls remain unconfirmed even
+  behind a numbered display label. Stored identifiers are unchanged. Original
+  ledgers, manual audit, source proof, API/SQL/SAR schemas, model/dependencies and
+  numerical activity policies are unchanged. No alternate filter authority.
+
 - Literal caption/source boundary authority: `source_paragraphs` supplies one
   paired bounded locator grammar to headings/table/context/discovery/reference
   consumers without rewriting raw source or IDs. Biological readout semantics

@@ -1,5 +1,23 @@
 # Operations and troubleshooting
 
+## Literal intermediate labels cannot bypass product admission
+
+Record-level binding/recognition, product views and SAR share one explicit-role
+predicate. Leading/trailing spaces, `Intermediate`/`Intermediates`, existing
+`interm.` spelling and Chinese role labels have the same admission behavior.
+`I-255`, longer namespaces and intermediate references inside an otherwise
+numbered product title are not reclassified by a prefix guess. This predicate
+does not grant a final-product role; original ownership and all QA remain required.
+Padded/case-varied `source-structure:` source IDs stay anonymous even after a
+display rename. C0 controls in an original source identity remain unconfirmed;
+they cannot be hidden by a valid-looking display label. This is a predicate-only
+projection, not a rewrite of source IDs.
+Rejected records remain in the original source ledger; no raw/derived historical
+artifact, scientific value, source ID or human correction is rewritten. Current
+SAR membership/counts/exports use the existing shared source-scope consumers.
+Generated controls verify these paths; they do not prove all-format recall or
+chemical correctness. No native model, external LLM or environment install needed.
+
 ## Paragraph-prefixed captions and original continued-table boundaries
 
 The same paired1–8digit paragraph locator grammar serves source headings,
