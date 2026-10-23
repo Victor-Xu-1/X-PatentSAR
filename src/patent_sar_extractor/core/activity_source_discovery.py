@@ -9,12 +9,8 @@ from .activity_headers import ACTIVITY_CONTEXT, context_from_text
 from .activity_source_roles import method_result_references, reported_method_source
 from .source_result_references import result_reference_sentences
 from .source_section_roles import section_heading
-from .source_table_markers import TABLE_MARKER
+from .source_table_markers import TABLE_CAPTION_LINE
 
-_CAPTION = re.compile(
-    rf"^\s*(?:\[\s*\d{{1,8}}\s*\]\s*)?{TABLE_MARKER.pattern}",
-    re.IGNORECASE | re.MULTILINE,
-)
 _ID_COLUMN = re.compile(
     r"(?:Compound|Cmpd|Cpd|Example|化合物|实施例)\s*(?:No\.?|ID|#|编号)|"
     r"^\s*(?:No\.|ID|编号)(?=\s|\||$)",
@@ -32,7 +28,7 @@ def declared_activity_source(text: str) -> bool:
         normalized = normalize_metric_text(window)
         if _ID_COLUMN.search(window) and METRIC.search(normalized):
             return True
-        if _CAPTION.search(window):
+        if TABLE_CAPTION_LINE.search(window):
             # A caption/continued title may nominate an unreadable source;
             # unrelated prose or a later assay must not rename its table.
             caption = context_from_text(window).raw_caption
@@ -88,7 +84,7 @@ def _original_windows(text: str, *, split_tables=True):
             < references[reference_index].end
         )
         if offset and (
-            (split_tables and _CAPTION.match(line) and not inside_reference)
+            (split_tables and TABLE_CAPTION_LINE.match(line) and not inside_reference)
             or section_heading(line)
         ):
             starts.append(offset)

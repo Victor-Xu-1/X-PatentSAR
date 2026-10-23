@@ -24,7 +24,6 @@ class BiologySchema:
     kinds: tuple[str, ...]
     pairs: int = 1
     target: str | None = None
-    assay: str | None = None
     cell_line: str | None = None
     context_conflicts: bool = False
 
@@ -50,7 +49,6 @@ def infer_schema(context: str, columns: int) -> BiologySchema | None:
             (f"{prefix} ratio", f"{prefix} grade"),
             ("number", "plus"),
             target=target.group(1) if target else None,
-            assay="HTRF",
             context_conflicts=bool(issues),
         )
     if columns in {2, 4} and re.search(r"degradation", context, re.IGNORECASE):
@@ -77,9 +75,6 @@ def infer_schema(context: str, columns: int) -> BiologySchema | None:
             ("letter",),
             columns // 2,
             target=target if target != "Protein" else None,
-            assay="Western blot"
-            if re.search(r"Western\s+blot", context, re.IGNORECASE)
-            else None,
             cell_line=cell_line,
             context_conflicts=bool(issues),
         )
@@ -88,7 +83,6 @@ def infer_schema(context: str, columns: int) -> BiologySchema | None:
             table_id,
             ("Anti-proliferation activity grade",),
             ("plus",),
-            assay="Anti-proliferation",
             context_conflicts=bool(issues),
         )
     return None
@@ -186,15 +180,10 @@ def biology_grid_schema(schema: GridSchema | None) -> GridSchema | None:
             (context.cell_line, bio.cell_line),
         )
     )
-    context = replace(
-        context,
-        target=context.target or bio.target,
-        # A declared assay NAME and an inferred readout METHOD are not the same
-        # field. The method already survives in observed biological metric keys;
-        # it cannot rename, or alone contradict, an original assay declaration.
-        assay=context.assay if context.assay is not None else bio.assay,
-        cell_line=context.cell_line or bio.cell_line,
-    )
+    # Biological metric/readout semantics do not create assay conditions. The
+    # same original context authority already owns declared target, assay and
+    # cell line. Keep literal readout details in keys/raw source; disagreements
+    # above remain review findings and missing conditions remain unknown.
     return replace(
         schema,
         context=context,

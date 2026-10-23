@@ -3,6 +3,7 @@
 import re
 from dataclasses import dataclass
 
+from .source_paragraphs import PARAGRAPH_LOCATOR
 from .source_table_markers import TABLE_INDEX, table_marker_identity
 
 MAX_REFERENCES = 2048
@@ -10,7 +11,7 @@ MAX_TARGETS_PER_REFERENCE = 128
 _SPACE = r"[ \t\r\n]*"
 _REPORT = re.compile(
     r"(?:^|(?<=[.!?。；;]))[ \t]*"
-    r"(?:\[\s*\d{1,8}\s*\][ \t]*)?"
+    rf"(?:{PARAGRAPH_LOCATOR}[ \t]*)?"
     rf"(?:(?:The{_SPACE})?Results?{_SPACE}(?:(?:are|were){_SPACE})?"
     rf"(?:shown|listed|reported|provided|summari[sz]ed|presented|included){_SPACE}in{_SPACE}"
     r"|(?:结果|数据)(?:见|列于|示于)\s*)"

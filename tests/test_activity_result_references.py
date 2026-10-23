@@ -3,6 +3,7 @@
 import copy
 import tempfile
 import unittest
+from functools import partial
 from pathlib import Path
 from unittest.mock import patch
 
@@ -52,6 +53,12 @@ def original_fixture(
 
 
 class ActivityResultReferenceTests(unittest.TestCase):
+    @staticmethod
+    def original_reader(path):
+        # The generated original survives the temporary directory; a saved
+        # derived packet never becomes its own original-PDF authority.
+        return partial(fitz.open, stream=path.read_bytes(), filetype="pdf")
+
     def test_same_page_other_grid_cannot_hide_the_missing_named_result(self):
         with tempfile.TemporaryDirectory() as temp:
             data = original_fixture(
@@ -63,7 +70,9 @@ class ActivityResultReferenceTests(unittest.TestCase):
     def test_proved_reference_window_and_actual_grid_can_share_one_page(self):
         with tempfile.TemporaryDirectory() as temp:
             data = original_fixture(Path(temp), same_page=True)
-        self.assertEqual(activity_evidence_errors(data, [0]), [])
+            reader = self.original_reader(Path(temp) / "original.pdf")
+        self.assertTrue(activity_evidence_errors(data, [0]))
+        self.assertEqual(activity_evidence_errors(data, [0], open_original=reader), [])
         self.assertEqual(data["coverage"]["references"][0]["status"], "resolved")
 
     def test_literal_reference_grammar_keeps_raw_table_identity(self):
@@ -84,7 +93,8 @@ class ActivityResultReferenceTests(unittest.TestCase):
     def test_actual_native_facade_resolves_only_named_table(self):
         with tempfile.TemporaryDirectory() as temp:
             data = original_fixture(Path(temp))
-        self.assertEqual(activity_evidence_errors(data, [0]), [])
+            reader = self.original_reader(Path(temp) / "original.pdf")
+        self.assertEqual(activity_evidence_errors(data, [0], open_original=reader), [])
         refs = data["coverage"]["references"]
         self.assertEqual(len(refs), 1)
         self.assertEqual(refs[0]["table_id"], "Table 72")
@@ -110,16 +120,23 @@ class ActivityResultReferenceTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as temp:
             data = original_fixture(Path(temp))
+            reader = self.original_reader(Path(temp) / "original.pdf")
         self.assertTrue(current(data, "activity"))
         self.assertEqual(
             _activity_acceptance_errors(
-                data, data["active_cpds"], classified_activity_pages=[0]
+                data,
+                data["active_cpds"],
+                classified_activity_pages=[0],
+                open_original=reader,
             ),
             [],
         )
         data["coverage"]["references"][0]["target_region_ids"] = []
         errors = _activity_acceptance_errors(
-            data, data["active_cpds"], classified_activity_pages=[0]
+            data,
+            data["active_cpds"],
+            classified_activity_pages=[0],
+            open_original=reader,
         )
         self.assertTrue(any("Result-reference" in error for error in errors))
 
@@ -146,7 +163,8 @@ class ActivityResultReferenceTests(unittest.TestCase):
             data = original_fixture(
                 Path(temp), method, (("Table 72", "IC50 (nM)"), ("Table 38", "Ki (nM)"))
             )
-        self.assertEqual(activity_evidence_errors(data, [0]), [])
+            reader = self.original_reader(Path(temp) / "original.pdf")
+        self.assertEqual(activity_evidence_errors(data, [0], open_original=reader), [])
         self.assertEqual(len(data["rows"]), 2)
         self.assertEqual(
             [r["status"] for r in data["coverage"]["references"]],
@@ -229,14 +247,15 @@ class ActivityResultReferenceTests(unittest.TestCase):
                 doc.save(pdf)
             extract(str(pdf), {"activity_pages": [0]}, str(root / "output"))
             data = load_json(root / "output" / "activity_data.json", None)
-        self.assertEqual(activity_evidence_errors(data, [0]), [])
+            reader = self.original_reader(pdf)
+        self.assertEqual(activity_evidence_errors(data, [0], open_original=reader), [])
         self.assertEqual(data["coverage"]["references"][0]["status"], "resolved")
         self.assertEqual(data["rows"][1]["activity_values"]["IC50 (nM)"], "ND")
         source = data["rows"][0]["activity_sources"][0]
         for observation in source["cells"][1]["observations"]:
             observation["raw_text"] = "91 | 19"
         with self.assertRaises(ValueError):
-            activity_evidence_errors(data, [0])
+            activity_evidence_errors(data, [0], open_original=reader)
 
     def test_existing_native_biology_reader_retains_named_table_caption(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -261,8 +280,9 @@ class ActivityResultReferenceTests(unittest.TestCase):
                 doc.save(pdf)
             extract(str(pdf), {"activity_pages": [0]}, str(root / "output"))
             data = load_json(root / "output" / "activity_data.json", None)
+            reader = self.original_reader(pdf)
         self.assertEqual(data["rows"][0]["source"], "observed_grid_cells")
-        self.assertEqual(activity_evidence_errors(data, [0]), [])
+        self.assertEqual(activity_evidence_errors(data, [0], open_original=reader), [])
         self.assertEqual(data["coverage"]["references"][0]["status"], "resolved")
 
     def test_native_transposed_reader_resolves_using_original_column_cells(self):
@@ -281,7 +301,10 @@ class ActivityResultReferenceTests(unittest.TestCase):
                 doc.save(pdf)
             extract(str(pdf), {"activity_pages": [0, 1]}, str(root / "output"))
             data = load_json(root / "output" / "activity_data.json", None)
-        self.assertEqual(activity_evidence_errors(data, [0, 1]), [])
+            reader = self.original_reader(pdf)
+        self.assertEqual(
+            activity_evidence_errors(data, [0, 1], open_original=reader), []
+        )
         self.assertEqual(data["coverage"]["references"][0]["status"], "resolved")
 
     def test_wrong_typed_contract_and_reference_reason_cannot_be_promoted(self):

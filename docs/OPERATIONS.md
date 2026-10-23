@@ -1,5 +1,33 @@
 # Operations and troubleshooting
 
+## Paragraph-prefixed captions and original continued-table boundaries
+
+The same paired1–8digit paragraph locator grammar serves source headings,
+table captions, discovery, result references and saved-row validation. Both
+ordinary/fullwidth printed brackets and digits retain their original source
+spelling. Only actual anchored captions set table identity/conditions; a new
+table cannot borrow the previous assay. Changed paragraph numbers alone do not
+break an explicit same-table continuation with identical known conditions.
+Unknown conditions/changed units or conditions/prose/malformed locators refuse.
+
+Biological method labels such as HTRF remain in metric names and raw source,
+not automatically supplied experimental conditions. Missing context stays
+unknown; explicit source declarations and conflicts retain their existing gate.
+
+Current boundary2 is required for original replay of borrowed generic headers.
+It keeps the current-page prefix/native paint and, for raster sources, one full
+400dpi cell-SDK pixel frame. Missing, hidden, changed or downgraded source cannot
+be excused by a correct parent header. The8M-pixel limit logs refusal and leaves
+that grid unresolved, without OCR or a larger render/retry. Actual replays do
+not start auxiliary recognition. This is source integrity, not OCR accuracy.
+
+Current derived epochs: Activity40/extractor52/coverage21; Binding59/binder70.
+Old originals, raw observations, model outputs, failed attempts and audited
+corrections remain intact. Never retag or hand-fill an old result. Actual private
+regeneration/acceptance is frontend-only after reviewed-main deployment; SAR
+requires accepted usable extraction. No environment, model, external LLM or
+scientific threshold/potency policy change is included.
+
 ## A short original-source column title breaks across lines
 
 The result table's source column shares a96px default/minimum across English

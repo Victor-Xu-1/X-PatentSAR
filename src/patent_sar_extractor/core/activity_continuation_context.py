@@ -15,7 +15,7 @@ def continuation_context_proved(region, prefix):
         )
     except ValueError:
         return False
-    if checked is None:
+    if checked is None or checked[0]["version"] != 2:
         return False
     scope, _, _ = checked
     snapshot = {

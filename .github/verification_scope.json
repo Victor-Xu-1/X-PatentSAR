@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "856304e12fc350eb5f490045b197dc894476bf38",
+  "base_sha": "d0468ad5c33191132786469d246c506cd6ba99c8",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
@@ -8,26 +8,50 @@
     "docs/PROJECT_MANIFEST.md",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/e2e/source-column-heading.spec.ts",
-    "frontend/src/model/resultColumns.ts",
-    "frontend/tests/column-resize.test.tsx",
     "src/patent_sar_extractor/contracts.py",
-    "tests/test_source_browser_fixture.py",
-    "tools/browser_fixture_mode.py"
+    "src/patent_sar_extractor/core/activity_auxiliary_replay.py",
+    "src/patent_sar_extractor/core/activity_boundary_pixels.py",
+    "src/patent_sar_extractor/core/activity_boundary_sources.py",
+    "src/patent_sar_extractor/core/activity_continuation_context.py",
+    "src/patent_sar_extractor/core/activity_continuation_policy.py",
+    "src/patent_sar_extractor/core/activity_headers.py",
+    "src/patent_sar_extractor/core/activity_native_sources.py",
+    "src/patent_sar_extractor/core/activity_parallel_context.py",
+    "src/patent_sar_extractor/core/activity_result_references.py",
+    "src/patent_sar_extractor/core/activity_source_discovery.py",
+    "src/patent_sar_extractor/core/biology_tables.py",
+    "src/patent_sar_extractor/core/source_paragraphs.py",
+    "src/patent_sar_extractor/core/source_result_references.py",
+    "src/patent_sar_extractor/core/source_section_roles.py",
+    "src/patent_sar_extractor/core/source_table_markers.py",
+    "tests/test_activity_boundary_pixels.py",
+    "tests/test_activity_result_references.py",
+    "tests/test_caption_locator_native.py",
+    "tests/test_source_caption_locators.py"
   ],
   "python_modules": [
-    "tests.test_source_browser_fixture.SourceBrowserFixtureTests.test_source_column_heading_needs_only_existing_read_only_results",
+    "tests.test_source_caption_locators",
+    "tests.test_caption_locator_native",
+    "tests.test_activity_boundary_pixels",
+    "tests.test_source_table_caption_semantics",
+    "tests.test_source_role_terms",
+    "tests.test_native_activity_context",
+    "tests.test_declared_table_continuations",
+    "tests.test_activity_header_continuation",
+    "tests.test_activity_source_roles",
+    "tests.test_activity_context_transport",
+    "tests.test_activity_header_grid",
+    "tests.test_activity_result_references",
+    "tests.test_source_context_projection",
+    "tests.test_sar_source_contexts",
+    "tests.test_auxiliary_activity_compatibility",
+    "tests.test_binding_cache_identity",
     "tests.test_release_policy.ReleaseNumberTests",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
-  "frontend_tests": [
-    "frontend/tests/column-resize.test.tsx",
-    "frontend/tests/i18n-workbench-table.test.tsx",
-    "frontend/tests/original-id-labels.test.tsx"
-  ],
+  "frontend_tests": [],
   "browser_tests": [
-    "frontend/e2e/source-column-heading.spec.ts",
     "frontend/e2e/product-version.spec.ts"
   ]
 }

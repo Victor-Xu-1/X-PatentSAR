@@ -1,11 +1,15 @@
 """Replay a unique shared original caption; no OCR, value or assay inference."""
 
+import logging
+
+from .activity_boundary_pixels import capture_boundary_pixels, valid_boundary_pixels
 from .activity_caption_windows import shared_caption_allowed
 from .activity_context_geometry import grid_box, valid_box, validate_context_geometry
 from .activity_context_values import CONTEXT_IDENTITY_FIELDS
 from .activity_grid_context import _prefix
 from .activity_header_sources import context_source_parts, source_context_region
 from .activity_headers import context_from_text
+from .cell_rendering import CellRenderLimit
 from .source_geometry import SourceTokens, native_region
 from .source_observations import (
     source_cell_observation,
@@ -13,6 +17,8 @@ from .source_observations import (
     source_observation_status,
 )
 from .source_window_chunks import validate_source_overlap
+
+logger = logging.getLogger(__name__)
 
 
 def observe_context_boundary(page, region, tokens):
@@ -22,13 +28,22 @@ def observe_context_boundary(page, region, tokens):
     bounds = [0, max(0, region["ys"][0] - 310), page.rect.width, region["ys"][0]]
     if not valid_box(bounds):
         return None
+    preferred = source_cell_observation(
+        tokens, bounds, native=native_region(tokens, bounds, False)
+    )
+    pixels = None
+    if preferred["origin"] == "raster":
+        try:
+            pixels = capture_boundary_pixels(page, bounds)
+        except CellRenderLimit:
+            logger.warning("Original context boundary exceeds its pixel budget")
+            return None  # Keep the grid unresolved, never omit its source rows.
     return {
-        "version": 1,
+        "version": 2,
         "page_size": [page.rect.width, page.rect.height],
-        "prefix": source_cell_observation(
-            tokens, bounds, native=native_region(tokens, bounds, False)
-        ),
+        "prefix": preferred,
         "native_prefix": source_cell_observation(tokens, bounds, native=True),
+        "original_pixels": pixels,
     }
 
 
@@ -44,9 +59,11 @@ def validate_context_boundary(region, scope, prefix=None):
         return None
     if (
         not isinstance(scope, dict)
-        or set(scope) != {"version", "page_size", "prefix", "native_prefix"}
+        or set(scope) - {"original_pixels"}
+        != {"version", "page_size", "prefix", "native_prefix"}
         or type(scope["version"]) is not int
-        or scope["version"] != 1
+        or scope["version"] not in {1, 2}
+        or ("original_pixels" in scope) != (scope["version"] == 2)
         or not isinstance(scope["page_size"], list)
         or len(scope["page_size"]) != 2
         or not valid_box([0, 0, *scope["page_size"]])
@@ -76,6 +93,13 @@ def validate_context_boundary(region, scope, prefix=None):
         and primary != native
     ):
         raise ValueError("Conflicting original shared-panel source origins")
+    if scope["version"] == 2 and (
+        primary["origin"] == "native"
+        and scope["original_pixels"] is not None
+        or primary["origin"] == "raster"
+        and not valid_boundary_pixels(scope["original_pixels"], bounds)
+    ):
+        raise ValueError("Missing full original boundary pixels")
     shared = shared_caption_allowed((primary["tokens"], native["tokens"]), region)
     if (
         prefix is not None
@@ -92,7 +116,7 @@ def validate_parallel_context(region, prefix=None):
 
 def _qualified(region, prefix):
     checked = validate_parallel_context(region, prefix)
-    if checked is None or not checked[2]:
+    if checked is None or checked[0]["version"] != 2 or not checked[2]:
         return None
     scope, bounds, _ = checked
     snapshot = {

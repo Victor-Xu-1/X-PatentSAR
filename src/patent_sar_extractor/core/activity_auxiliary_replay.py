@@ -5,6 +5,8 @@ from contextlib import AbstractContextManager
 from functools import partial
 from pathlib import Path
 
+from .activity_boundary_pixels import original_boundary_pixels_match
+from .activity_boundary_sources import original_context_boundaries
 from .activity_header_cells import header_leaf_cells
 from .activity_header_layout_proof import physical_discovery_views
 from .activity_native_sources import original_native_contexts
@@ -151,6 +153,11 @@ def original_activity_source_errors(
             role_errors = original_role_source_errors(document, role_sources)
             if role_errors:
                 return role_errors
+            for page_no, scope, bounds in original_context_boundaries(payload):
+                if page_no > len(document) or not original_boundary_pixels_match(
+                    scope, bounds, document[page_no - 1]
+                ):
+                    return ["Activity boundary differs from its original page pixels."]
             for page_no, packet, claims in original_native_contexts(
                 payload, maximum=MAX_PRIMARY_SOURCE_CELLS
             ):

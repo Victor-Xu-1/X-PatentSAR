@@ -7,6 +7,7 @@ from typing import Any
 
 from .activity_identity import PRINTED_ID, printed_identifier_key
 from .printed_identifiers import identifier_width
+from .source_paragraphs import PARAGRAPH_LOCATOR
 from .source_role_terms import (
     INTERMEDIATE_CJK,
     INTERMEDIATE_PLURAL,
@@ -16,10 +17,8 @@ from .source_role_terms import (
     role_words,
 )
 
-_PARAGRAPH = r"(?:\[\s*\d{1,8}\s*\]|［\s*\d{1,8}\s*］)"
-
 _HEADING = re.compile(
-    rf"^(?:{_PARAGRAPH}\s*)?"
+    rf"^(?:{PARAGRAPH_LOCATOR}\s*)?"
     r"(?P<preparation>(?:(?:Synthesis|Preparation)\s+(?:of\s+)?)?)"
     r"(?:Exemplary\s+)?"
     rf"(?P<kind>Compound|Cmpd|Cpd|Example|{INTERMEDIATE_SINGULAR}|实施例|化合物)\s*[-:.：]?\s*"
@@ -28,7 +27,7 @@ _HEADING = re.compile(
 )
 _SEPARATOR = r"\s*(?:,\s*(?:and\s+)?|and\s+|&\s*|和|及|、)\s*"
 _GROUP = re.compile(
-    rf"^(?:{_PARAGRAPH}\s*)?"
+    rf"^(?:{PARAGRAPH_LOCATOR}\s*)?"
     r"(?P<preparation>(?:(?:Synthesis|Preparation)\s+(?:of\s+)?)?)"
     r"(?:Exemplary\s+)?"
     rf"(?P<kind>Compounds|Cmpds|Cpds|Examples|{INTERMEDIATE_PLURAL}|实施例|化合物)\s*[-:.：]?\s*"
@@ -37,7 +36,7 @@ _GROUP = re.compile(
     re.IGNORECASE,
 )
 _LIST_START = re.compile(
-    rf"^(?:{_PARAGRAPH}\s*)?"
+    rf"^(?:{PARAGRAPH_LOCATOR}\s*)?"
     r"(?:(?:Synthesis|Preparation)\s+(?:of\s+)?)?(?:Exemplary\s+)?"
     rf"(?:Compounds?|Cmpds?|Cpds?|Examples?|{INTERMEDIATE_TERM}|实施例|化合物)\s*[-:.：]?\s*",
     re.IGNORECASE,
@@ -59,13 +58,13 @@ _INTERMEDIATE_TARGET = re.compile(
     re.IGNORECASE,
 )
 _PROCEDURE = re.compile(
-    rf"^(?:{_PARAGRAPH}|(?:Step|Stage|步骤|中间体|Intermediate)\b|"
+    rf"^(?:{PARAGRAPH_LOCATOR}|(?:Step|Stage|步骤|中间体|Intermediate)\b|"
     r"[A-Z][.)]\s|To\s+(?:a|an|the)\s|A\s+(?:solution|mixture)\b|"
     r"The\s+(?:reaction|mixture)\b)",
     re.IGNORECASE,
 )
 _SCHEME_BOUNDARY = re.compile(
-    rf"^(?:{_PARAGRAPH}\s*)?"
+    rf"^(?:{PARAGRAPH_LOCATOR}\s*)?"
     r"(?:(?:Alternative|Independent|Separate|Different|Unrelated|Other)\s+"
     r"(?:synthetic\s+)?(?:products?|routes?|schemes?|reactions?|preparations?|synthes(?:is|es))\b"
     r"|(?:Control|Comparative)\s+(?:experiments?|reactions?|compounds?|products?)\b"

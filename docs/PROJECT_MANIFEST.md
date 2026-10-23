@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Literal caption/source boundary authority: `source_paragraphs` supplies one
+  paired bounded locator grammar to headings/table/context/discovery/reference
+  consumers without rewriting raw source or IDs. Biological readout semantics
+  own keys, not a competing assay/target/cell-line condition parser. Boundary2
+  uses the existing original activity inventory for native-paint visibility and
+  the shared full400dpi/8M `cell_raster` SDK for raster-prefix replay. Omissions,
+  downgrades, hidden/changed source and over-budget frames refuse. No new model,
+  parser, writer, store, queue or activation exists. Activity40/extractor52/
+  coverage21 and Binding59/binder70 refresh derived proof only; raw/manual/
+  history/SMILES6/API/SQL/dependencies/SAR/potency authorities are unchanged.
+  Older epoch entries below are release history, not current competing paths.
+
 - Source-header readability authority: shared `resultColumns` default/min96px,
   max180px reserves label/menu space without locale/task branches or global
   scientific-header no-wrap. Existing resizing/source navigation/i18n remain;

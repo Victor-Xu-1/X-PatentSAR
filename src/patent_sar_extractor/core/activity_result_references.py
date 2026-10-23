@@ -13,6 +13,7 @@ from .activity_table_scopes import table_scope_groups
 from .cell_cross_observation import printed_cross_valid
 from .printed_identifiers import identifier_fragments_conflict, identifier_key
 from .source_cell_claims import cell_source_conflict, cell_source_status, native_witness
+from .source_paragraphs import strip_paragraph_locator
 from .source_result_references import MAX_REFERENCES, MAX_TARGETS_PER_REFERENCE
 from .source_section_roles import nonfinal_original_label
 from .source_table_markers import TABLE_MARKER, table_marker_identity
@@ -34,7 +35,7 @@ def _key(table):
 def _caption_key(text):
     if not isinstance(text, str) or len(text) > 10000:
         return ""
-    caption = re.sub(r"^\[\d{4,8}\]\s*", "", text.strip())
+    caption = strip_paragraph_locator(text.strip())
     markers = list(TABLE_MARKER.finditer(caption))
     if len(markers) != 1 or markers[0].start() != 0:
         return ""

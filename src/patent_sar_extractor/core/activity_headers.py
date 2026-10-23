@@ -15,13 +15,13 @@ from .activity_header_metrics import (
 from .activity_identity import ID_HEADER, is_id_header, is_value, normalize_value
 from .activity_metadata import metadata_role
 from .activity_models import ColumnGroup, GridSchema, TableContext
-from .source_table_markers import TABLE_MARKER, table_marker_identity
-
-_CAPTION_LINE = re.compile(
-    rf"^[ \t]*(?:\[\d{{4,8}}\][ \t]*)?(?:{TABLE_MARKER.pattern})",
-    re.IGNORECASE | re.MULTILINE,
+from .source_paragraphs import paragraph_only, strip_paragraph_locator
+from .source_table_markers import (
+    TABLE_CAPTION_LINE,
+    TABLE_MARKER,
+    table_marker_identity,
 )
-_PARAGRAPH_NUMBER = re.compile(r"^\[\d{4,8}\]\s*$")
+
 ACTIVITY_CONTEXT = re.compile(
     r"assay|activity|binding|degrad|prolifer|xenograft|microsom|pharmacokinetic|"
     r"活性|降解|增殖|药代|药效|抑制|代谢|HTRF|HiBiT|NanoBiT|FACS",
@@ -112,7 +112,7 @@ def context_from_text(
     """Store local source language; scientific identity requires explicit labels."""
     raw_context = str(surrounding or caption)
     raw_caption, body_text, source = _context_parts(str(caption), str(surrounding))
-    caption = re.sub(r"^\[\d{4,8}\]\s*", "", raw_caption)
+    caption = strip_paragraph_locator(raw_caption)
     caption = re.sub(r"\s+", " ", caption).strip()[:300]
     marker = TABLE_MARKER.search(caption)
     table_id = table_marker_identity(marker.group()) if marker else ""
@@ -130,17 +130,17 @@ def context_from_text(
 def _context_parts(caption: str, surrounding: str) -> tuple[str, str, str]:
     """A line-anchored caption owns context; prose references are provenance only."""
     source = surrounding or caption
-    markers = list(_CAPTION_LINE.finditer(source))
+    markers = list(TABLE_CAPTION_LINE.finditer(source))
     if not markers and caption and caption != source:
         source = f"{caption}\n{source}"
-        markers = list(_CAPTION_LINE.finditer(source))
+        markers = list(TABLE_CAPTION_LINE.finditer(source))
     if markers:
         start = markers[-1].start()
         end = source.find("\n", markers[-1].end())
         if end < 0:
             end = len(source)
         raw_caption = source[start:end].strip()
-        label = re.sub(r"^\[\d{4,8}\]\s*", "", raw_caption)
+        label = strip_paragraph_locator(raw_caption)
         if not TABLE_MARKER.sub("", label, count=1).strip(" .:：") and end < len(
             source
         ):
@@ -150,12 +150,13 @@ def _context_parts(caption: str, surrounding: str) -> tuple[str, str, str]:
             title = source[end + 1 : title_end].strip()
             if (
                 title
+                and not paragraph_only(title)
                 and not re.match(
-                    r"\[\d{4,8}\]|(?:Target|Assay|靶点|实验)\s*[:：]",
+                    r"(?:Target|Assay|靶点|实验)\s*[:：]",
                     title,
                     re.IGNORECASE,
                 )
-                and not _CAPTION_LINE.match(title)
+                and not TABLE_CAPTION_LINE.match(title)
             ):
                 end = title_end
                 raw_caption = source[start:end].strip()
@@ -164,7 +165,7 @@ def _context_parts(caption: str, surrounding: str) -> tuple[str, str, str]:
         # borrow a previous table's explicit target/assay labels.
         return raw_caption, body, source[start:]
     raw_caption = caption.strip()
-    if _PARAGRAPH_NUMBER.fullmatch(raw_caption):
+    if paragraph_only(raw_caption):
         raw_caption = ""
     body = surrounding if surrounding != raw_caption else ""
     return raw_caption, body, source
