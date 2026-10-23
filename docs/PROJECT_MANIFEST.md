@@ -1,5 +1,19 @@
 # Project governance manifest
 
+- Physical negative-role adapter: `activity_text_roles` links both complete
+  qualified400/600dpi line readings to the SAME spectral data cell of an
+  existing current whole-grid role proof, separately per DPI. The shared
+  `text_source_owners` resolver serves capture, partition and saved readback;
+  original full-line inventories/pixels and all unknown/completeness gates
+  remain. Shared `characterization_conflict` uses existing metric/context
+  authorities for titles, cell matrices and independent native hints. No role
+  keyword alone, competing parser/model/writer/store or value correction exists.
+  Role6/source4/Activity43/extractor55/coverage24/Binding61/binder72 refresh
+  derived proof only. Raw/manual/history, SMILES6, API/SQL, models/dependencies,
+  activation, SAR and potency/percentage/log policy remain unchanged. Older
+  contract entries below are release history. Generated controls do not prove
+  scientific/real-patent acceptance.
+
 - Mixed-page physical ownership authority: `activity_text_partition` projects
   already-qualified grid/caption lines into barriers for the existing declared
   text planner and proof reader. Coordinate page membership is not an exclusion
@@ -11,7 +25,8 @@
   Activity42/extractor54/coverage23/declared-source3 refresh combined derived activity
   evidence only; raw/manual/history, Binding60/binder71/SMILES6, API/SQL, models,
   SAR and tenth-strongest/percentage/log scientific policies are unchanged.
-  The source3 entry is current; older source2 entries below are release history.
+  That source3 entry documents the mixed-page release; current role6/source4
+  authority is above. Older entries are release history, not alternate paths.
 
 - Literal record-role guard: `source_role_terms.intermediate_source_label` owns
   the shared declared intermediate-label predicate for core binding, OCSR input,

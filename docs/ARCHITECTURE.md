@@ -1,5 +1,38 @@
 # X-PatentSAR architecture
 
+## Physical characterization claims, not competing literal votes
+
+`activity_text_sources.text_source_owners` is the same call-local resolver used
+by declared-text capture, partition validation and saved proof. Its bounded
+`activity_text_roles` adapter links a nonliteral negative claim only to one data
+cell in a complete current characterization grid. Both high-quality400/600dpi
+line reads must be literal contiguous word runs in that SAME cell's respective
+DPI readings. It cannot borrow the other DPI, another row/cell, a role label,
+native witness, header, identifier or preparation column. No winning string is
+selected, corrected, combined or used as an activity value.
+
+Every line, raw nomination, differing reading and original frame remains in the
+existing catalog. The single partition only projects already-owned characters
+to whitespace barriers for the existing text planner. Full original role/cell
+and actual grid-axis replay remain mandatory; a changed/missing/foreign source,
+unqualified reading, unresolved role or competing/crossing owner still refuses.
+Unknown sources cannot be removed, and an empty or missing result stays open.
+
+`activity_grid_roles.characterization_conflict` reuses the existing metric and
+literal-context authorities. Scientific conditions/results in the title, full
+role matrix or independent native hints refuse a characterization role, even
+when an NMR label is present. This applies to the binder/worker/Web/SAR readers
+of the existing role proof as well as activity extraction. No new classifier,
+recognizer, row writer, store, queue or scientific threshold is introduced.
+
+Current derived contracts are role6, declared-source4, Activity43/extractor55/
+coverage24 and Binding61/binder72. Old derived proof remains historical; raw
+PDF/OCR/OCSR, structure assets, manual audits, SMILES6, API/SQL, model/environment
+activation and SAR strength/percentage/log policies are unchanged. Earlier
+contract entries below are release history, not current alternate authorities.
+Controlled generated readers prove these engineering contracts, not OCR recall,
+chemical correctness or actual private-patent acceptance.
+
 ## Mixed-page source ownership
 
 Coordinate `owned_pages` nominates pages; it no longer excludes the other text
@@ -26,8 +59,10 @@ unknown source, empty grid, source conflict or completeness gate is waived.
 Every nominated/coordinate page requires its complete text catalog even when its
 projection is blank, so removing an outside table and its entire catalog together
 cannot turn partial extraction into complete acceptance.
-Declared source3 / Activity42 / extractor54 / coverage23 refresh derived activity
-proof; raw originals, manual corrections, binding, OCSR/SMILES6, API/SQL, SAR and
+The mixed-page release introduced source3 / Activity42 / extractor54 / coverage23;
+the current role6/source4 contracts are recorded above. Both refresh derived
+proof only. The mixed-page change left raw originals, manual corrections,
+binding, OCSR/SMILES6, API/SQL, SAR and
 potency policies stay unchanged. Native checks do not construct OCR runtimes.
 
 ## One literal nonfinal-label admission guard

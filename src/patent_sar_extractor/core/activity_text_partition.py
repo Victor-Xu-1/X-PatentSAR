@@ -9,19 +9,26 @@ import re
 from itertools import pairwise
 
 from .activity_header_sources import context_source_parts, source_context_region
+from .activity_text_roles import characterization_line
 from .cell_frame_proof import inside_box
 from .source_cell_tokens import cell_lines, cell_tokens
 from .source_observations import source_claim_runs
 
 
-def line_owner(line, regions):
+def line_owner(line, regions, *, role_cells=None):
     """Return a unique physical owner, never a page-wide or nearest-title guess."""
     candidates, overlaps = [], set()
     for region in regions:
         if region.get("kind") != "grid" or "grid_axes" not in region:
             continue
         if inside_box(line["bbox"], region["bbox"]):
-            candidates.append({"region_id": region["region_id"], "role": "grid"})
+            cells = (role_cells or {}).get(region["region_id"], ())
+            role = (
+                "characterization"
+                if cells and characterization_line(line, cells)
+                else "grid"
+            )
+            candidates.append({"region_id": region["region_id"], "role": role})
             continue
         left, top, right, bottom = line["bbox"]
         box = region["bbox"]
@@ -70,10 +77,14 @@ def line_owner(line, regions):
 
 def owned(line):
     owner = line.get("coordinate_owner")
-    return isinstance(owner, dict) and owner.get("role") in ("grid", "caption")
+    return isinstance(owner, dict) and owner.get("role") in (
+        "grid",
+        "caption",
+        "characterization",
+    )
 
 
-def annotations_match(source, regions, qualified):
+def annotations_match(source, owner):
     """A saved owner flag is not authority; recompute from the actual inventory."""
     if (
         not isinstance(source, dict)
@@ -83,7 +94,7 @@ def annotations_match(source, regions, qualified):
     ):
         return False
     for line in source["lines"]:
-        expected = line_owner(line, regions) if qualified(line) else None
+        expected = owner(line)
         if line.get("coordinate_owner") != expected:
             return False
     return True
@@ -141,7 +152,7 @@ def _physical_barriers(positions):
     bodies, outside = {}, []
     for line, start, end in positions:
         owner = line.get("coordinate_owner")
-        if owned(line) and owner["role"] == "grid":
+        if owned(line) and owner["role"] in ("grid", "characterization"):
             box = line["bbox"]
             previous = bodies.get(owner["region_id"], box)
             bodies[owner["region_id"]] = [

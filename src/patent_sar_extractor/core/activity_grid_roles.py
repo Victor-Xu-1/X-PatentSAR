@@ -2,6 +2,7 @@
 
 import re
 
+from .activity_context_values import context_values
 from .activity_header_metrics import METRIC, normalize_metric_text
 from .activity_headers import ACTIVITY_CONTEXT, context_from_text
 from .printed_identifiers import LABEL_KIND, PRINTED_ID, identifier_key
@@ -47,6 +48,17 @@ def declared_measurement(text):
     """Nuclear 19 F / chloride fragments are not bare bioavailability/clearance."""
     normalized = normalize_metric_text(text)
     return bool(_ENDPOINT.search(normalized) or METRIC.fullmatch(compact(normalized)))
+
+
+def characterization_conflict(text):
+    """A spectral label cannot waive explicit scientific conditions or results."""
+    values, issues = context_values(text)
+    return bool(
+        issues
+        or any(value is not None for value in values.values())
+        or declared_measurement(text)
+        or ACTIVITY_CONTEXT.search(text)
+    )
 
 
 def nominate_characterization(matrix, prefix):
@@ -99,6 +111,8 @@ def characterization_roles(matrix, prefix):
         for row in matrix
     ):
         return None
+    if characterization_conflict(prefix):
+        return None
     context = context_from_text(prefix, prefix)
     if context.raw_caption:
         if ACTIVITY_CONTEXT.search(context.raw_caption) or METRIC.search(
@@ -112,7 +126,9 @@ def characterization_roles(matrix, prefix):
             return None
     has_header = any(_ID_HEADER.fullmatch(compact(cell)) for cell in matrix[0])
     rows = matrix[1:] if has_header else matrix
-    if not rows or any(declared_measurement(cell) for row in matrix for cell in row):
+    if not rows or any(
+        characterization_conflict(cell) for row in matrix for cell in row
+    ):
         return None
     if has_header and any(
         METRIC.search(normalize_metric_text(cell)) and not _NMR.search(cell)

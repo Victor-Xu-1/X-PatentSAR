@@ -7,8 +7,8 @@ from patent_sar_extractor.contracts import CHARACTERIZATION_ROLE_SCHEMA_VERSION
 from .activity_grid_roles import (
     MAX_ROLE_ROW_HEIGHT,
     MAX_ROLE_TEXT_ROWS,
+    characterization_conflict,
     characterization_roles,
-    declared_measurement,
 )
 from .activity_headers import context_from_text
 from .cell_frame_proof import valid_cell_frame
@@ -71,7 +71,9 @@ def valid_role_scope(record):
         or len(hints) != rows
         or any(not isinstance(row, list) or len(row) != columns for row in hints)
         or any(
-            not isinstance(text, str) or len(text) > 4096 or declared_measurement(text)
+            not isinstance(text, str)
+            or len(text) > 4096
+            or characterization_conflict(text)
             for row in hints
             for text in row
         )
@@ -214,7 +216,7 @@ def valid_role_scope(record):
                     or not 0 <= part["confidence"] <= 1
                     or not math.isfinite(part["confidence"])
                     or part["confidence"] >= 0.85
-                    and declared_measurement(part["text"])
+                    and characterization_conflict(part["text"])
                     for part in text_detection_parts(cell)
                 ):
                     return False
