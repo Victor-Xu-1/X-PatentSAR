@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 
 from .activity_context_values import SCIENTIFIC_CONTEXT_FIELDS, context_values
 from .source_role_observations import RoleObservationBuffer
+from .source_table_markers import TABLE_BOUNDARY_LINE, unproved_caption_prefix
 
 
 @dataclass
@@ -74,7 +75,14 @@ class TableContext:
         # raw_context retains earlier tables too; raw_caption/body_text are the
         # same existing last-caption scope selected by context_from_text.
         source = "\n".join(part for part in (self.raw_caption, self.body_text) if part)
-        return context_values(source if source.strip() else self.raw_context)[1]
+        source = source if source.strip() else self.raw_context
+        conflicts = context_values(source)[1]
+        boundary = None
+        for boundary in TABLE_BOUNDARY_LINE.finditer(source):
+            pass
+        if boundary is not None and unproved_caption_prefix(source[boundary.start() :]):
+            conflicts += ("table_id:unproved_caption_prefix",)
+        return conflicts
 
     def scientific_values(self) -> dict[str, str | None]:
         # Do not invent optional unknown keys: they would turn a recorded SAR

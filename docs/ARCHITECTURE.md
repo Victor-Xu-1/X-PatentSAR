@@ -5,9 +5,17 @@
 `source_paragraphs` owns paired, bounded literal paragraph metadata. Original
 headings, table nomination, activity context windows, result-reference spans and
 saved-row comparison use it without changing source characters or molecular IDs.
-Only the last anchored table caption owns conditions; a different paragraph
+The last literal or uncertain table boundary scopes the original observation;
+only a proved caption supplies table identity. A different valid paragraph
 locator does not break an otherwise proved, explicit same-table continuation.
-Malformed/overlong locators and prose references do not become captions.
+Malformed/overlong numeric bracket prefixes stop prior condition/role ownership
+without becoming captions or corrected identifiers. The same boundary grammar
+serves discovery, physical header wrapping, local/parallel title projection,
+declarations and saved-source consumers. Unknown boundaries retain all original
+facts while ending trusted prior ownership; they cannot trim the source inventory
+or exclude later diagrams as intermediates. Prose/isotope labels are not numeric
+paragraph metadata. Unproved current context remains a computed review conflict,
+including a saved raw context whose caption fields were omitted.
 
 Biological readout classification owns metric keys, not a second experimental
 context parser. Method words remain in keys/raw captions; missing assay, target
@@ -25,7 +33,7 @@ with an explicit diagnostic and unresolved grid instead of a partial frame.
 Omitted/downgraded boundaries cannot inherit a parent source. No new parser,
 recognizer, source store, queue, model activation or scientific-value writer.
 
-Activity40/extractor52/coverage21 and Binding59/binder70 invalidate affected
+Activity41/extractor53/coverage22 and Binding60/binder71 invalidate affected
 derived proof only. Original PDF/raw OCR/OCSR/manual audits/history, SMILES6,
 default recognizers, environment/dependencies, API/SQL and strict SAR/tenth-strong
 potency rules stay unchanged. Historical data is not rewritten or retagged;

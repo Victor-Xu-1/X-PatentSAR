@@ -2,7 +2,7 @@
 
 from .activity_context_geometry import context_band, context_floor
 from .source_table_captions import caption_line_parts
-from .source_table_markers import TABLE_CAPTION_START, TABLE_MARKER
+from .source_table_markers import TABLE_MARKER, table_body_boundary
 
 
 def _window_parts(tokens, region):
@@ -26,7 +26,7 @@ def _captions(parts, region):
         part
         for part in parts
         if span is not None
-        and TABLE_CAPTION_START.match(" ".join(t["text"] for t in part))
+        and table_body_boundary(" ".join(t["text"] for t in part))
         and TABLE_MARKER.search(" ".join(t["text"] for t in part))
         and span[0] <= part[0]["x"] < span[1]
     ]
@@ -65,7 +65,7 @@ def prefix_parts(tokens, region):
         if part is shared:
             output.append(part)
         elif band is not None:
-            if TABLE_CAPTION_START.match(" ".join(t["text"] for t in part)):
+            if table_body_boundary(" ".join(t["text"] for t in part)):
                 if band[0] <= part[0]["x"] < band[1]:
                     output.append(part)
             else:

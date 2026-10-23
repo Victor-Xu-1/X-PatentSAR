@@ -10,6 +10,14 @@ table cannot borrow the previous assay. Changed paragraph numbers alone do not
 break an explicit same-table continuation with identical known conditions.
 Unknown conditions/changed units or conditions/prose/malformed locators refuse.
 
+A numeric paragraph prefix with missing/mismatched/overlong brackets is not
+silently corrected. Its literal table boundary nominates an unresolved source,
+ends the previous table's trusted condition/role extent and preserves the whole
+raw inventory. It cannot inherit an older intermediate classification or grant
+an explicit continued-table edge. Physical headers and saved title projection
+share this rule; ordinary prose and isotope labels remain unchanged. Inspect the
+original before any manual correction, rather than editing generated artifacts.
+
 Biological method labels such as HTRF remain in metric names and raw source,
 not automatically supplied experimental conditions. Missing context stays
 unknown; explicit source declarations and conflicts retain their existing gate.
@@ -21,7 +29,7 @@ be excused by a correct parent header. The8M-pixel limit logs refusal and leaves
 that grid unresolved, without OCR or a larger render/retry. Actual replays do
 not start auxiliary recognition. This is source integrity, not OCR accuracy.
 
-Current derived epochs: Activity40/extractor52/coverage21; Binding59/binder70.
+Current derived epochs: Activity41/extractor53/coverage22; Binding60/binder71.
 Old originals, raw observations, model outputs, failed attempts and audited
 corrections remain intact. Never retag or hand-fill an old result. Actual private
 regeneration/acceptance is frontend-only after reviewed-main deployment; SAR

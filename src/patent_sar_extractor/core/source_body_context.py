@@ -10,9 +10,10 @@ from .source_cell_tokens import cell_lines, cell_text
 from .source_observations import project_source_observation
 from .source_section_roles import heading_members, section_body_boundary
 from .source_table_markers import (
-    TABLE_CAPTION_START,
     caption_table_marker,
+    table_body_boundary,
     table_marker_identity,
+    unproved_caption_prefix,
 )
 from .source_window_chunks import validate_source_window, window_source_tokens
 from .structure_table_headers import (
@@ -78,7 +79,7 @@ def box_inside_drawing(box, diagrams):
 def _boundary_identity(parts, window, *, column_boundaries):
     text = cell_text(parts, window)
     marker = caption_table_marker(text)
-    if TABLE_CAPTION_START.match(text):
+    if table_body_boundary(text):
         return (
             "table",
             table_marker_identity(marker.group()).casefold()
@@ -187,8 +188,12 @@ def original_context_extent(chunks, window, diagrams, *, column_boundaries=True)
             overlaps_diagram = any(
                 min(bottom, d["bbox"][3]) > max(top, d["bbox"][1]) for d in diagrams
             )
-            proved = not overlaps_diagram and _proved_boundary(
-                chunks, bounds, identity, column_boundaries=column_boundaries
+            proved = (
+                not overlaps_diagram
+                and not unproved_caption_prefix(cell_text(line, bounds))
+                and _proved_boundary(
+                    chunks, bounds, identity, column_boundaries=column_boundaries
+                )
             )
             cut = max(window[1], top - 4) if identity[0] == "columns" else top
             events.append(
