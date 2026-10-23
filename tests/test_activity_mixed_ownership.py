@@ -8,6 +8,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import fitz
+
 from patent_sar_extractor.core.activity_auxiliary_replay import original_pdf_reader
 from patent_sar_extractor.core.activity_coordinates import extract_coordinate_tables
 from patent_sar_extractor.core.activity_extractor import extract
@@ -17,7 +18,6 @@ from patent_sar_extractor.core.activity_text_partition import line_owner, text_p
 from patent_sar_extractor.core.activity_text_sources import text_page_qualified
 from patent_sar_extractor.core.source_page_lines import observed_page_text
 from patent_sar_extractor.web.artifacts import _activities
-
 from tests.test_activity_parser_modules import draw_grid
 
 

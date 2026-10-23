@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 import fitz
+
 from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.activity_extractor import extract
 from patent_sar_extractor.core.activity_join import activity_evidence_errors

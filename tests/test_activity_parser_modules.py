@@ -11,6 +11,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import fitz
+
 from patent_sar_extractor.core.activity_coordinates import extract_coordinate_tables
 from patent_sar_extractor.core.activity_extractor import extract
 from patent_sar_extractor.core.activity_identity import (
