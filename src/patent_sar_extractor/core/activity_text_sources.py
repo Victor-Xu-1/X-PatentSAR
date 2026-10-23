@@ -4,6 +4,7 @@ import math
 
 from patent_sar_extractor.contracts import DECLARED_TEXT_SOURCE_VERSION
 
+from .activity_text_partition import annotations_match, owned
 from .cell_frame_proof import inside_box, valid_cell_frame
 from .cell_text_proof import valid_text_reading
 from .source_cell_claims import cell_source_status, native_witness
@@ -24,7 +25,7 @@ def same_text(left, right):
 
 def text_line_qualified(line):
     """A location proposal is not a read vote; retain all of its original reads."""
-    if not isinstance(line, dict) or set(line) != {
+    if not isinstance(line, dict) or set(line) - {"coordinate_owner"} != {
         "nomination",
         "text",
         "bbox",
@@ -81,7 +82,7 @@ def text_line_qualified(line):
     return True
 
 
-def text_page_qualified(source, text):
+def text_page_qualified(source, text, *, coordinate_regions=()):
     if (
         not isinstance(source, dict)
         or set(source) != {"version", "origin", "nomination_text", "page_size", "lines"}
@@ -109,6 +110,8 @@ def text_page_qualified(source, text):
     for line in lines:
         if not text_line_qualified(line) or not inside_box(line["bbox"], [0, 0, *size]):
             return False
+        if "coordinate_owner" in line and not owned(line):
+            return False
         key = tuple(line["bbox"])
         if key in seen:
             return False
@@ -118,7 +121,8 @@ def text_page_qualified(source, text):
         ] != ["native_cell"]:
             return False
     return (
-        same_text(
+        annotations_match(source, coordinate_regions, text_line_qualified)
+        and same_text(
             " ".join(line["nomination"] for line in lines), source["nomination_text"]
         )
         and observed_page_text(source) == text
@@ -166,10 +170,26 @@ def declared_text_cells(payload):
 
 def original_text_pages_errors(coverage, document):
     pages, sources = coverage.get("text_pages", {}), coverage.get("text_sources", {})
+    required = {
+        str(index + 1)
+        for index in (
+            *coverage.get("seed_pages", ()),
+            *coverage.get("discovered_pages", ()),
+        )
+    } | {
+        str(region["page_no"])
+        for region in coverage.get("regions", ())
+        if region.get("kind") == "grid"
+    }
+    if not required <= set(pages):
+        return [
+            "Activity source pages lack their complete coordinate/text partition inventory."
+        ]
     if set(pages) != set(sources):
         return ["Declared activity text has no complete physical source inventory."]
     for key, source in sources.items():
-        if not text_page_qualified(source, pages[key]):
+        regions = [r for r in coverage.get("regions", []) if r["page_no"] == int(key)]
+        if not text_page_qualified(source, pages[key], coordinate_regions=regions):
             return [
                 "Declared activity text differs from its qualified source readings."
             ]
@@ -198,5 +218,23 @@ def original_text_pages_errors(coverage, document):
             ):
                 return [
                     "Declared activity text differs from the actual original native page."
+                ]
+        if any("coordinate_owner" in line for line in source["lines"]):
+            from .table_geometry import detect_ruled_table_regions
+
+            actual = detect_ruled_table_regions(page, dpi=240)
+            axes = {(tuple(r["xs"]), tuple(r["ys"])) for r in actual}
+            owned = {
+                line["coordinate_owner"]["region_id"]
+                for line in source["lines"]
+                if "coordinate_owner" in line
+            }
+            if any(
+                (tuple(r["grid_axes"]["xs"]), tuple(r["grid_axes"]["ys"])) not in axes
+                for r in regions
+                if r["region_id"] in owned
+            ):
+                return [
+                    "Declared text coordinate owner differs from its actual original grid."
                 ]
     return []

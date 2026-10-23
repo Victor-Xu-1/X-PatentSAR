@@ -1,5 +1,18 @@
 # Project governance manifest
 
+- Mixed-page physical ownership authority: `activity_text_partition` projects
+  already-qualified grid/caption lines into barriers for the existing declared
+  text planner and proof reader. Coordinate page membership is not an exclusion
+  of independent text on that page. Full original line/read inventory remains;
+  ownership/overlap ambiguity, empty/unknown grids, missing/changed original and
+  all prior completeness gates remain fail-closed. Actual grid geometry is
+  replayed along with the existing native/optical source inventory. No second
+  parser/writer/recognizer, store, queue or scientific-data correction exists.
+  Activity42/extractor54/coverage23/declared-source3 refresh combined derived activity
+  evidence only; raw/manual/history, Binding60/binder71/SMILES6, API/SQL, models,
+  SAR and tenth-strongest/percentage/log scientific policies are unchanged.
+  The source3 entry is current; older source2 entries below are release history.
+
 - Literal record-role guard: `source_role_terms.intermediate_source_label` owns
   the shared declared intermediate-label predicate for core binding, OCSR input,
   Web product records and SAR admission/views/exports. Outer whitespace,
@@ -22,7 +35,9 @@
   fences share the original source/physical header/title projection and stop
   trusted prior condition/nonfinal ownership without trimming facts, repairing
   IDs or certifying unknown roles. Prose/isotope prefixes are not table fences.
-  Activity41/extractor53/coverage22 and Binding60/binder71 refresh derived proof only; raw/manual/
+  The boundary-only release introduced Activity41/extractor53/coverage22 and
+  Binding60/binder71; the current combined activity authority is source3/Activity42
+  above. Derived proof refresh leaves raw/manual/
   history/SMILES6/API/SQL/dependencies/SAR/potency authorities are unchanged.
   Older epoch entries below are release history, not current competing paths.
 

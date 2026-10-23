@@ -48,7 +48,11 @@ def extract_coordinate_tables(
     header_resolver: HeaderResolver | None = None,
     page_texts: dict[str, str] | None = None,
 ) -> ParsedActivity:
-    """Recognized pages remain owned even if a table contains no data rows."""
+    """Retain every physical grid, including header-only/unknown sources.
+
+    owned_pages remains a coordinate-discovery inventory, not proof that all
+    other sources on that page have been parsed or may be skipped.
+    """
     result = ParsedActivity()
     token_map = {}
     generic_regions = []

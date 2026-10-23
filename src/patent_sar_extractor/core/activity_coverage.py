@@ -215,7 +215,14 @@ def coverage_errors(
     errors.extend(layout_scope_errors(packet["regions"]))
     errors.extend(table_row_errors(packet["regions"], rows))
     errors.extend(transposed_row_errors(packet["regions"], rows))
-    errors.extend(text_source_errors(packet["text_pages"], packet["regions"], rows))
+    errors.extend(
+        text_source_errors(
+            packet["text_pages"],
+            packet["regions"],
+            rows,
+            sources=packet["text_sources"],
+        )
+    )
     if packet["references"] and rows is None:
         errors.append(
             "Original result references require their current source rows for validation."

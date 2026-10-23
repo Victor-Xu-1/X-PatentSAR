@@ -1,5 +1,28 @@
 # Operations and troubleshooting
 
+## A recognized grid hides another table on the same page
+
+Do not treat coordinate `owned_pages` as complete page ownership. The facade now
+passes all nominated/coordinate pages through the existing physical-text reader;
+the shared partition marks qualified grid lines and exact original captions as
+already consumed. Their full reads remain saved, but the text parser must not
+duplicate them. Independent unruled text is retained. Empty/unknown grids remain
+explicit; another successful table does not resolve them.
+
+Saved ownership must match original regions and current grid geometry. A missing
+line, changed owner, moved reading, competing owner, removed grid or changed
+original remains a failure. Internal PDF object order cannot bridge scientific
+context through a physically intervening grid. No confidence vote, guessed ID,
+numerical repair or new OCR engine is involved. The whole-page qualification of
+retained text is unchanged; unrelated weak-line policy is not silently relaxed.
+
+Current combined activity proof is Activity42/extractor54/coverage23/declared-source3;
+older activity proofs remain historical and require normal frontend production
+of fresh derived evidence. Do not rewrite old artifacts or manual revisions.
+Focused controls: `tests.test_activity_mixed_ownership`, existing declared-source
+native/recovery, text ownership, coverage and directly related consumers. A green
+generated sample is not universal OCR, extraction or chemical acceptance.
+
 ## Literal intermediate labels cannot bypass product admission
 
 Record-level binding/recognition, product views and SAR share one explicit-role
@@ -47,7 +70,8 @@ be excused by a correct parent header. The8M-pixel limit logs refusal and leaves
 that grid unresolved, without OCR or a larger render/retry. Actual replays do
 not start auxiliary recognition. This is source integrity, not OCR accuracy.
 
-Current derived epochs: Activity41/extractor53/coverage22; Binding60/binder71.
+Current combined epochs: Activity42/extractor54/coverage23/source3;
+Binding60/binder71. The earlier boundary-only activity41 proof remains historical.
 Old originals, raw observations, model outputs, failed attempts and audited
 corrections remain intact. Never retag or hand-fill an old result. Actual private
 regeneration/acceptance is frontend-only after reviewed-main deployment; SAR

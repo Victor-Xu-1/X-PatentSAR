@@ -1,5 +1,35 @@
 # X-PatentSAR architecture
 
+## Mixed-page source ownership
+
+Coordinate `owned_pages` nominates pages; it no longer excludes the other text
+on a page. `activity_text_partition` is the single projection shared by the
+existing declared-text producer, planner and saved proof reader. Every original
+line, read, location and nomination remains in the physical inventory. Only a
+qualified line wholly inside one recorded grid, or an exactly qualified caption
+owned by that grid's existing source snapshot, may be annotated as consumed.
+Overlapping/competing owners remain ambiguous and fail source qualification.
+The obsolete internal page-blocklist arguments are removed, not retained as a
+competing way to skip sources. Missing-page and physical-barrier controls remain.
+
+The sole text planner sees character-position-preserving whitespace projections
+and explicit barriers, not a second set of grid measurements. A physically
+intervening grid is also a barrier when native PDF object insertion order differs
+from page geometry. Native original word order is retained; columns are not
+arbitrarily sorted or conditions borrowed through a removed source. Independent
+unruled tables above/below a grid remain parsed with their own context.
+
+Coverage recomputes owners against the same physical region inventory. Original
+readback checks every retained native/optical reading and the actual grid axes;
+removed rules with identical native text are not equivalent evidence. No line,
+unknown source, empty grid, source conflict or completeness gate is waived.
+Every nominated/coordinate page requires its complete text catalog even when its
+projection is blank, so removing an outside table and its entire catalog together
+cannot turn partial extraction into complete acceptance.
+Declared source3 / Activity42 / extractor54 / coverage23 refresh derived activity
+proof; raw originals, manual corrections, binding, OCSR/SMILES6, API/SQL, SAR and
+potency policies stay unchanged. Native checks do not construct OCR runtimes.
+
 ## One literal nonfinal-label admission guard
 
 `source_role_terms.intermediate_source_label` is shared by the binder record
@@ -54,7 +84,9 @@ with an explicit diagnostic and unresolved grid instead of a partial frame.
 Omitted/downgraded boundaries cannot inherit a parent source. No new parser,
 recognizer, source store, queue, model activation or scientific-value writer.
 
-Activity41/extractor53/coverage22 and Binding60/binder71 invalidate affected
+The boundary-only release introduced Activity41/extractor53/coverage22 and
+Binding60/binder71. The combined activity authority is source3/Activity42 above.
+These versions invalidate affected
 derived proof only. Original PDF/raw OCR/OCSR/manual audits/history, SMILES6,
 default recognizers, environment/dependencies, API/SQL and strict SAR/tenth-strong
 potency rules stay unchanged. Historical data is not rewritten or retagged;

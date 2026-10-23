@@ -17,6 +17,7 @@ from .activity_headers import (
 from .activity_identity import value_tokens
 from .activity_source_discovery import _original_windows
 from .activity_text_legend import read_legend
+from .activity_text_partition import validate_barriers
 from .activity_text_rows import (
     _HEADER_START,
     _ROW,
@@ -46,8 +47,19 @@ def validate_text_pages(pages):
         raise ValueError("Original text observations exceed their bounded inventory")
 
 
-def segments(text):
+def segments(text, *, barriers=()):
     """Reuse the original section/table authority, retaining physical text order."""
+    validate_barriers(barriers, text)
+    if barriers:
+        cursor = 0
+        for left, right in barriers:
+            for start, end, caption, body in segments(text[cursor:left]):
+                yield cursor + start, cursor + end, caption, body
+            yield left, right, "", None
+            cursor = right
+        for start, end, caption, body in segments(text[cursor:]):
+            yield cursor + start, cursor + end, caption, body
+        return
     offset = 0
     for window in _original_windows(text, split_tables=False):
         markers = list(
@@ -121,7 +133,7 @@ def recognized(header, caption):
     )
 
 
-def source_plan(pages, *, page_count=None, page_reader=None, blocked=()):
+def source_plan(pages, *, page_count=None, page_reader=None, page_barriers=None):
     """A source may inherit only from one closed immediately-adjacent table."""
     validate_text_pages(pages)
     if page_count is not None and (
@@ -134,9 +146,6 @@ def source_plan(pages, *, page_count=None, page_reader=None, blocked=()):
         raise ValueError("Original text observation lies outside the document")
     total_bytes = sum(len(text.encode()) for text in pages.values())
     for page_no in range(min(map(int, pages), default=maximum + 1), maximum + 1):
-        if page_no in blocked:
-            previous = None
-            continue
         if str(page_no) not in pages:
             if (
                 page_reader is None
@@ -158,7 +167,12 @@ def source_plan(pages, *, page_count=None, page_reader=None, blocked=()):
         if not text.strip():
             previous = None
             continue
-        for start, end, printed_caption, body in segments(text):
+        for start, end, printed_caption, body in segments(
+            text, barriers=(page_barriers or {}).get(str(page_no), ())
+        ):
+            if body is None:
+                previous = None
+                continue
             lines = canonical_lines(body)
             header, first_row = _find_header(lines)
             key = [page_no, start, end]
