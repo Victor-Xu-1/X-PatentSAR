@@ -68,6 +68,23 @@ class AuxiliarySourceReplayTests(unittest.TestCase):
                 replay.call_count, 1
             )  # Both DPI columns own one paired proof.
 
+    def test_changed_complete_original_returns_false_not_an_uncaught_exception(self):
+        reading = self.payload["header_observations"]["controlled"]["observations"][0][
+            "columns"
+        ][0]
+        self.assertTrue(replay_auxiliary_cell(reading, self.page))
+        self.page.insert_text((28, 76), "changed original", fontsize=6)
+        self.assertFalse(replay_auxiliary_cell(reading, self.page))
+
+    def test_invalid_reading_or_unavailable_page_never_raises_or_admits(self):
+        reading = self.payload["header_observations"]["controlled"]["observations"][0][
+            "columns"
+        ][0]
+        for changed in (None, [], "observed", {}):
+            with self.subTest(changed=changed):
+                self.assertFalse(replay_auxiliary_cell(changed, self.page))
+        self.assertFalse(replay_auxiliary_cell(reading, None))
+
     def test_relabelled_page_and_changed_actual_ink_are_rejected(self):
         missing = copy.deepcopy(self.payload)
         missing["header_observations"]["controlled"]["page_no"] = True

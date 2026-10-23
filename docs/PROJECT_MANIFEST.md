@@ -1,5 +1,21 @@
 # Project governance manifest
 
+- Heading typography authority: the existing heading geometry constants own
+  capture and recovery limits. `heading_observation` passes8rows/128pt and the
+  existing typed `text_scope` through the SAME primary/cell/auxiliary/replay
+  chain. Qualified primaries do not load auxiliary OCR. Caller-subordinate scope,
+  retained raw claims, known conflicts, actual-original pixels, missingdrawing
+  refusal and unchanged model/source budgets remain mandatory. No competing
+  parser/recognizer/store, spelling/ID repair, implicit resize or policy exists.
+  Binding63/binder74 refresh derived proof only; raw/manual/history,
+  Activity43/source4/role6, OCSR/SMILES6/API/SQL/dependencies/activation/SAR
+  numerical policies remain unchanged. Generated controls prove contracts, not
+  native-model or scientific acceptance. Earlier epochs below are release history.
+  Shared auxiliary replay keeps one fail-closed boolean boundary for current and
+  legacy actual-original windows; rendering refusal cannot escape only the
+  historical adapter. This reader-contract consistency changes no admission,
+  raw packet version or scientific value; normal callers keep explicit failure.
+
 - Caption occurrence ownership: one page/source index in `caption_label_roles`
   feeds the existing literal path and a typed complete closed-cell locator
   adapter (`caption_locator_proof`/`caption_locator_source`). Only one current
