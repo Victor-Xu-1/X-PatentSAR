@@ -1,5 +1,18 @@
 # Project governance manifest
 
+- Caption occurrence ownership: one page/source index in `caption_label_roles`
+  feeds the existing literal path and a typed complete closed-cell locator
+  adapter (`caption_locator_proof`/`caption_locator_source`). Only one current
+  confirmed compound-caption owner can supply its existing identity; raw
+  nomination text stays unchanged. Unknown/open/crossing/competing/native/
+  foreign sources, unrelated occurrences and evidence budgets stay refused.
+  The same source ledger/RecognitionPlan/worker/Web/original replay gate carries
+  every physical owner independently of molecule work. No new parser/writer,
+  binding or model chain, store or queue exists. Binding62/binder73 refresh
+  derived ownership only; all other scientific/raw/manual, SQL/API, dependency,
+  activation and numerical SAR policy remains unchanged. Older entries below
+  are release history, not alternate authorities.
+
 - Physical negative-role adapter: `activity_text_roles` links both complete
   qualified400/600dpi line readings to the SAME spectral data cell of an
   existing current whole-grid role proof, separately per DPI. The shared

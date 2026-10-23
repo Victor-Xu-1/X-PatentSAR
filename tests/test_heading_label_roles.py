@@ -331,7 +331,7 @@ class HeadingLabelRoleTests(unittest.TestCase):
             payload["compound_catalog"]["entries"],
             payload["source_reference_scope"]["original_pdf_sha256"],
         )
-        source = next(iter(index[(1, "17")].values()))
+        source = next(s for s in index[1].values() if s["identifier"] == "17")
         cell = source["bbox"]
         inside = [cell[0] + 5, cell[1] + 3, cell[2] - 5, cell[3] - 3]
         line = {
@@ -349,7 +349,7 @@ class HeadingLabelRoleTests(unittest.TestCase):
         outside = [inside[0], cell[3] + 0.1, inside[2], cell[3] + 0.9]
         self.assertIsNone(caption_label_reference({**line, "bbox": outside}, 1, index))
         ambiguous = copy.deepcopy(index)
-        ambiguous[(1, "17")]["f" * 64] = {**source, "source_key": "f" * 64}
+        ambiguous[1]["f" * 64] = {**source, "source_key": "f" * 64}
         self.assertIsNone(
             caption_label_reference({**line, "bbox": inside}, 1, ambiguous)
         )

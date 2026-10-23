@@ -1,5 +1,27 @@
 # Operations and troubleshooting
 
+## A page locator invents another heading inside a proved caption cell
+
+Do not repair a clipped or mistyped locator number by similarity, synthesis
+order or a matching number elsewhere. The existing complete original caption
+may own a raw page-OCR nomination only through the SAME uniquely confirmed
+closed cell and proved compound-catalogue role. Keep the nomination verbatim;
+its text is not promoted into the original scientific identifier.
+
+The physical role reference is saved in the ordinary source ledger, revalidated
+against the current caption owner, and carried through worker/Web original
+preflight. Actual closed rules and all retained pixels must replay on the
+caller-owned original document. IDs, graphs, activities and inference work lists
+are not changed by this negative occurrence role. Missing drawings, unresolved
+catalogues and independent repeated procedure headings remain open failures.
+
+Binding62/binder73 invalidate affected derived proof only. Preserve old files,
+manual corrections and audit; fresh production stays frontend-only under normal
+authorization. The unchanged1MiB proof/8M-pixel SDK bounds refuse a whole alias,
+not a trimmed successful label. No OCR/OCSR/model/dependency install or extra
+recognizer is needed by this source-ownership adapter. Source tests do not prove
+chemical correctness or completion of a retained failed extraction.
+
 ## A spectral-read difference invalidates an independent activity source
 
 Do not replace DMSO/DMS0, Greek characters, punctuation or numbers by confidence

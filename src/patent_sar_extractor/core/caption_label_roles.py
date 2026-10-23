@@ -4,10 +4,13 @@ import re
 from collections import defaultdict
 
 from .activity_header_evidence import proof_id
+from .caption_locator_proof import valid_locator_scope
+from .caption_role_proof import caption_role_status
 from .numbered_structure_pairs import _box
 from .printed_identifiers import identifier_key
 from .source_binding_proof import annotate_source_binding
 from .source_cell_tokens import cell_tokens, crosses_cell
+from .source_evidence_identity import SourceEvidenceLimit
 from .source_section_roles import heading_members, section_heading
 
 ROLE = "structure_label_reference"
@@ -71,11 +74,25 @@ def caption_label_index(bindings, original_pdf_sha256):
                     field: evidence,
                 }
             )
-            output[(evidence["page_no"], identifier)][key] = {
+            ownership = evidence.get("ownership") or {}
+            physical = (
+                list(bounds)
+                if rule == "original_caption_cell"
+                and ownership.get("kind") == "ruled_caption"
+                and ownership.get("label_cell") == list(bounds)
+                and evidence.get("reading_bbox", list(bounds)) == list(bounds)
+                and caption_role_status(
+                    ownership.get("caption_role"), evidence["page_no"], list(bounds)
+                )
+                == "compound"
+                else None
+            )
+            output[evidence["page_no"]][key] = {
                 "source_key": key,
                 "identifier": identifier,
                 "bbox": list(bounds),
                 "original_pdf_sha256": original_pdf_sha256,
+                "cell_bbox": physical,
             }
     return dict(output)
 
@@ -91,7 +108,9 @@ def owns_label_locator(box, cell):
     return bool(cell_tokens([token], cell)) and not crosses_cell([token], cell)
 
 
-def caption_label_reference(line, page_no, index):
+def caption_label_reference(
+    line, page_no, index, *, physical_source=None, page_size=None
+):
     """A matching literal must belong to one exact proved label window."""
     if (
         type(page_no) is not int
@@ -115,12 +134,25 @@ def caption_label_reference(line, page_no, index):
         return None
     options = [
         source
-        for source in index.get((page_no, members[0]), {}).values()
-        if owns_label_locator(box, source["bbox"])
+        for source in index.get(page_no, {}).values()
+        if source["identifier"] == members[0]
+        and owns_label_locator(box, source["bbox"])
     ]
+    physical = False
+    if (
+        not options
+        and physical_source is not None
+        and valid_locator_scope(physical_source, line, page_size)
+    ):
+        options = [
+            source
+            for source in index.get(page_no, {}).values()
+            if source["cell_bbox"] == physical_source["cell"]
+        ]
+        physical = True
     if len(options) != 1:
         return None
-    return {
+    reference = {
         "role": ROLE,
         "status": "observed_source_reference",
         "page_no": page_no,
@@ -128,10 +160,21 @@ def caption_label_reference(line, page_no, index):
         "line_text": line["text"],
         "line_source": line["source"],
         "geometry_space": "rendered",
-        "identifier": members[0],
+        "identifier": options[0]["identifier"],
         "source_key": options[0]["source_key"],
         "original_pdf_sha256": options[0]["original_pdf_sha256"],
+        **(
+            {"physical_source": physical_source, "page_size": page_size}
+            if physical
+            else {}
+        ),
     }
+    if physical:
+        try:
+            proof_id(reference)
+        except SourceEvidenceLimit:
+            return None  # Keep the occurrence on the ordinary unresolved path.
+    return reference
 
 
 def caption_reference_ids(sections):
@@ -167,6 +210,8 @@ def validate_caption_references(sections, scope, entries):
             },
             section.get("page_no"),
             index,
+            physical_source=section.get("physical_source"),
+            page_size=section.get("page_size"),
         )
         if expected is None or expected != section:
             raise ValueError("Unproved original label-role reference ownership")
