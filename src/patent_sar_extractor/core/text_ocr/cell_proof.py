@@ -101,20 +101,31 @@ def valid_auxiliary_cell(reading, dpi):
 
 def replay_auxiliary_cell(reading, page):
     """Render the same original windows, without models, paths from artifacts or edits."""
-    if not valid_auxiliary_cell(reading, reading.get("render_dpi")):
+    if not isinstance(reading, dict) or not valid_auxiliary_cell(
+        reading, reading.get("render_dpi")
+    ):
         return False
     if any(
         "source_window" not in view["primary"]
         for view in reading["auxiliary_text"]["views"]
     ):
         return False  # Legacy parsing/display is not complete-source admission.
-    if reading["auxiliary_text"]["version"] in (2, 3, AUXILIARY_TEXT_RECOVERY_VERSION):
-        from .recovery_proof import replay_recovery_cell
+    try:
+        if reading["auxiliary_text"]["version"] in (
+            2,
+            3,
+            AUXILIARY_TEXT_RECOVERY_VERSION,
+        ):
+            from .recovery_proof import replay_recovery_cell
 
-        try:
             return replay_recovery_cell(reading, page)
-        except (TypeError, ValueError, KeyError, IndexError, RuntimeError):
-            return False
+        return _replay_legacy_cell(reading, page)
+    except (TypeError, ValueError, KeyError, IndexError, RuntimeError, AttributeError):
+        return False  # A changed/unavailable original is never admitted.
+
+
+def _replay_legacy_cell(reading, page):
+    """Historical original windows obey the same fail-closed boolean contract."""
     for view in reading["auxiliary_text"]["views"]:
         primary = view["primary"]
         image = original_reading_image(page, primary["bbox"], view["dpi"], primary)

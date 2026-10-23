@@ -6,8 +6,13 @@ import fitz
 
 from .cell_ocr_observation import observe_cell
 from .cell_raster import render_cell_raster
+from .cell_text_scope import text_scope
 from .heading_cell_source import observe_cell_source
-from .heading_source_geometry import MAX_HEADING_HEIGHT, heading_bounds
+from .heading_source_geometry import (
+    MAX_HEADING_HEIGHT,
+    MAX_HEADING_ROWS,
+    heading_bounds,
+)
 from .heading_source_proof import heading_observation_status
 from .page_ocr_cache import get_ocr_engine
 from .source_geometry import SourceTokens, overlaps, source_layout
@@ -87,11 +92,14 @@ def _observe_window(page, proof, layout):
                     dpi,
                     engine[1],
                     lambda raw, _kind: raw if section_heading(raw) else "",
+                    maximum_text_rows=MAX_HEADING_ROWS,
+                    maximum_row_height=MAX_HEADING_HEIGHT,
                 )
                 reading = replace(
                     reading,
                     source_frame=raster.frame,
                     source_window=raster.source_window,
+                    text_scope=text_scope(MAX_HEADING_ROWS, MAX_HEADING_HEIGHT),
                 )
                 proof["observations"].append(reading.evidence(dpi, bounds))
                 proof["rendered_frames"].append(raster.frame)
@@ -99,5 +107,11 @@ def _observe_window(page, proof, layout):
     if proof["status"] == "unresolved" and len(proof["observations"]) == 2:
         from .text_ocr.source_capture import refine_source_text
 
-        proof["observations"] = refine_source_text(page, bounds, proof["observations"])
+        proof["observations"] = refine_source_text(
+            page,
+            bounds,
+            proof["observations"],
+            maximum_rows=MAX_HEADING_ROWS,
+            maximum_row_height=MAX_HEADING_HEIGHT,
+        )
         proof["status"], _ = heading_observation_status(proof)

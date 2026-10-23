@@ -1,5 +1,37 @@
 # X-PatentSAR architecture
 
+## Heading typography belongs to the same original source throughout recovery
+
+The existing heading observer passes `MAX_HEADING_ROWS` and
+`MAX_HEADING_HEIGHT` to both primary capture and on-demand auxiliary recovery.
+Both retained primary views carry the existing typed `text_scope`; the same
+cell/recovery proof and actual-original replay reconstruct that scope. A large
+or wrapped heading must not inherit the short assay-header default midway
+through the chain. No new recognizer, spelling/ID repair, vote, parser or store
+is introduced. Qualified primaries still use only the existing400/600dpi reads
+and do not acquire the auxiliary runtime.
+
+The scope is subordinate to the trusted caller: a heading packet cannot enlarge
+an assay cell's row height. Missing/changed scope, differing IDs, qualified
+primary/native conflicts, changed actual pixels and source/model limits still
+refuse. Recovery of a title does not prove a drawing or terminal-product role;
+the normal binder continues to reject a heading without its proved structure.
+The unchanged auxiliary256px row limit can still reject larger rendered text.
+No implicit resize, source crop or limit increase is licensed by this fix.
+
+`replay_auxiliary_cell` has the same fail-closed boolean contract for current
+and historical packets. A changed or unavailable actual original returnsfalse;
+callers still emit an explicit source failure. Legacy windows no longer leak a
+rendering exception where current recovered windows already returnfalse.
+Historical parsing/display and complete-source admission remain distinct; this
+reader consistency change admits no previously rejected source or saved flag.
+
+Binding63/binder74 refresh affected derived observations. Activity43/source4/
+role6, raw originals, manual/history, OCSR/SMILES6, API/SQL, environments/models,
+activation and SAR numerical policies remain unchanged. Controlled generated
+checks prove source/caller contracts, not model accuracy or private-patent
+acceptance. Earlier binding-version entries below document release history.
+
 ## One physical caption owner for imperfect location nominations
 
 `caption_label_roles` has one page/source index for exact-label and physically

@@ -1,5 +1,32 @@
 # Operations and troubleshooting
 
+## A large or wrapped heading fails only when auxiliary recovery is needed
+
+Keep one heading typography scope through primary400/600dpi capture, retained
+observations, auxiliary recovery, serialized proof and actual-original replay.
+The ordinary heading caller owns the existing8row/128pt bounds; short assay
+headers do not inherit them. `heading_observation` now explicitly supplies the
+same bounds to the existing cell SDK and recovery entry, rather than falling
+back to12pt during recovery. A qualified primary never loads auxiliary OCR.
+
+Do not infer an identifier from the page locator or replace a qualified literal
+because two auxiliary reads agree. Native/primary conflicts, differing recovered
+IDs, changed/missing scope, changed actual ink, missing drawings and unknown
+roles stay refused. All primary observations and failed attempts remain saved.
+The existing256px model-row and complete source-window/pixel limits are
+unchanged: larger input may still fail explicitly. Resizing or raising those
+limits needs its own model-preparation validation, not a passing scope test.
+
+The shared auxiliary replayer now returnsfalse consistently for changed or
+unavailable actual originals, including historical V1 packets. Normal callers
+still report explicit source failure; do not interpretfalse or an old saved
+success flag as a usable source. Original checks never load OCR on readback.
+
+Binding63/binder74 refresh derived proof only; keep original files and manual
+history. No model/runtime download, installation, new inference backend, API/
+database change or private off-frontend processing is needed. Generated and
+installed checks do not constitute scientific or all-format acceptance.
+
 ## A page locator invents another heading inside a proved caption cell
 
 Do not repair a clipped or mistyped locator number by similarity, synthesis
