@@ -101,6 +101,7 @@ def read_source_observations(files, payloads, original_sha, *, open_original=Non
             plan.proven.work_items,
             role_text=plan.proven.role_text,
             plot_references=plan.proven.plot_references,
+            caption_references=plan.proven.caption_references,
         ):
             if open_original is None:
                 raise ValueError("Original PDF is required for binding/source replay")
@@ -110,6 +111,7 @@ def read_source_observations(files, payloads, original_sha, *, open_original=Non
                     plan.proven.work_items,
                     role_text=plan.proven.role_text,
                     plot_references=plan.proven.plot_references,
+                    caption_references=plan.proven.caption_references,
                 ):
                     raise ValueError("Original binding/source replay failed")
     except (OSError, ValueError, TypeError, KeyError, OverflowError, WebError):

@@ -16,6 +16,7 @@ from .binding_source_regions import (
     reference_regions,
 )
 from .caption_label_roles import caption_label_index, caption_label_reference
+from .caption_locator_source import observe_caption_locator
 from .caption_pending_roles import pending_caption_index, pending_caption_reference
 from .heading_declaration_index import HeadingDeclarationIndex
 from .heading_evidence import (
@@ -133,6 +134,13 @@ def observed_heading_blocks(
                 label_reference = caption_label_reference(
                     line, page_index + 1, caption_labels
                 )
+                if label_reference is None:
+                    label_reference = observe_caption_locator(
+                        page,
+                        line,
+                        caption_labels,
+                        grids_for_page=grids_for_page,
+                    )
                 if label_reference is not None:
                     if source_sections is not None:
                         source_sections.append(label_reference)

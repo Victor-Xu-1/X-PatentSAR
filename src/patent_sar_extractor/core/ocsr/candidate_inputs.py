@@ -32,6 +32,7 @@ def load_source_observation_plan(
         plan.proven.work_items,
         role_text=plan.proven.role_text,
         plot_references=plan.proven.plot_references,
+        caption_references=plan.proven.caption_references,
     ):
         import fitz
 
@@ -41,6 +42,7 @@ def load_source_observation_plan(
                 plan.proven.work_items,
                 role_text=plan.proven.role_text,
                 plot_references=plan.proven.plot_references,
+                caption_references=plan.proven.caption_references,
             )
         if errors:
             raise ValueError(

@@ -1,5 +1,34 @@
 # X-PatentSAR architecture
 
+## One physical caption owner for imperfect location nominations
+
+`caption_label_roles` has one page/source index for exact-label and physically
+proved locator references. The existing literal path remains unchanged. A raw
+page-OCR single compound-label nomination may instead reference exactly one
+current confirmed caption when its COMPLETE closed cell equals that caption's
+original cell and the original catalogue role is compound. The locator's text
+stays raw; the identifier comes only from the existing confirmed binding. No
+prefix/parent/suffix, nearest-neighbour or same-ID occurrence inference occurs.
+Native contradictions, prose, unruled/unknown/open/crossing/competing/foreign
+sources, different original positions and oversized proof remain unaliased.
+
+`caption_locator_proof` is the pure typed scope reader. `caption_locator_source`
+adapts the same full closed-cell SDK for capture and actual-original replay;
+grid/render work begins only after a possible proved parent exists. The single
+source ledger keeps the physical packet and original nomination. The ordinary
+source plan carries `caption_references` alongside its other original role
+owners. Worker preflight and Web source observation reads feed that inventory
+into the SAME `original_binding_source_errors` gate before model access. Removing
+model work cannot remove a required original source replay. No second binding,
+recognition, parser, data store, queue or acceptance path is added.
+
+Binding62/binder73 refresh derived ownership; Activity43/source4/role6, raw
+observations/PDF/assets/manual audit, OCSR/SMILES6, API/SQL, environments/models,
+activation and SAR numerical policies remain unchanged. A shape-valid digest is
+not a source proof: changed original pixels still fail the real replay. Generated
+controls validate these contracts, not private-patent or all-format accuracy.
+Earlier Binding61 entries below document release history.
+
 ## Physical characterization claims, not competing literal votes
 
 `activity_text_sources.text_source_owners` is the same call-local resolver used

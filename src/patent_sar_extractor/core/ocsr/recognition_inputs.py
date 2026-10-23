@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from patent_sar_extractor.core.binding_records import binding_records
+from patent_sar_extractor.core.caption_locator_source import caption_locator_sources
 from patent_sar_extractor.core.catalog_reader import (
     MAX_CATALOG_RECORDS,
     read_catalog_entries,
@@ -46,6 +47,7 @@ class RecognitionPlan:
     reprints: list[dict]
     role_text: tuple[tuple[int, dict], ...] = ()
     plot_references: tuple[dict, ...] = ()
+    caption_references: tuple[dict, ...] = ()
 
     @property
     def work_items(self) -> list[dict]:
@@ -111,6 +113,7 @@ def recognition_inputs(payload: dict[str, Any]) -> RecognitionPlan:
         reprints,
         role_text=tuple(role_text_cells(payload)),
         plot_references=tuple(plot_reference_sources(payload)),
+        caption_references=tuple(caption_locator_sources(payload)),
     )
 
 
