@@ -4,7 +4,9 @@ from collections import defaultdict
 
 from .activity_context_values import SCIENTIFIC_CONTEXT_FIELDS
 from .activity_headers import context_from_text
+from .activity_text_partition import annotations_match, text_partition
 from .activity_text_plan import scope_descriptor, source_plan, validate_text_scope
+from .activity_text_sources import text_line_qualified
 
 
 def _get(row, key, default=None):
@@ -13,8 +15,19 @@ def _get(row, key, default=None):
     )
 
 
-def text_source_errors(pages, regions, rows):
-    expected = source_plan(dict(pages))
+def text_source_errors(pages, regions, rows, *, sources=None):
+    barriers = {}
+    for key, source in (sources or {}).items():
+        if not annotations_match(
+            source,
+            [r for r in regions if r["page_no"] == int(key)],
+            text_line_qualified,
+        ):
+            raise ValueError(
+                "Declared text coordinate ownership differs from the physical inventory"
+            )
+        barriers[key] = text_partition(source)[1]
+    expected = source_plan(dict(pages), page_barriers=barriers)
     scoped = [r for r in regions if r.get("text_scope")]
     if not expected and not scoped and rows is None:
         return []

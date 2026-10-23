@@ -3,6 +3,7 @@
 from .activity_coverage import source_record
 from .activity_headers import context_from_text
 from .activity_models import ParsedActivity
+from .activity_text_partition import text_partition
 from .activity_text_plan import scope_descriptor, source_plan
 from .activity_text_rows import parse_segment
 from .activity_text_sources import text_page_qualified
@@ -17,16 +18,19 @@ def extract_text_tables(
     *,
     page_count=None,
     page_reader=None,
-    blocked_pages=(),
     source_reader=None,
+    coordinate_regions=(),
 ):
     result = ParsedActivity()
+    barriers = {}
 
     def observe_page(index, text):
         if source_reader is None:
             return text
         source = source_reader(index, text)
         result.text_sources[str(index + 1)] = source
+        if source.get("lines"):
+            barriers[str(index + 1)] = text_partition(source)[1]
         return observed_page_text(source) if source.get("lines") else text
 
     result.text_pages = {
@@ -39,7 +43,7 @@ def extract_text_tables(
         page_reader=(lambda index: observe_page(index, page_reader(index)))
         if page_reader is not None
         else None,
-        blocked={p + 1 for p in blocked_pages},
+        page_barriers=barriers,
     )
     unproved_scopes = set()
     for item in plan:
@@ -53,7 +57,11 @@ def extract_text_tables(
         result.rows.extend(rows)
         unproved = source_reader is not None and (
             not text_page_qualified(
-                result.text_sources.get(str(page_no)), result.text_pages[str(page_no)]
+                result.text_sources.get(str(page_no)),
+                result.text_pages[str(page_no)],
+                coordinate_regions=[
+                    r for r in coordinate_regions if r["page_no"] == page_no
+                ],
             )
             or tuple(item["parent"] or ()) in unproved_scopes
             or tuple(item["origin"]) in unproved_scopes

@@ -1,5 +1,18 @@
 # Project governance manifest
 
+- Mixed-page physical ownership authority: `activity_text_partition` projects
+  already-qualified grid/caption lines into barriers for the existing declared
+  text planner and proof reader. Coordinate page membership is not an exclusion
+  of independent text on that page. Full original line/read inventory remains;
+  ownership/overlap ambiguity, empty/unknown grids, missing/changed original and
+  all prior completeness gates remain fail-closed. Actual grid geometry is
+  replayed along with the existing native/optical source inventory. No second
+  parser/writer/recognizer, store, queue or scientific-data correction exists.
+  Activity41/extractor53/coverage22/declared-source3 refresh derived activity
+  evidence only; raw/manual/history, Binding59/binder70/SMILES6, API/SQL, models,
+  SAR and tenth-strongest/percentage/log scientific policies are unchanged.
+  The source3 entry is current; older source2 entries below are release history.
+
 - Literal caption/source boundary authority: `source_paragraphs` supplies one
   paired bounded locator grammar to headings/table/context/discovery/reference
   consumers without rewriting raw source or IDs. Biological readout semantics

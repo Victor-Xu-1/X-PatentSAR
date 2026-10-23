@@ -2,6 +2,7 @@
 
 from patent_sar_extractor.contracts import DECLARED_TEXT_SOURCE_VERSION
 
+from .activity_text_partition import line_owner
 from .activity_text_sources import MAX_TEXT_SOURCE_LINES, same_text, text_line_qualified
 from .cell_frame_proof import inside_box
 from .cell_raster import render_cell_raster
@@ -59,7 +60,7 @@ def _line_readings(page, bounds, tokens, layout, paints):
     ]
 
 
-def capture_text_page(page, text, cached_lines=()):
+def capture_text_page(page, text, cached_lines=(), *, coordinate_regions=()):
     """Raw cache lines nominate locations only; current reads must prove text.
 
     Native source order follows original extraction order, not guessed columns.
@@ -110,5 +111,10 @@ def capture_text_page(page, text, cached_lines=()):
             "observations": readings,
         }
         selected = {**current, "text": candidate}
-        proof["lines"].append(selected if text_line_qualified(selected) else current)
+        selected = selected if text_line_qualified(selected) else current
+        if text_line_qualified(selected) and (
+            owner := line_owner(selected, coordinate_regions)
+        ):
+            selected["coordinate_owner"] = owner
+        proof["lines"].append(selected)
     return proof

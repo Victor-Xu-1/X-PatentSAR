@@ -6,7 +6,6 @@ import unittest
 from pathlib import Path
 
 import fitz
-
 from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.activity_extractor import extract
 from patent_sar_extractor.core.activity_join import activity_evidence_errors
@@ -335,19 +334,8 @@ class TextOwnershipTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             table_scope_groups(data.coverage)
 
-    def test_gap_and_blocked_coordinate_page_terminate_text_context(self):
+    def test_missing_original_page_terminates_text_context(self):
         result = extract_text_tables([0, 2], {"0": ROOT, "2": "44 | 0.3"})
-        self.assertEqual([r.cpd for r in result.rows], ["Compound 31"])
-        calls = []
-
-        def reader(index):
-            calls.append(index)
-            return "44 | 0.3"
-
-        result = extract_text_tables(
-            [0], {"0": ROOT}, page_count=3, page_reader=reader, blocked_pages={1}
-        )
-        self.assertEqual(calls, [])
         self.assertEqual([r.cpd for r in result.rows], ["Compound 31"])
 
     def test_running_headers_can_continue_but_unknown_preface_and_suffix_cannot(self):

@@ -11,14 +11,12 @@ from pathlib import Path
 from unittest.mock import patch
 
 import fitz
-
 from patent_sar_extractor.core.activity_coordinates import extract_coordinate_tables
 from patent_sar_extractor.core.activity_extractor import extract
 from patent_sar_extractor.core.activity_identity import (
     normalize_compound,
     normalize_value,
 )
-from patent_sar_extractor.core.activity_models import ParsedActivity
 from patent_sar_extractor.core.activity_observations import merge_rows
 from patent_sar_extractor.core.activity_text import extract_text_tables
 from patent_sar_extractor.web.artifacts import _activities
@@ -168,20 +166,20 @@ class ActivityParserModuleTests(unittest.TestCase):
                 ["Compound 42"],
             )
 
-    def test_empty_owned_grid_is_not_reparsed_as_cached_text(self):
+    def test_owned_header_only_grid_is_not_duplicated_as_declared_text(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
             pdf = root / "control.pdf"
             with fitz.open() as doc:
-                draw_grid(doc.new_page(), [["No.", "IC50 (nM)"], ["", ""]])
+                draw_grid(doc.new_page(), [["No.", "IC50 (nM)"]])
                 doc.save(pdf)
-            with patch(
-                "patent_sar_extractor.core.activity_extractor.extract_text_tables",
-                return_value=ParsedActivity(),
-            ) as text:
-                result = extract(str(pdf), {"activity_pages": [0]}, str(root / "out"))
+            result = extract(str(pdf), {"activity_pages": [0]}, str(root / "out"))
             self.assertEqual(result["n_rows"], 0)
-            self.assertEqual(text.call_args.args[0], [])
+            self.assertTrue(result["coverage"]["text_sources"])
+            self.assertFalse(result["coverage"]["text_pages"]["1"].strip())
+            self.assertFalse(
+                any(r["kind"] == "text" for r in result["coverage"]["regions"])
+            )
 
     def test_identity_and_thresholds_are_lossless(self):
         self.assertEqual(normalize_compound("Compound 42"), "Compound 42")

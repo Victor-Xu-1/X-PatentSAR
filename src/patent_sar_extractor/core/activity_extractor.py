@@ -1,7 +1,8 @@
 """Activity extraction facade: original cells/text -> observations -> one writer.
 
 No table-number schema, numeric repair, activity pseudo-compound, alternate OCR
-engine or fallback parser lives here. Recognized cell pages have sole ownership.
+engine or fallback parser lives here. Physical grids own only their own sources;
+independent text on the same page uses the existing text planner and writer.
 Application acceptance and public contract/version policy remain outside core.
 """
 
@@ -91,14 +92,19 @@ def extract(
             return observed
 
         text = extract_text_tables(
-            [p for p in source_pages if p not in cells.owned_pages],
+            sorted(set(source_pages) | cells.owned_pages),
             text_map,
             page_count=len(doc),
-            blocked_pages=cells.owned_pages,
             page_reader=text_for_page,
             source_reader=lambda index, observed: capture_text_page(
-                doc[index], observed, cache.get("ocr_line_map", {}).get(str(index), [])
+                doc[index],
+                observed,
+                cache.get("ocr_line_map", {}).get(str(index), []),
+                coordinate_regions=[
+                    r for r in cells.coverage if r["page_no"] == index + 1
+                ],
             ),
+            coordinate_regions=cells.coverage,
         )
     if dirty and cache_path:
         save_page_ocr_cache(cache_path, cache)

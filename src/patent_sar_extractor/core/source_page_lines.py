@@ -72,6 +72,10 @@ def native_page_lines(layout):
 
 
 def observed_page_text(source):
+    if any("coordinate_owner" in line for line in source["lines"]):
+        from .activity_text_partition import text_partition
+
+        return text_partition(source)[0]
     if source["origin"] == "native":
         # Native order is an original fact; display rotation must not reverse
         # a native table row or exchange its identifier and measured value.
