@@ -1,5 +1,6 @@
 """Native header/context owners in the existing activity evidence inventory."""
 
+from .activity_boundary_sources import layout_boundary_sources
 from .source_evidence_identity import proof_id
 
 
@@ -73,6 +74,24 @@ def _owners(payload):
         )
     for record in (payload.get("coverage") or {}).get("regions", []):
         layout = record.get("layout")
+        if layout is not None:
+            for scope, _bounds in layout_boundary_sources(layout, record["page_no"]):
+                xs, ys = layout["xs"], layout["ys"]
+                snapshot = {
+                    "schema_version": 3,
+                    "context_geometry": layout["context_geometry"],
+                    "columns": [],
+                    **scope,
+                }
+                yield (
+                    record["page_no"],
+                    _snapshot_sources(
+                        snapshot,
+                        [xs[0], ys[0], xs[-1], ys[1]],
+                        layout["context"],
+                        primary_headers=False,
+                    ),
+                )
         if layout is not None and layout.get("data_start", 0) > 0:
             xs, ys, first = layout["xs"], layout["ys"], layout["data_start"]
             band = [xs[0], ys[0], xs[-1], ys[first]]

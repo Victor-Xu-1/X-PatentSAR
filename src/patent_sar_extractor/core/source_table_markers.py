@@ -2,6 +2,8 @@
 
 import re
 
+from .source_paragraphs import PARAGRAPH_LOCATOR
+
 # Common OCR l/i/1 confusion affects the word Table, never the printed number.
 # Raw captions remain source evidence; this marker supplies discovery/identity.
 TABLE_INDEX = r"(?:[A-Za-z][-–—]?)?\d+(?:[-–—]\d+)*[A-Za-z]?"
@@ -11,10 +13,14 @@ TABLE_MARKER = re.compile(
     re.IGNORECASE,
 )
 TABLE_CAPTION_START = re.compile(
-    r"^\s*(?:\[\s*\d{1,8}\s*\]\s*)?"
+    rf"^\s*(?:{PARAGRAPH_LOCATOR}\s*)?"
     rf"(?:Tab[li1]e(?:\b|(?={TABLE_INDEX}\b(?![-–—])))|"
     r"表(?=\s|[0-9A-Za-z一二三四五六七八九十甲乙丙丁]))",
     re.IGNORECASE,
+)
+TABLE_CAPTION_LINE = re.compile(
+    rf"^[ \t]*(?:{PARAGRAPH_LOCATOR}[ \t]*)?(?:{TABLE_MARKER.pattern})",
+    re.IGNORECASE | re.MULTILINE,
 )
 
 

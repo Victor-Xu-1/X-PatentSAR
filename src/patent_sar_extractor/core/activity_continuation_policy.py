@@ -10,6 +10,7 @@ from .activity_context_values import (
 )
 from .activity_header_metrics import normalize_metric_text
 from .activity_headers import context_source_text
+from .source_paragraphs import strip_paragraph_locator
 from .source_table_markers import caption_table_marker, table_marker_identity
 
 
@@ -62,8 +63,10 @@ def caption_prefix(
     )
     if continued and not term.search(text):
         return False
-    clean = term.sub("", text).strip(" .:：-()（）")
-    original = original_context(original_caption).strip(" .:：-()（）")
+    clean = strip_paragraph_locator(term.sub("", text)).strip(" .:：-()（）")
+    original = strip_paragraph_locator(original_context(original_caption)).strip(
+        " .:：-()（）"
+    )
     return canonical_header(clean) in {
         canonical_header(original),
         canonical_header(table_id),

@@ -1,5 +1,36 @@
 # X-PatentSAR architecture
 
+## One paragraph-locator and original table-boundary authority
+
+`source_paragraphs` owns paired, bounded literal paragraph metadata. Original
+headings, table nomination, activity context windows, result-reference spans and
+saved-row comparison use it without changing source characters or molecular IDs.
+Only the last anchored table caption owns conditions; a different paragraph
+locator does not break an otherwise proved, explicit same-table continuation.
+Malformed/overlong locators and prose references do not become captions.
+
+Biological readout classification owns metric keys, not a second experimental
+context parser. Method words remain in keys/raw captions; missing assay, target
+or cell-line conditions cannot be filled from that classification. Known literal
+target disagreements remain review findings. The obsolete inferred-assay field
+has no remaining consumer and is removed from the internal readout descriptor.
+
+Current boundary2 retains each borrowed header's local native/parallel/adjacent
+prefix, not only its parent's header. The existing original activity source
+inventory replays complete native words/paint and positive-claim visibility.
+Raster boundaries additionally retain the shared `cell_raster` full, untrimmed
+400dpi frame/window and compare them with the actual original; no recognition,
+spelling repair or confidence vote occurs. The existing8M-pixel budget refuses
+with an explicit diagnostic and unresolved grid instead of a partial frame.
+Omitted/downgraded boundaries cannot inherit a parent source. No new parser,
+recognizer, source store, queue, model activation or scientific-value writer.
+
+Activity40/extractor52/coverage21 and Binding59/binder70 invalidate affected
+derived proof only. Original PDF/raw OCR/OCSR/manual audits/history, SMILES6,
+default recognizers, environment/dependencies, API/SQL and strict SAR/tenth-strong
+potency rules stay unchanged. Historical data is not rewritten or retagged;
+generated controls do not prove scientific correctness or all-format coverage.
+
 ## Short source headings retain their menu space
 
 `resultColumns` owns the shared source-column default/minimum96px and existing
