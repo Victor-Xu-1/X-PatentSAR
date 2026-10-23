@@ -1,5 +1,25 @@
 # Operations and troubleshooting
 
+## A range is supported by SAR but rejected or lost during extraction
+
+Source intake now shares SAR's exact numeric grammar. Examples include `.05`,
+`[1,10)`, `2..8`, `1e-3-2e-3` and censored bounds; the complete source cell or
+text-row field is retained, not split at an interval comma, replaced by its
+midpoint, or shifted into a neighbouring endpoint. Explicit source units remain
+literal. The existing independent SAR adapter owns any permitted conversion;
+unknown conditions/units and raw decimal-comma/uncertainty forms do not become
+invented quantitative observations.
+
+Malformed/reversed/empty intervals, unsupported suffixes and numeric budgets
+refuse. Physical source ownership and actual-original replay remain mandatory;
+unchanged graphs/identifiers are not evidence of a measurement's correctness.
+Activity44/extractor56 prevent older extraction omissions from being reused as
+current output. Keep originals, old task results and manual audit; fresh private
+extraction still requires the normal authorized frontend path. This change
+does not fix unresolved OCR headers or grant continuation from an unknown one.
+Use the explicit measurement-literal, producer/original-replay, source-policy,
+SAR interval/unit/statistics and tenth-strength checks, not a global test suite.
+
 ## Auxiliary OCR runs even though retained primary claims cannot agree
 
 `not_attempted/conflicting_retained_primary_claims` means the existing retained

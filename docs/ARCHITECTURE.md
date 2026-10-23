@@ -1,5 +1,29 @@
 # X-PatentSAR architecture
 
+## Exact numeric literals survive source intake into SAR
+
+`measurement_literals` is the shared pure scalar/censored/interval authority,
+extracted from the existing SAR parser. It owns exact Decimal endpoints, open/
+closed bounds and the unchanged 256-character/exponent limits. `sar.values`
+keeps its public Value/error/grade/missing adapters and comparison semantics;
+the former competing numeric parser is removed, not left as another path.
+
+`activity_identity` uses that same syntax/validation for source values and full
+text-row tokenization. Bracket commas, range separators, leading decimals,
+comparators and explicit inline units cannot split across adjacent endpoints.
+`table_cells` uses the same numeric predicate instead of a digit-prefix gate.
+Original strings and physical cell positions are retained. Legacy decimal-comma
+and uncertainty forms remain extraction-only literals, not scalar SAR values;
+their temporary resource checks do not publish a conversion or midpoint.
+
+Activity44/extractor56 invalidate affected derived extraction/cache admission.
+Raw PDFs/OCR/structure assets, manual audit/history, Binding63/binder74, API/SQL,
+SAR numeric/direction/tenth-strongest/percentage policies and models/dependencies
+stay unchanged. Unknown/malformed/reversed/over-budget values stay unresolved;
+unpositioned missing/extra cells cannot shift field assignments. The same source
+and original-pixel replay gates still apply. Generated original-PDF checks are
+engineering evidence, not all-format or private-patent acceptance.
+
 ## Recovery preflight reuses existing retained-claim constraints
 
 `text_ocr.recovery_primary.primary_constraints_conflict` is a necessary-constraint

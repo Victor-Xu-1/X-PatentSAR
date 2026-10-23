@@ -59,7 +59,15 @@ class ActivityParserModuleTests(unittest.TestCase):
         self.assertTrue(all(cell["bbox"] for cell in source["cells"]))
 
     def test_numeric_cell_with_missing_neighbor_never_shifts(self):
-        with fitz.open() as doc:
+        # Empty native cells retain ruled ink and may visit the optical adapter.
+        # This is a column-ownership test, not an unbudgeted native OCR benchmark.
+        with (
+            fitz.open() as doc,
+            patch(
+                "patent_sar_extractor.core.table_cells.get_ocr_engine",
+                return_value=("rapidocr", lambda *_a, **_k: ([], None)),
+            ),
+        ):
             page = doc.new_page()
             draw_grid(page, [["No.", "IC50 (nM)", "Dmax (%)"], ["42", "", "80"]])
             row = extract_coordinate_tables(doc, [0]).rows[0]
@@ -75,7 +83,13 @@ class ActivityParserModuleTests(unittest.TestCase):
         self.assertFalse(row.needs_review)
 
     def test_recognized_empty_grid_owns_page_without_rows(self):
-        with fitz.open() as doc:
+        with (
+            fitz.open() as doc,
+            patch(
+                "patent_sar_extractor.core.table_cells.get_ocr_engine",
+                return_value=("rapidocr", lambda *_a, **_k: ([], None)),
+            ),
+        ):
             page = doc.new_page()
             draw_grid(page, [["No.", "IC50 (nM)"], ["", ""]])
             result = extract_coordinate_tables(doc, [0])
