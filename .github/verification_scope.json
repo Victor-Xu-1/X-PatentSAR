@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "94febe9398b938c6c2b30f331a3720ced60788be",
+  "base_sha": "596c86df8c893ad54e27263f7f9833b03a926c78",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
@@ -26,6 +26,8 @@
     "tests.test_sar_current_strength",
     "tests.test_sar_api.SARAPITests.test_real_worker_csv_region_activity_and_exports_without_extraction_job",
     "tests.test_sar_api.SARAPITests.test_project_snapshot_reads_effective_correction_without_rewriting_artifacts",
+    "tests.test_unproved_caption_boundary",
+    "tests.test_unproved_caption_ownership",
     "tests.test_release_policy.ReleaseNumberTests",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"

@@ -7,7 +7,7 @@ from .activity_grid_role_observation import observe_role_cells
 from .printed_identifiers import identifier_key
 from .source_cell_tokens import cell_lines, cell_text
 from .source_section_roles import section_body_boundary
-from .source_table_markers import TABLE_CAPTION_START
+from .source_table_markers import table_body_boundary
 from .source_window_chunks import (
     observe_source_window,
     observe_window_sources,
@@ -188,7 +188,7 @@ def continuation_roles(scope):
         )
         for line in cell_lines(prefix_tokens, prefix):
             text = cell_text(line, prefix)
-            if TABLE_CAPTION_START.match(text) or section_body_boundary(text):
+            if table_body_boundary(text) or section_body_boundary(text):
                 return None
         for identifier, _structure in roles["pairs"]:
             window = [xs[identifier], 0, xs[identifier + 1], bounds[1]]

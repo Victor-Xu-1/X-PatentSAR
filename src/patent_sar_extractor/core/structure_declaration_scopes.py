@@ -17,7 +17,7 @@ from .source_cell_tokens import cell_lines, cell_text
 from .source_evidence_identity import proof_id
 from .source_section_roles import section_heading
 from .source_table_captions import caption_context_geometry, table_caption_nominees
-from .source_table_markers import TABLE_CAPTION_START
+from .source_table_markers import table_body_boundary
 from .source_table_roles import observed_role
 from .source_window_chunks import (
     project_source_window,
@@ -43,7 +43,7 @@ def _title_window(caption, lanes, size, band):
             if (
                 count == 2
                 or top - tail > 18
-                or TABLE_CAPTION_START.match(text)
+                or table_body_boundary(text)
                 or section_heading(text)
                 or identifier_key(text, wrapped=True)
                 or possible_structure_header(text)

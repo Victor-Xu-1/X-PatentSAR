@@ -22,6 +22,26 @@ TABLE_CAPTION_LINE = re.compile(
     rf"^[ \t]*(?:{PARAGRAPH_LOCATOR}[ \t]*)?(?:{TABLE_MARKER.pattern})",
     re.IGNORECASE | re.MULTILINE,
 )
+# A broken numeric paragraph prefix is a source fence, not a proved caption.
+# Keep brackets/digits literal; isotope/prose prefixes never gain this role.
+_UNPROVED_LOCATOR = r"[\[［](?=[\d\[\]［］ \t]*\d)[\d\[\]［］ \t]*"
+TABLE_BOUNDARY_LINE = re.compile(
+    # The unproved locator already owns whitespace; a second trailing quantifier
+    # would backtrack quadratically on a long numeric prefix without a caption.
+    rf"^[ \t]*(?:{PARAGRAPH_LOCATOR}[ \t]*|{_UNPROVED_LOCATOR})?"
+    rf"(?:{TABLE_MARKER.pattern})",
+    re.IGNORECASE | re.MULTILINE,
+)
+
+
+def unproved_caption_prefix(text: str) -> bool:
+    """Withhold a numeric-prefix boundary without repairing its printed source."""
+    return bool(TABLE_BOUNDARY_LINE.match(text) and not TABLE_CAPTION_LINE.match(text))
+
+
+def table_body_boundary(text: str) -> bool:
+    """Nominate a literal or uncertain title, never grant its role or identity."""
+    return bool(TABLE_CAPTION_START.match(text)) or unproved_caption_prefix(text)
 
 
 def caption_table_marker(text):

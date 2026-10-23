@@ -5,8 +5,9 @@
   Web product records and SAR admission/views/exports. Outer whitespace,
   singular/plural and already-supported abbreviations cannot make these consumers
   disagree. Namespace/prose is not a role claim; original ownership validation
-  remains mandatory. Anonymous SAR source-ID checks use the same outer-whitespace
-  projection as visible labels, without changing stored identifiers. Original
+  remains mandatory. Anonymous SAR source-ID namespace checks ignore outer
+  whitespace/case for the predicate only; C0 controls remain unconfirmed even
+  behind a numbered display label. Stored identifiers are unchanged. Original
   ledgers, manual audit, source proof, API/SQL/SAR schemas, model/dependencies and
   numerical activity policies are unchanged. No alternate filter authority.
 
@@ -17,8 +18,11 @@
   uses the existing original activity inventory for native-paint visibility and
   the shared full400dpi/8M `cell_raster` SDK for raster-prefix replay. Omissions,
   downgrades, hidden/changed source and over-budget frames refuse. No new model,
-  parser, writer, store, queue or activation exists. Activity40/extractor52/
-  coverage21 and Binding59/binder70 refresh derived proof only; raw/manual/
+  parser, writer, store, queue or activation exists. Unproved numeric table-prefix
+  fences share the original source/physical header/title projection and stop
+  trusted prior condition/nonfinal ownership without trimming facts, repairing
+  IDs or certifying unknown roles. Prose/isotope prefixes are not table fences.
+  Activity41/extractor53/coverage22 and Binding60/binder71 refresh derived proof only; raw/manual/
   history/SMILES6/API/SQL/dependencies/SAR/potency authorities are unchanged.
   Older epoch entries below are release history, not current competing paths.
 

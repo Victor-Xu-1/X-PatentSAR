@@ -58,12 +58,28 @@ class SourceRoleTermTests(unittest.TestCase):
                 self.assertIsNone(source_exclusion("Compound 12", label))
 
     def test_source_id_padding_cannot_hide_an_anonymous_original(self):
-        for padding in ("", " ", "\u3000"):
-            original = padding + "source-structure:original-observation" + padding
+        for namespace in (
+            "source-structure:",
+            "Source-Structure:",
+            "SOURCE-STRUCTURE:",
+        ):
+            for padding in ("", " ", "\u3000"):
+                original = padding + namespace + "original-observation" + padding
+                with self.subTest(source_id=original):
+                    self.assertEqual(
+                        source_exclusion("Compound 12", original),
+                        "unconfirmed_identifier",
+                    )
+
+    def test_source_id_controls_cannot_be_hidden_by_a_valid_display_label(self):
+        for original in (
+            "\x00source-structure:observation",
+            "source-\x00structure:observation",
+            "\x1fI-255",
+        ):
             with self.subTest(source_id=original):
                 self.assertEqual(
-                    source_exclusion("Compound 12", original),
-                    "unconfirmed_identifier",
+                    source_exclusion("Compound 12", original), "unconfirmed_identifier"
                 )
 
     def test_nonfinal_product_view_and_model_admission_share_the_literal_role(self):

@@ -132,7 +132,7 @@ class CurrentStrengthTests(unittest.TestCase):
                 packet, captured = copy.deepcopy(baseline), report.model_copy(deep=True)
                 # Archive observations remain intact; the current population is scoped.
                 packet["molecules"][0]["source_compound_id"] = (
-                    " source-structure:unconfirmed "
+                    " SOURCE-STRUCTURE:unconfirmed "
                 )
                 packet["molecules"][1]["label"] = label
                 captured.rows[1].label = label

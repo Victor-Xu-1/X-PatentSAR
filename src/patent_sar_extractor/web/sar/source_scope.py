@@ -42,8 +42,9 @@ def source_exclusion(label: str, source_id: str | None = None, issues=()) -> str
         or label.casefold() in _MISSING_NUMBER
         or len(label) > 200
         or any(ord(char) < 32 for char in label)
+        or any(ord(char) < 32 for char in (source_id or ""))
         or _TEMPORARY.match(label)
-        or source_identity.startswith("source-structure:")
+        or source_identity.casefold().startswith("source-structure:")
         or _UNCONFIRMED.intersection(issues)
     ):
         return "unconfirmed_identifier"

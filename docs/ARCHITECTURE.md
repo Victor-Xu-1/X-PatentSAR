@@ -9,8 +9,10 @@ ignoring only outer presentation whitespace without changing retained originals.
 An I-prefix, a longer namespace or a reference inside a product title is not an
 intermediate declaration. Unknown ownership still needs the existing original
 source proof; passing a lexical guard never proves that a drawing is a product.
-SAR also applies its existing anonymous-source guard to the stripped source-ID
-projection. Original assets, stored IDs, manual edits and historical artifacts
+SAR also applies its existing anonymous-source guard to a stripped, case-folded
+source-ID namespace projection. C0 controls in the source identity refuse even
+when a separate display label looks numbered. Retained source IDs are unchanged.
+Original assets, stored IDs, manual edits and historical artifacts
 are not rewritten or deleted; no new recognition, queue, parser or policy path.
 
 ## One paragraph-locator and original table-boundary authority
@@ -18,9 +20,23 @@ are not rewritten or deleted; no new recognition, queue, parser or policy path.
 `source_paragraphs` owns paired, bounded literal paragraph metadata. Original
 headings, table nomination, activity context windows, result-reference spans and
 saved-row comparison use it without changing source characters or molecular IDs.
-Only the last anchored table caption owns conditions; a different paragraph
+The last literal or uncertain table boundary scopes the original observation;
+only a proved caption supplies table identity. A different valid paragraph
 locator does not break an otherwise proved, explicit same-table continuation.
-Malformed/overlong locators and prose references do not become captions.
+Malformed/overlong numeric bracket prefixes stop prior condition/role ownership
+without becoming captions or corrected identifiers. The same boundary grammar
+serves discovery, physical header wrapping, local/parallel title projection,
+declarations and saved-source consumers. Unknown boundaries retain all original
+facts while ending trusted prior ownership; they cannot trim the source inventory
+or exclude later diagrams as intermediates. Prose/isotope labels are not numeric
+paragraph metadata. Unproved current context remains a computed review conflict,
+including a saved raw context whose caption fields were omitted.
+
+Literal boundary matching gives numeric prefixes a single trailing-whitespace
+owner. Overlapping whitespace quantifiers must not amplify negative source lines
+into quadratic backtracking. Generated long-prefix controls enforce a bounded
+worker check and retain the complete original span for valid and unknown titles;
+they neither trim evidence nor grant an uncertain caption a positive identity.
 
 Biological readout classification owns metric keys, not a second experimental
 context parser. Method words remain in keys/raw captions; missing assay, target
@@ -38,7 +54,7 @@ with an explicit diagnostic and unresolved grid instead of a partial frame.
 Omitted/downgraded boundaries cannot inherit a parent source. No new parser,
 recognizer, source store, queue, model activation or scientific-value writer.
 
-Activity40/extractor52/coverage21 and Binding59/binder70 invalidate affected
+Activity41/extractor53/coverage22 and Binding60/binder71 invalidate affected
 derived proof only. Original PDF/raw OCR/OCSR/manual audits/history, SMILES6,
 default recognizers, environment/dependencies, API/SQL and strict SAR/tenth-strong
 potency rules stay unchanged. Historical data is not rewritten or retagged;
