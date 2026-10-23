@@ -1,5 +1,27 @@
 # Operations and troubleshooting
 
+## A spectral-read difference invalidates an independent activity source
+
+Do not replace DMSO/DMS0, Greek characters, punctuation or numbers by confidence
+votes or expected chemical text. Current declared-source4 may retain a differing
+negative role claim only when both complete qualified source reads link literally
+to the same spectral data cell of a current complete role6 grid. Each DPI must
+match its own cell view. Original frame/pixel and actual grid replay still apply.
+The readings stay saved; they are not measurements or corrected source text.
+
+IDs, preparation, headers, conditions, endpoints, weak/missing/unknown reads,
+crossing cells or competing owners do not get this treatment. Explicit context
+in a role matrix/title or independent native layer refuses the role itself.
+Incomplete sources, missing referenced results and unknown grids remain failures.
+Only an independently qualified outside table can keep its own activity records.
+
+Current derived contracts: Activity43/extractor55/coverage24/source4 and
+Binding61/binder72/role6. Preserve old proof and manual history; software may
+derive fresh evidence only through the normal authorized frontend workflow.
+No task-specific ID/page rule, new OCR pass, model, dependency or external call
+is installed by this fix. Generated/installed checks do not count as a successful
+private extraction or SAR acceptance. Older contract entries below are history.
+
 ## A recognized grid hides another table on the same page
 
 Do not treat coordinate `owned_pages` as complete page ownership. The facade now
@@ -16,7 +38,8 @@ context through a physically intervening grid. No confidence vote, guessed ID,
 numerical repair or new OCR engine is involved. The whole-page qualification of
 retained text is unchanged; unrelated weak-line policy is not silently relaxed.
 
-Current combined activity proof is Activity42/extractor54/coverage23/declared-source3;
+That mixed-page release introduced Activity42/extractor54/coverage23/source3;
+the current role6/source4 contracts and limits are recorded above. All
 older activity proofs remain historical and require normal frontend production
 of fresh derived evidence. Do not rewrite old artifacts or manual revisions.
 Focused controls: `tests.test_activity_mixed_ownership`, existing declared-source

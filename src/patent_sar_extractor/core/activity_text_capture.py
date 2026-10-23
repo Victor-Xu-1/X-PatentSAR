@@ -2,8 +2,12 @@
 
 from patent_sar_extractor.contracts import DECLARED_TEXT_SOURCE_VERSION
 
-from .activity_text_partition import line_owner
-from .activity_text_sources import MAX_TEXT_SOURCE_LINES, same_text, text_line_qualified
+from .activity_text_sources import (
+    MAX_TEXT_SOURCE_LINES,
+    same_text,
+    text_line_qualified,
+    text_source_owners,
+)
 from .cell_frame_proof import inside_box
 from .cell_raster import render_cell_raster
 from .cell_text_chunks import observe_text_cell
@@ -86,6 +90,7 @@ def capture_text_page(page, text, cached_lines=(), *, coordinate_regions=()):
         return proof
     tokens = SourceTokens(layout.native, layout, layout.raster_bounds)
     paints = native_paint_view(page)
+    owner = text_source_owners(coordinate_regions)
     for line in proposals:
         if (
             not isinstance(line, dict)
@@ -112,9 +117,7 @@ def capture_text_page(page, text, cached_lines=(), *, coordinate_regions=()):
         }
         selected = {**current, "text": candidate}
         selected = selected if text_line_qualified(selected) else current
-        if text_line_qualified(selected) and (
-            owner := line_owner(selected, coordinate_regions)
-        ):
-            selected["coordinate_owner"] = owner
+        if claim := owner(selected):
+            selected["coordinate_owner"] = claim
         proof["lines"].append(selected)
     return proof

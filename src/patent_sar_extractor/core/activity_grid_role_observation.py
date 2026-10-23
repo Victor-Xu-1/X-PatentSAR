@@ -10,8 +10,8 @@ from .activity_grid_context import table_matrix
 from .activity_grid_role_proof import valid_role_scope
 from .activity_grid_roles import (
     MAX_ROLE_TEXT_ROWS,
+    characterization_conflict,
     characterization_roles,
-    declared_measurement,
     nominate_characterization,
 )
 from .cell_raster import cell_pixel_rect, render_cell_raster
@@ -182,7 +182,7 @@ def observe_characterization(page, region, tokens, prefix, *, evidence_sink=None
     if not nominate_characterization(initial, prefix):
         return None
     if any(
-        declared_measurement(native_cell_text(tokens, (x0, y0, x1, y1)))
+        characterization_conflict(native_cell_text(tokens, (x0, y0, x1, y1)))
         for x0, x1 in pairwise(xs)
         for y0, y1 in pairwise(ys)
     ):

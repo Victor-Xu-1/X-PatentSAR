@@ -6,7 +6,7 @@ from .activity_context_values import SCIENTIFIC_CONTEXT_FIELDS
 from .activity_headers import context_from_text
 from .activity_text_partition import annotations_match, text_partition
 from .activity_text_plan import scope_descriptor, source_plan, validate_text_scope
-from .activity_text_sources import text_line_qualified
+from .activity_text_sources import text_source_owners
 
 
 def _get(row, key, default=None):
@@ -20,8 +20,7 @@ def text_source_errors(pages, regions, rows, *, sources=None):
     for key, source in (sources or {}).items():
         if not annotations_match(
             source,
-            [r for r in regions if r["page_no"] == int(key)],
-            text_line_qualified,
+            text_source_owners([r for r in regions if r["page_no"] == int(key)]),
         ):
             raise ValueError(
                 "Declared text coordinate ownership differs from the physical inventory"

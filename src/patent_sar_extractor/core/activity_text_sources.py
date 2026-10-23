@@ -4,7 +4,8 @@ import math
 
 from patent_sar_extractor.contracts import DECLARED_TEXT_SOURCE_VERSION
 
-from .activity_text_partition import annotations_match, owned
+from .activity_text_partition import annotations_match, line_owner, owned
+from .activity_text_roles import characterization_cells
 from .cell_frame_proof import inside_box, valid_cell_frame
 from .cell_text_proof import valid_text_reading
 from .source_cell_claims import cell_source_status, native_witness
@@ -23,7 +24,12 @@ def same_text(left, right):
     )
 
 
-def text_line_qualified(line):
+def _contains_words(text, words):
+    actual = text.split()
+    return any(actual[i : i + len(words)] == words for i in range(len(actual)))
+
+
+def _line_qualified(line, *, literal):
     """A location proposal is not a read vote; retain all of its original reads."""
     if not isinstance(line, dict) or set(line) - {"coordinate_owner"} != {
         "nomination",
@@ -64,7 +70,8 @@ def text_line_qualified(line):
         return False
     for reading, dpi in zip(primary, (400, 600), strict=True):
         if (
-            not same_text(reading.get("text"), text)
+            literal
+            and not same_text(reading.get("text"), text)
             or not valid_text_reading(reading, bounds, dpi)
             or not valid_cell_frame(reading.get("source_frame"), reading, bounds, dpi)
         ):
@@ -74,12 +81,32 @@ def text_line_qualified(line):
             if cell_source_status(witness) == "invalid":
                 return False
             words = witness.get("text", "").split()
-            actual = text.split()
-            if words and not any(
-                actual[i : i + len(words)] == words for i in range(len(actual))
+            if words and not all(
+                _contains_words(reading["text"], words) for reading in primary
             ):
                 return False
     return True
+
+
+def text_line_qualified(line):
+    """A positive literal claim still needs agreeing complete original reads."""
+    return _line_qualified(line, literal=True)
+
+
+def text_source_owners(regions):
+    """One call-local physical owner resolver for capture, planner and readback."""
+    role_cells = characterization_cells(regions)
+
+    def owner(line):
+        literal = text_line_qualified(line)
+        if not literal and not _line_qualified(line, literal=False):
+            return None
+        claim = line_owner(line, regions, role_cells=role_cells)
+        if literal or claim and claim["role"] == "characterization":
+            return claim
+        return None
+
+    return owner
 
 
 def text_page_qualified(source, text, *, coordinate_regions=()):
@@ -107,8 +134,14 @@ def text_page_qualified(source, text, *, coordinate_regions=()):
     ):
         return False
     seen = set()
+    owner = text_source_owners(coordinate_regions)
     for line in lines:
-        if not text_line_qualified(line) or not inside_box(line["bbox"], [0, 0, *size]):
+        claim = owner(line)
+        if (
+            not text_line_qualified(line)
+            and not (claim and claim["role"] == "characterization")
+            or not inside_box(line["bbox"], [0, 0, *size])
+        ):
             return False
         if "coordinate_owner" in line and not owned(line):
             return False
@@ -121,7 +154,7 @@ def text_page_qualified(source, text, *, coordinate_regions=()):
         ] != ["native_cell"]:
             return False
     return (
-        annotations_match(source, coordinate_regions, text_line_qualified)
+        annotations_match(source, owner)
         and same_text(
             " ".join(line["nomination"] for line in lines), source["nomination_text"]
         )
