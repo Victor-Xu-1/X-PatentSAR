@@ -3,6 +3,7 @@
 import re
 
 from ...core.source_role_terms import intermediate_source_label
+
 _TEMPORARY = re.compile(
     r"^(?:source-structure:|编号待确认|未关联结构|关联结构\s+[a-f0-9]{6})",
     re.IGNORECASE,
