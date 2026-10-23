@@ -6,6 +6,7 @@ import sys
 import unittest
 from pathlib import Path
 
+from patent_sar_extractor.core import source_table_markers
 from patent_sar_extractor.core.source_table_markers import (
     TABLE_BOUNDARY_LINE,
     caption_table_marker,
@@ -13,9 +14,13 @@ from patent_sar_extractor.core.source_table_markers import (
 )
 
 NEGATIVE_PROBE = """
+import sys
+from pathlib import Path
+from patent_sar_extractor.core import source_table_markers
 from patent_sar_extractor.core.source_table_markers import (
     TABLE_BOUNDARY_LINE, table_body_boundary,
 )
+assert Path(source_table_markers.__file__).resolve() == Path(sys.argv[1]).resolve(), "Child parser differs from the parent authority"
 for prefix in ('[42]', '[42', '［４２］', '[123456789]'):
     raw = prefix + ' ' * 20000 + 'not a table'
     assert TABLE_BOUNDARY_LINE.search(raw) is None
@@ -27,12 +32,18 @@ class TableBoundaryBudgetTests(unittest.TestCase):
     def test_negative_numeric_prefixes_complete_within_a_bounded_worker(self):
         env = {
             **os.environ,
-            "PYTHONPATH": str(Path(__file__).resolve().parents[1] / "src"),
+            "PYTHONPATH": str(Path(source_table_markers.__file__).resolve().parents[2]),
             "PYTHONDONTWRITEBYTECODE": "1",
         }
         try:
             result = subprocess.run(
-                [sys.executable, "-B", "-c", NEGATIVE_PROBE],
+                [
+                    sys.executable,
+                    "-B",
+                    "-c",
+                    NEGATIVE_PROBE,
+                    source_table_markers.__file__,
+                ],
                 env=env,
                 capture_output=True,
                 text=True,
