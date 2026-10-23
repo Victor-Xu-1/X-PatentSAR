@@ -16,6 +16,7 @@ from .cell_frames import literal
 from .cell_packets import primary_structure
 
 PRIMARY_CONFLICT_CODE = "conflicting_retained_primary_claims"
+_MIN_RETAINED_SCORE = 0.85
 
 
 def complete_primary(reading, dpi, *, maximum_row_height=12):
@@ -122,7 +123,7 @@ def _retained_constraints(reading):
             or (score := confidence_value(part.get("confidence"))) is None
         ):
             return None
-        constraints.append(literal(part["text"]) if score >= 0.85 else None)
+        constraints.append(literal(part["text"]) if score >= _MIN_RETAINED_SCORE else None)
     return constraints
 
 
@@ -209,11 +210,12 @@ def compatible_primary(
         return False
     if len(original) == len(recovered):
         if any(
-            a["confidence"] >= 0.85 and literal(a["text"]) != literal(b["text"])
+            a["confidence"] >= _MIN_RETAINED_SCORE
+            and literal(a["text"]) != literal(b["text"])
             for a, b in zip(original, recovered, strict=True)
         ):
             return False
-    elif any(part["confidence"] >= 0.85 for part in original):
+    elif any(part["confidence"] >= _MIN_RETAINED_SCORE for part in original):
         return False
     return valid_text_reading(
         selected,

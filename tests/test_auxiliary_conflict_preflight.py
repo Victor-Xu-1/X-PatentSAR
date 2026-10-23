@@ -148,6 +148,16 @@ def reading(constraints):
 
 
 class RetainedConstraintProofTests(unittest.TestCase):
+    def test_retained_score_boundary_is_shared_with_the_existing_validator(self):
+        strong = reading((("A", 0.99),))
+        for score, expected in ((0.849999, False), (0.85, True), (0.850001, True)):
+            self.assertEqual(
+                recovery_primary.primary_constraints_conflict(
+                    (strong, reading((("B", score),)))
+                ),
+                expected,
+            )
+
     def test_preflight_is_only_an_unsatisfiable_existing_constraint_set(self):
         alphabet = tuple(itertools.product(("A", "B"), (0.2, 0.99)))
         vectors = [
