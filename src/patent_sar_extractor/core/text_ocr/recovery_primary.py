@@ -123,7 +123,9 @@ def _retained_constraints(reading):
             or (score := confidence_value(part.get("confidence"))) is None
         ):
             return None
-        constraints.append(literal(part["text"]) if score >= _MIN_RETAINED_SCORE else None)
+        constraints.append(
+            literal(part["text"]) if score >= _MIN_RETAINED_SCORE else None
+        )
     return constraints
 
 
