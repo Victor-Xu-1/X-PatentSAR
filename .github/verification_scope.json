@@ -23,10 +23,12 @@
     "src/patent_sar_extractor/core/structure_header_lines.py",
     "src/patent_sar_extractor/core/unruled_continuation.py",
     "tests/test_caption_locator_native.py",
+    "tests/test_table_boundary_budget.py",
     "tests/test_unproved_caption_boundary.py",
     "tests/test_unproved_caption_ownership.py"
   ],
   "python_modules": [
+    "tests.test_table_boundary_budget",
     "tests.test_unproved_caption_boundary",
     "tests.test_unproved_caption_ownership",
     "tests.test_source_caption_locators",

@@ -26,7 +26,9 @@ TABLE_CAPTION_LINE = re.compile(
 # Keep brackets/digits literal; isotope/prose prefixes never gain this role.
 _UNPROVED_LOCATOR = r"[\[［](?=[\d\[\]［］ \t]*\d)[\d\[\]［］ \t]*"
 TABLE_BOUNDARY_LINE = re.compile(
-    rf"^[ \t]*(?:(?:{PARAGRAPH_LOCATOR}|{_UNPROVED_LOCATOR})[ \t]*)?"
+    # The unproved locator already owns whitespace; a second trailing quantifier
+    # would backtrack quadratically on a long numeric prefix without a caption.
+    rf"^[ \t]*(?:{PARAGRAPH_LOCATOR}[ \t]*|{_UNPROVED_LOCATOR})?"
     rf"(?:{TABLE_MARKER.pattern})",
     re.IGNORECASE | re.MULTILINE,
 )

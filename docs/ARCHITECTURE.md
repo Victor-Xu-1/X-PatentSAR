@@ -17,6 +17,12 @@ or exclude later diagrams as intermediates. Prose/isotope labels are not numeric
 paragraph metadata. Unproved current context remains a computed review conflict,
 including a saved raw context whose caption fields were omitted.
 
+Literal boundary matching gives numeric prefixes a single trailing-whitespace
+owner. Overlapping whitespace quantifiers must not amplify negative source lines
+into quadratic backtracking. Generated long-prefix controls enforce a bounded
+worker check and retain the complete original span for valid and unknown titles;
+they neither trim evidence nor grant an uncertain caption a positive identity.
+
 Biological readout classification owns metric keys, not a second experimental
 context parser. Method words remain in keys/raw captions; missing assay, target
 or cell-line conditions cannot be filled from that classification. Known literal
