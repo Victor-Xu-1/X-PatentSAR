@@ -1,8 +1,26 @@
 """Shared unresolved-only original text capture, without scientific decisions."""
 
+import copy
+
 from .cell_capture import refine_text_pair
 from .configuration import get_auxiliary_text_runtime
-from .recovery_primary import complete_primary
+from .recovery_primary import (
+    PRIMARY_CONFLICT_CODE,
+    complete_primary,
+    primary_constraints_conflict,
+)
+
+
+def _retain_attempts(readings, attempts):
+    histories = [reading.get("auxiliary_text_attempts", []) for reading in readings]
+    if any(
+        not isinstance(prior, list) or any(not isinstance(a, dict) for a in prior)
+        for prior in histories
+    ):
+        raise ValueError("Malformed original auxiliary attempt history")
+    for reading, prior in zip(readings, histories, strict=True):
+        additions = [attempt for attempt in attempts if attempt not in prior]
+        reading["auxiliary_text_attempts"] = [*prior, *copy.deepcopy(additions)]
 
 
 def refine_source_text(
@@ -15,6 +33,11 @@ def refine_source_text(
         complete_primary(p, d, maximum_row_height=maximum_row_height)
         for p, d in zip(readings, (400, 600))
     ):
+        return readings
+    if primary_constraints_conflict(readings):
+        _retain_attempts(
+            readings, [{"status": "not_attempted", "code": PRIMARY_CONFLICT_CODE}]
+        )
         return readings
     auxiliary = get_auxiliary_text_runtime()
     if auxiliary is None:
@@ -38,6 +61,5 @@ def refine_source_text(
     if selected is not None:
         return list(selected)
     if attempts:
-        for reading in readings:
-            reading["auxiliary_text_attempts"] = attempts
+        _retain_attempts(readings, attempts)
     return readings

@@ -11,7 +11,12 @@ from patent_sar_extractor.core.ocsr.worker_process import WorkerProtocolError
 
 from .identity import recipe
 from .process import TextOCRCancelled
-from .recovery_primary import complete_primary, source_metadata
+from .recovery_primary import (
+    PRIMARY_CONFLICT_CODE,
+    complete_primary,
+    primary_constraints_conflict,
+    source_metadata,
+)
 from .recovery_proof import RECOVERY_VERSION, effective_recovery_cells
 from .recovery_rows import RecoveryRowEngine, UnqualifiedRecoveryRow
 
@@ -39,6 +44,12 @@ def recover_complete_pair(
         complete_primary(primary, dpi, maximum_row_height=maximum_row_height)
         for primary, dpi in zip(primaries, (400, 600), strict=True)
     ):
+        return None
+    if primary_constraints_conflict(primaries):
+        if evidence_sink is not None:
+            evidence_sink.append(
+                {"status": "not_attempted", "code": PRIMARY_CONFLICT_CODE}
+            )
         return None
     budget, views, fingerprint = [], [], None
     for image, primary, dpi in zip(images, primaries, (400, 600), strict=True):

@@ -15,6 +15,8 @@ from patent_sar_extractor.core.cell_text_proof import (
 from .cell_frames import literal
 from .cell_packets import primary_structure
 
+PRIMARY_CONFLICT_CODE = "conflicting_retained_primary_claims"
+
 
 def complete_primary(reading, dpi, *, maximum_row_height=12):
     rows = (
@@ -89,6 +91,60 @@ def parts(reading):
             raise TypeError("Malformed original recovery chunk reading")
         result.extend(chunk["reading"]["parts"])
     return result
+
+
+def _retained_constraints(reading):
+    if not isinstance(reading, dict):
+        return None
+    chunks = reading.get("physical_text_chunks")
+    if isinstance(chunks, dict) and isinstance(chunks.get("chunks"), list):
+        for chunk in chunks["chunks"][: MAX_TEXT_CHUNKS + 1]:
+            child = chunk.get("reading") if isinstance(chunk, dict) else None
+            if (
+                isinstance(child, dict)
+                and isinstance(child.get("parts"), list)
+                and len(child["parts"]) > 32
+            ):
+                return None
+    try:
+        original = parts(reading)
+    except (TypeError, ValueError, KeyError):
+        return None
+    if not isinstance(original, list) or len(original) > 32 * MAX_TEXT_CHUNKS:
+        return None
+    constraints = []
+    for part in original:
+        if (
+            not isinstance(part, dict)
+            or not isinstance(part.get("text"), str)
+            or len(part["text"]) > 4096
+            or part.get("confidence_valid", True) is not True
+            or (score := confidence_value(part.get("confidence"))) is None
+        ):
+            return None
+        constraints.append(literal(part["text"]) if score >= 0.85 else None)
+    return constraints
+
+
+def primary_constraints_conflict(primaries):
+    """Refuse only impossible existing constraints, not new semantic conflicts.
+
+    compatible_primary freezes each high-score part and its count. The final
+    recovery proof requires identical selected part vectors at both DPI values.
+    Incompatible fixed vectors therefore cannot succeed regardless of a model's
+    output. Unknown/malformed observations are not reclassified as known claims.
+    """
+    if not isinstance(primaries, (list, tuple)) or len(primaries) != 2:
+        return False
+    first, second = (_retained_constraints(p) for p in primaries)
+    if first is None or second is None:
+        return False
+    if len(first) != len(second):
+        return any(v is not None for v in first) and any(v is not None for v in second)
+    return any(
+        a is not None and b is not None and a != b
+        for a, b in zip(first, second, strict=True)
+    )
 
 
 def compatible_primary(

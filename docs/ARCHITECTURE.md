@@ -1,5 +1,28 @@
 # X-PatentSAR architecture
 
+## Recovery preflight reuses existing retained-claim constraints
+
+`text_ocr.recovery_primary.primary_constraints_conflict` is a necessary-constraint
+check, not another source/semantic validator. The existing `compatible_primary`
+freezes each qualified primary part and its part count; `effective_recovery_cells`
+requires identical recovered part vectors at both resolutions. Mutually
+incompatible fixed vectors cannot be accepted by those rules, regardless of a
+model's output. Unknown, malformed and oversized observations are not promoted
+into known conflicts. Whitespace-only equality preserves character identities.
+
+The shared source wrapper checks before auxiliary runtime acquisition or original
+re-rendering; direct complete-pair callers check before physical-row/model work.
+Both retain `not_attempted/conflicting_retained_primary_claims`. Raw primaries,
+all previous failed attempts and their original evidence remain; repeated exact
+diagnostics do not mutate shared history lists or erase prior failures.
+
+No acceptance set, original replay, row/model budget, scientific epoch, API/SQL,
+model/dependency, activation, SAR or numerical policy changes. Weak/compatible
+sources still traverse the same paired recovery and actual-original replay.
+Generated controls test resource/contract behavior, not model recall or patent
+acceptance. Native isolated text comparisons cannot by themselves authorize
+spelling repair, confidence votes or replacement of a retained known claim.
+
 ## Heading typography belongs to the same original source throughout recovery
 
 The existing heading observer passes `MAX_HEADING_ROWS` and
