@@ -16,6 +16,7 @@ from .source_role_terms import (
     is_intermediate_kind,
     role_words,
 )
+from .source_table_markers import unproved_caption_prefix
 
 _HEADING = re.compile(
     rf"^(?:{PARAGRAPH_LOCATOR}\s*)?"
@@ -83,9 +84,11 @@ def scheme_heading_boundary(text):
 
 def procedure_heading_boundary(text):
     """One literal procedure stop shared by single/plural original declarations."""
-    return bool(
-        _PROCEDURE.match(identifier_width(str(text).strip()))
-    ) or scheme_heading_boundary(text)
+    return (
+        bool(_PROCEDURE.match(identifier_width(str(text).strip())))
+        or scheme_heading_boundary(text)
+        or unproved_caption_prefix(str(text).strip())
+    )
 
 
 def section_heading(text: object) -> dict[str, Any] | None:

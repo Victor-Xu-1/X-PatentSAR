@@ -7,8 +7,11 @@
   uses the existing original activity inventory for native-paint visibility and
   the shared full400dpi/8M `cell_raster` SDK for raster-prefix replay. Omissions,
   downgrades, hidden/changed source and over-budget frames refuse. No new model,
-  parser, writer, store, queue or activation exists. Activity40/extractor52/
-  coverage21 and Binding59/binder70 refresh derived proof only; raw/manual/
+  parser, writer, store, queue or activation exists. Unproved numeric table-prefix
+  fences share the original source/physical header/title projection and stop
+  trusted prior condition/nonfinal ownership without trimming facts, repairing
+  IDs or certifying unknown roles. Prose/isotope prefixes are not table fences.
+  Activity41/extractor53/coverage22 and Binding60/binder71 refresh derived proof only; raw/manual/
   history/SMILES6/API/SQL/dependencies/SAR/potency authorities are unchanged.
   Older epoch entries below are release history, not current competing paths.
 

@@ -6,7 +6,7 @@ from .activity_context_geometry import MAX_TABLES
 from .printed_identifiers import identifier_key
 from .source_cell_tokens import cell_lines
 from .source_section_roles import section_heading
-from .source_table_markers import TABLE_CAPTION_START
+from .source_table_markers import table_body_boundary
 from .structure_table_headers import (
     header_groups,
     structure_column_pairs,
@@ -25,7 +25,7 @@ def _body_or_boundary(groups):
         and any(identifier_key(t, wrapped=True, terminal_period=True) for t in texts)
     ) or (
         not structure_column_pairs(texts)
-        and (TABLE_CAPTION_START.match(text) or section_heading(text))
+        and (table_body_boundary(text) or section_heading(text))
     )
 
 

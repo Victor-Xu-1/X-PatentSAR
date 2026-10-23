@@ -3,19 +3,19 @@
 from .activity_context_geometry import context_region, grid_box
 from .caption_role_semantics import catalog_title_role
 from .source_cell_tokens import cell_lines, cell_text
-from .source_table_markers import TABLE_CAPTION_START
+from .source_table_markers import table_body_boundary
 from .source_table_roles import title_key
 from .structure_table_headers import header_groups
 
 
 def caption_line_parts(line):
     """Split only independent caption starts after an original physical gap."""
-    if not TABLE_CAPTION_START.match(" ".join(part["text"] for part in line)):
+    if not table_body_boundary(" ".join(part["text"] for part in line)):
         return [line]  # Several prose references do not become new table titles.
     starts = [
         group["bbox"][0]
         for group in header_groups(line)
-        if TABLE_CAPTION_START.match(group["text"])
+        if table_body_boundary(group["text"])
     ]
     if len(starts) < 2:
         return [line]
@@ -71,7 +71,7 @@ def table_caption_nominees(tokens, size, *, native_tokens=()):
             for part in caption_line_parts(original)
         ):
             text = cell_text(line, window)
-            if not TABLE_CAPTION_START.match(text):
+            if not table_body_boundary(text):
                 continue
             box = [
                 min(p["bbox"][0] for p in line),
