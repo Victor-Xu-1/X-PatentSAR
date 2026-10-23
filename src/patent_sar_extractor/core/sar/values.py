@@ -4,12 +4,12 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 
+from ..measurement_literals import NumericLiteralError, parse_numeric_literal
 from .errors import SARInputError
 from .limits import MAX_GRADES, MAX_VALUE_CHARS
 
-NUMBER = r"[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:[eE][+-]?\d+)?"
 MISSING = {
     "",
     "na",
@@ -61,16 +61,6 @@ def grade_ranks(order: object) -> dict[str, int]:
     return {item: i for i, item in enumerate(order)}
 
 
-def _number(text: str) -> Decimal:
-    try:
-        value = Decimal(text)
-        if not value.is_finite() or not -308 <= value.adjusted() <= 308:
-            raise SARInputError("numeric_limit_exceeded")
-        return value
-    except InvalidOperation:
-        raise SARInputError("invalid_numeric_value") from None
-
-
 def parse_value(raw: str, ranks: dict[str, int]) -> Value:
     if len(raw) > MAX_VALUE_CHARS:
         raise SARInputError("value_limit_exceeded")
@@ -79,29 +69,18 @@ def parse_value(raw: str, ranks: dict[str, int]) -> Value:
         return Value("missing")
     if text in ranks:
         return Value("ordinal", grade=text)
-    if re.fullmatch(NUMBER, text):
-        scalar = _number(text)
-        return Value("scalar", scalar, scalar)
-    match = re.fullmatch(rf"(<=|>=|<|>|≤|≥)\s*({NUMBER})", text)
-    if match:
-        bound = _number(match[2])
-        if match[1] in {"<", "<=", "≤"}:
-            return Value(
-                "interval", Decimal("-Infinity"), bound, False, match[1] != "<"
-            )
-        return Value("interval", bound, Decimal("Infinity"), match[1] != ">", False)
-    bracket = re.fullmatch(rf"([\[(])\s*({NUMBER})\s*,\s*({NUMBER})\s*([\])])", text)
-    ranged = re.fullmatch(rf"({NUMBER})\s*(?:-|–|—|\.\.)\s*({NUMBER})", text)
-    if bracket or ranged:
-        if bracket:
-            low, high = _number(bracket[2]), _number(bracket[3])
-        elif ranged:
-            low, high = _number(ranged[1]), _number(ranged[2])
-        lower_closed = not bracket or bracket[1] == "["
-        upper_closed = not bracket or bracket[4] == "]"
-        if low > high or (low == high and not (lower_closed and upper_closed)):
-            raise SARInputError("invalid_interval")
-        return Value("interval", low, high, lower_closed, upper_closed)
+    try:
+        numeric = parse_numeric_literal(raw)
+        return Value(
+            numeric.kind,
+            numeric.low,
+            numeric.high,
+            numeric.lower_closed,
+            numeric.upper_closed,
+        )
+    except NumericLiteralError as error:
+        if error.code != "unsupported_measurement_value":
+            raise SARInputError(error.code) from None
     if re.fullmatch(r"[^\W\d_]+|\++", text, flags=re.UNICODE):
         raise SARInputError("grade_order_required" if not ranks else "unknown_grade")
     raise SARInputError("unsupported_measurement_value")

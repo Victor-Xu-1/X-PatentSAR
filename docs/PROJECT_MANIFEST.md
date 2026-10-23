@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Numeric source/SAR authority: `core/measurement_literals` owns the exact
+  bounded scalar/censored/interval grammar previously embedded in SAR. Both
+  source intake and SAR use that single parser; `sar.values` keeps its existing
+  public Value/error/grade/missing adapter, not another numerical implementation.
+  `activity_identity` owns full source-literal tokenization and extraction-only
+  legacy uncertainty/decimal-comma forms; `table_cells` reuses its numeric
+  predicate. Original strings/units and column ownership are conserved; no
+  midpoint, guessed conditions/unit, unknown ordinal order or fuzzy repair.
+  Activity44/extractor56 refresh derived extraction only. Other scientific
+  epochs, raw/manual/history, API/SQL, model/dependency/activation and SAR
+  numerical/comparison policies are unchanged. Old outputs stay historical.
+
 - Auxiliary recovery preflight authority: the existing `recovery_primary` owns
   the conservative unsatisfiable retained-part check. The source/runtime wrapper
   and direct complete-pair adapter use the SAME predicate before auxiliary work.

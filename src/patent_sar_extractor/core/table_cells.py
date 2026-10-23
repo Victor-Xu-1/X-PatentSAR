@@ -7,7 +7,7 @@ from dataclasses import dataclass, field, replace
 
 import numpy as np
 
-from .activity_identity import is_value
+from .activity_identity import is_numeric_value
 from .activity_values import is_explicit_missing_activity_value
 from .cell_cross_observation import observe_printed_crosses
 from .cell_ocr_observation import OCRObservation, observe_cell
@@ -47,11 +47,7 @@ def _normalize(value: str, kind: str) -> str:
         # markers and uncertainty. Never join two separate numbers into one.
         return (
             text
-            if is_value(text)
-            and (
-                is_explicit_missing_activity_value(text)
-                or re.match(r"^[<>≤≥+\-]?\s*\d", text)
-            )
+            if is_explicit_missing_activity_value(text) or is_numeric_value(text)
             else ""
         )
     if kind == "id":
