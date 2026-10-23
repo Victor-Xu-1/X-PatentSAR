@@ -9,7 +9,6 @@ from patent_sar_extractor.core.cell_raster import original_reading_image
 from patent_sar_extractor.core.text_ocr import recovery_primary
 from patent_sar_extractor.core.text_ocr.cell_capture import refine_text_pair
 from patent_sar_extractor.core.text_ocr.source_capture import refine_source_text
-
 from tests import test_auxiliary_cell_evidence as fixture
 
 REFUSAL = {
