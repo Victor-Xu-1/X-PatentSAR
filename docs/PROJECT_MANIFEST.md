@@ -896,8 +896,11 @@
   distinct gates; no claim of arbitrary-patent or chemical accuracy is implied.
 
 - Unpublished-result presentation stays in `ResultsPane`, receiving the existing
-  current-project verified job observation from `Workspace` and sharing
-  `activeJob`. `ResultsTable` renders one native status output. Query-empty,
+  current-project presentation-confirmed job observation from `Workspace` and
+  sharing `activeJob`. Workspace forwards `jobPresentationVerified` to this
+  read-only consumer, retaining its stricter `jobVerified` for task controls.
+  No retained display observation grants mutation authority. `ResultsTable`
+  renders one native status output. Query-empty,
   page-empty, active unpublished and neutral states remain distinct; real rows,
   errors, source identity and scientific acceptance are not rewritten. The empty
   output uses the current scrollport's inline size, not the complete column width;

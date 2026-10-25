@@ -598,6 +598,13 @@ presentation. Task controls remain disabled until required reads finish. Actual
 read errors, explicit refresh, a new source/task and unknown history retain their
 unknown/error presentation; no write is replayed during session/read recovery.
 The view is a server observation, not proof of scientific progress or acceptance.
+The same distinction applies if the empty table flashes “No confirmed numbered
+products yet” during a known running task. Its pending-result copy must consume
+the existing presentation confirmation, not the fresh mutation gate. Disabling
+controls during a pending read remains intentional; preserving display copy must
+not enable start/resume/cancel from a stale observation. A finished task with
+detected drawings but no confirmed products remains different from an original
+with no detected structures, and actual result-read errors stay visible.
 Delayed-read and denied-session regressions use isolated synthetic browser state
 only. Deploy this presentation correction only after real producers are idle;
 never restart a real extraction merely to update its presentation.

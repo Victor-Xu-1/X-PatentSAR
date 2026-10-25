@@ -35,6 +35,7 @@ export function ResultsPane({
 }: {
   project: Project | null;
   job?: Job | null;
+  /** Existing read-only presentation observation; never grants mutation authority. */
   jobVerified?: boolean;
   resource: Resource<Results>;
   filters: Filters;
