@@ -3,9 +3,17 @@ import type { Job, Project } from '../../api/types';
 import { acceptanceLabels, stageLabels } from '../../model/presentation';
 import { completedCoreRejection, observedStages, stoppedJob } from '../../model/extraction';
 import { AcceptanceFindings } from './AcceptanceFindings';
+import { ProjectReadIssue } from '../projects/ProjectReadIssue';
 
 export function ExtractionNotice({ project, job }: { project: Project; job: Job | null }) {
   const { locale, t } = useTranslation();
+  if (project.read_error)
+    return (
+      <div className="acceptance-banner failed" role="alert" aria-label={t('提取验收与阻塞状态')}>
+        <ProjectReadIssue project={project} />
+        <AcceptanceFindings errors={[project.read_error.message]} open={false} />
+      </div>
+    );
   const failed = project.acceptance.state === 'failed' || job?.status === 'failed';
   const trustedStages = observedStages(job);
   const failedStage = trustedStages.find((stage) => stage.status === 'failed');

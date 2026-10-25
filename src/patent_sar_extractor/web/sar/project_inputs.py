@@ -96,6 +96,12 @@ def project_inputs(
     # This is an explicit user snapshot action. Current read-model refresh is
     # the existing source authority; SAR never edits its chemistry or acceptance.
     source = service.project(identifier)
+    if source.read_error is not None:
+        raise WebError(
+            422,
+            "sar_source_unavailable",
+            "Saved project results are unavailable; no SAR snapshot was created.",
+        )
     rich_contexts = ObservationContexts(service.store.project(identifier))
     before = project_revision(
         service,

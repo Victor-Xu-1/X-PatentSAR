@@ -2036,6 +2036,17 @@
 - Attempt ownership: every new/resumed job has its own output root; bounded checkpoint transport and sealed terminal stage history do not rewrite old jobs. Legacy shared-directory stage history is explicitly unavailable. Progress, recognition and manual-count DTO additions retain API v1 and workspace SQLite v1.
 - Recovery ownership: bounded `process_identity.py` and the existing supervisor own same-boot cleanup/previous-kernel absence proof. `job_recovery.py` archives identity before compare-and-set recovery publication and rechecks blocked interruptions at startup. `job_preparation.py` owns durable queued readiness/bounded inactive source ancestry, with cancellable copying outside the writer. `checkpoint_chunks.py` only adapts completed batches into the existing copy/fingerprint authority, never a second cache/acceptance path. Unchanged identity/idle polling is read-only; projection encoding precedes writes. Additive private preparation fields/receipts retain independent release numbering, API v1, SQLite v1 and immutable history/QA; invalid/foreign guards remain fail closed.
 - Projection publication: `WorkspaceService.refresh` binds an artifact view to its observed run root; `Store.snapshot` checks the expected root and original SHA inside the writer before any compound deletion/publication. A stale read cannot restore a prior attempt's rows/acceptance after new enqueue. No artifact, schema or acceptance authority changes.
+- Project metadata ownership: `web/project_views.py` projects identity and explicit
+  additive `read_error` separately from result admission. Known saved-source
+  refusals retain a visible failed project, never current counts/acceptance;
+  visibility/source ownership is rechecked; raw/snapshot/manual data is not
+  rewritten. Other
+  projects remain readable. Unknown, authentication and concurrent-state errors
+  propagate. Results/corrections retain strict `_current_project`; SAR rejects
+  unreadable source before constructing a snapshot. The shared UI issue marker
+  hides unavailable statistics, blocks run/resume/import, and does not block
+  cancellation of an independently verified live job. API-v1/SQL/scientific
+  epochs and all original limits remain unchanged.
 - Live results: completed checkpoints project into the existing read model while the owned CLI runs. The UI keys results by job ID and stage revision; provisional counts never imply acceptance.
 - Generated output: wheels and source archives are created under ignored `dist/` and must be reproducible from an identified clean revision. `frontend/dist` is copied by `tools/build_frontend.py` into ignored `src/patent_sar_extractor/web/static` for wheel packaging; a content manifest checks exact generated assets and protects modified files.
 - Vendored/model assets: no source-vendored code or scientific weights. Ketcher 3.18.0 and its local Indigo worker/WASM are npm-lock-derived frontend build assets packaged with generated third-party attribution, not a second runtime/dependency authority. DECIMER and OCR model assets are externally installed and retain their upstream licenses.

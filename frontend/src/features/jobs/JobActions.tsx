@@ -8,6 +8,7 @@ import { activeJob, jobStatusText } from '../../model/presentation';
 import { ErrorNotice } from '../../components/Feedback';
 import { Dialog } from '../../components/Dialog';
 import { JobRecord } from './JobRecord';
+import { ProjectReadIssue } from '../projects/ProjectReadIssue';
 
 export function JobActions({
   project,
@@ -49,7 +50,13 @@ export function JobActions({
   // A fresh DTO from the existing reload path must reconcile a submitted resume.
   const awaitingResume = job !== null && submittedResume === job;
   const canStart =
-    verified && ready && project?.pdf.available && !running && !busy && !awaitingResume;
+    verified &&
+    ready &&
+    project?.pdf.available &&
+    !project.read_error &&
+    !running &&
+    !busy &&
+    !awaitingResume;
   const canResume =
     job?.can_resume === true &&
     job.project_id === project?.id &&
@@ -69,7 +76,12 @@ export function JobActions({
     setBusy(false);
   }
   const recoveryControls = {
-    eligible: verified && canResume && project?.pdf.available === true && !awaitingResume,
+    eligible:
+      verified &&
+      canResume &&
+      project?.pdf.available === true &&
+      !project.read_error &&
+      !awaitingResume,
     disabled: busy || !verified,
     acquire,
     release,
@@ -99,6 +111,7 @@ export function JobActions({
   return (
     <div className="job-actions-wrapper">
       <div className="job-actions">
+        <ProjectReadIssue project={project} />
         {job && !compact && (
           <span className={`badge job-${presentationVerified ? job.status : 'unknown'}`}>
             {presentationVerified ? jobStatusText(job) : t('阶段状态未知')}
@@ -145,11 +158,13 @@ export function JobActions({
                     ? t('请先选择项目')
                     : !project.pdf.available
                       ? t('请先补充原始 PDF')
-                      : !verified
-                        ? t('阶段状态未知')
-                        : !ready
-                          ? t('运行环境未就绪')
-                          : t('创建新的提取任务')
+                      : project.read_error
+                        ? t('结果数据需修复')
+                        : !verified
+                          ? t('阶段状态未知')
+                          : !ready
+                            ? t('运行环境未就绪')
+                            : t('创建新的提取任务')
                 }
                 onClick={() => void operate('run')}
               >

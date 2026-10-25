@@ -12,6 +12,7 @@ import { newRequestId } from './presentation';
 import { useSARMutation } from './useSARMutation';
 import { TableScroll } from './TableScroll';
 import { StudyGuide } from './study/StudyGuide';
+import { ProjectReadIssue } from '../projects/ProjectReadIssue';
 
 export function SARImport({
   active,
@@ -43,8 +44,16 @@ export function SARImport({
     loadProjects,
   );
   const selectedExists = projects.data?.items.some((p) => p.id === projectId);
+  const selectedProject = projects.data?.items.find((p) => p.id === projectId);
   function snapshot() {
-    if (!active || !projects.validated || !projectId || mutation.locked) return;
+    if (
+      !active ||
+      !projects.validated ||
+      !selectedProject ||
+      selectedProject.read_error ||
+      mutation.locked
+    )
+      return;
     const payload: ProjectSnapshot = {
       project_id: projectId,
       title: title.trim() || null,
@@ -113,12 +122,17 @@ export function SARImport({
                 <option value="">{t('请选择已提取项目')}</option>
                 {projectId && !selectedExists && <option value={projectId}>{projectId}</option>}
                 {projects.data?.items.map((project) => (
-                  <option key={project.id} value={project.id}>
+                  <option
+                    key={project.id}
+                    value={project.id}
+                    disabled={Boolean(project.read_error)}
+                  >
                     {project.title}
                   </option>
                 ))}
               </select>
             </label>
+            <ProjectReadIssue project={selectedProject ?? null} />
             <details className="sar-compact">
               <summary>{t('自定义名称（可选）')}</summary>
               <label>
@@ -130,7 +144,9 @@ export function SARImport({
               className="primary"
               type="submit"
               title={t('创建独立快照')}
-              disabled={!projectId || Boolean(projects.error)}
+              disabled={
+                !selectedProject || Boolean(selectedProject.read_error) || Boolean(projects.error)
+              }
             >
               {t('下一步')}
             </button>

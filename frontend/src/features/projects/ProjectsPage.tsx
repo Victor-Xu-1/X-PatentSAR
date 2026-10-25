@@ -8,6 +8,7 @@ import type { HistoryEntry } from '../../api/historyTypes';
 import { HistoryActions } from '../history/HistoryActions';
 import { HistoryDialog } from '../history/HistoryDialog';
 import { useTranslation } from '../../i18n';
+import { ProjectReadIssue } from './ProjectReadIssue';
 export function ProjectsPage({
   resource,
   onOpen,
@@ -80,12 +81,20 @@ export function ProjectsPage({
                       : t('原文未提供')}
                   </small>
                 </span>
-                <span
-                  id={`${metadataId}-${index}-acceptance`}
-                  className={`badge recent-file-acceptance ${project.acceptance.state}`}
-                >
-                  {t(acceptanceLabels[project.acceptance.state])}
-                </span>
+                {project.read_error ? (
+                  <ProjectReadIssue
+                    project={project}
+                    id={`${metadataId}-${index}-acceptance`}
+                    className="recent-file-acceptance"
+                  />
+                ) : (
+                  <span
+                    id={`${metadataId}-${index}-acceptance`}
+                    className={`badge recent-file-acceptance ${project.acceptance.state}`}
+                  >
+                    {t(acceptanceLabels[project.acceptance.state])}
+                  </span>
+                )}
                 <time id={`${metadataId}-${index}-updated`} dateTime={project.updated_at}>
                   {dateText(project.updated_at)}
                 </time>

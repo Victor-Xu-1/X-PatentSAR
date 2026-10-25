@@ -1,5 +1,22 @@
 # Operations and troubleshooting
 
+## A single saved-source read failure does not hide the workspace
+
+Project catalogue/detail metadata can return additive `read_error` while keeping
+the original project title and PDF reference. This is not an empty/accepted
+dataset: counts are unavailable, acceptance is failed, and result/SAR readers
+still refuse the malformed or unsafe source. Other projects and independently
+verified task history remain usable. The frontend marks only that source as
+needing repair, suppresses its statistics and blocks run/resume/SAR import;
+verified running-task cancellation remains available. Refresh can clear the
+transient metadata error only after the ordinary source reader succeeds.
+
+Keep original artifacts, old projections and manual audit unchanged when
+diagnosing these errors. Do not increase field/file budgets, sanitize raw values,
+erase the project or update cached acceptance merely to make the list load.
+Unexpected errors, visibility changes and projection races remain explicit
+request failures. This presentation repair changes no scientific epoch or model.
+
 ## A range is supported by SAR but rejected or lost during extraction
 
 Source intake now shares SAR's exact numeric grammar. Examples include `.05`,
