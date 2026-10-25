@@ -84,9 +84,20 @@ another column, or guess a product role. An ordinary non-numbered experimental
 section followed by procedure prose does not create a missing molecule; its
 activity-source completeness remains independently required.
 Source strings, original IDs and qualified contradictory observations are never
-rewritten. Binding64/binder75 and Activity45/extractor57/coverage25 refresh
+rewritten. Binding65/binder76 and Activity45/extractor57/coverage25 refresh
 derived proof only; older results remain historical without altering raw OCR,
 drawings, model generations or manual audit.
+
+For a narrow ruled title/caption, the existing single-column request now uses
+the detector's physical12pt horizontal rule span/kernel instead of the80pt/
+page-relative assay-table gate. Both complete outer edges and the SAME closed
+original-cell witness remain mandatory. A missing edge, unexplained marginal
+mark, conflicting original ID or unknown/negative role cannot acquire a product
+by removing nearby pixels. The normal two primary heading reads use the whole
+proved frame, without acquiring auxiliary OCR for a qualified source. Ordinary
+multi-column activity detection is unchanged. Generated narrow/dotted/adjacent
+frame, caption binder, serialized/original replay and downstream scope checks
+are engineering coverage, not a claim that every private heading is now readable.
 
 The shared auxiliary replayer now returnsfalse consistently for changed or
 unavailable actual originals, including historical V1 packets. Normal callers

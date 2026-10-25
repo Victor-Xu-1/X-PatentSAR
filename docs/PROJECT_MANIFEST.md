@@ -38,7 +38,12 @@
   non-numbered experimental sections do not invent molecular declarations.
   Independent activity-source completeness remains. Complete-title detector fragments
   cannot drop the original negative role, change IDs or erase qualified conflicts.
-  Binding64/binder75 and Activity45/extractor57/coverage25 refresh derived proof
+  Explicit single-column caption frames use the SAME `table_geometry` detector
+  with a physical12pt horizontal rule span/kernel, not the multi-column80pt/
+  page-relative gate. Default assay detection is unchanged. Complete original
+  outer rules, closed-cell ink conservation, role/ID qualification and replay
+  remain mandatory; a geometric diagram frame alone never becomes a product.
+  Binding65/binder76 and Activity45/extractor57/coverage25 refresh derived proof
   only; raw/manual/history, source4/role6, OCSR/SMILES6/API/SQL/dependencies/activation/SAR
   numerical policies remain unchanged. Generated controls prove contracts, not
   native-model or scientific acceptance. Earlier epochs below are release history.
