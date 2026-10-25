@@ -976,6 +976,12 @@
   retains original inventory bounds; shared axes/marker modules prove strokes.
   Extending these families preserves the original inner-envelope conflict guard.
   The sole refined-axis replay conserves every retained word in the final x axis.
+  The same caption-below-legend boundary also limits candidate inventory BEFORE
+  the256candidate budget; unrelated following body words/numbers remain in the
+  source ledger, not in that figure's tick nomination. In-strip unknowns,
+  over-budget content, actual strokes and original replay still refuse. No
+  successful subset or extra model path is added. Binding66/binder77 refresh
+  derived ownership only; proof7/activity/raw/manual/model/SAR policies stay.
   `plot_legend_locator` retains original graphic/text line boundaries, not a
   stripped prefix. Locator2 and `plot_legend_geometry` use the existing physical
   row SDK: complete400/600dpi source, max8rows/32pt/250k pixels, one literal cell

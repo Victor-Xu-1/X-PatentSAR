@@ -204,13 +204,25 @@ def _axis_candidates(tokens, caption, label, size, independent_tokens, *, unread
     This nominates original windows only. All selected literals and the graphic
     key still require original observations; no plotted activity is calculated.
     """
-    if not figure_caption(caption.get("text")) or not inside_box(label, [0, 0, *size]):
+    if (
+        not figure_caption(caption.get("text"))
+        or not inside_box(caption.get("bbox"), [0, 0, *size])
+        or not inside_box(label, [0, 0, *size])
+    ):
         return None
+    # The complete original x-word reader already ends at a caption below the
+    # legend. Apply that SAME source boundary before candidate resource checks:
+    # unrelated body text/numbers below it are not an unbounded axis inventory.
+    # This nominates only; all in-strip words, original strokes and independent
+    # source contradictions still require the unchanged complete replay.
+    bottom = caption["bbox"][1] if caption["bbox"][1] > label[3] else size[1]
     numbers = []
     seen = set()
     for token in tokens:
         box = token.get("bbox")
         if tick_value(token.get("text")) is None or not inside_box(box, [0, 0, *size]):
+            continue
+        if box[1] >= bottom:
             continue
         if abs((box[1] + box[3]) / 2 - label[1]) > 360:
             continue
@@ -229,6 +241,7 @@ def _axis_candidates(tokens, caption, label, size, independent_tokens, *, unread
             and p["text"].strip()
             and inside_box(p.get("bbox"), [0, 0, *size])
             and label[3] + 2 < p["bbox"][1] < label[3] + 360
+            and p["bbox"][1] < bottom
         ]
         if len(row_members) > 256:
             return None

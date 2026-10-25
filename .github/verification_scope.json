@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "27916bdc66aedf5ae9b5cbfb525bb1e593c7c975",
+  "base_sha": "21e1e9c8458b3be43f42126267b8dad121612890",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
@@ -9,22 +9,15 @@
     "frontend/package-lock.json",
     "frontend/package.json",
     "src/patent_sar_extractor/contracts.py",
-    "src/patent_sar_extractor/core/table_geometry.py",
-    "tests/test_caption_locator_native.py",
-    "tests/test_narrow_heading_frames.py"
+    "src/patent_sar_extractor/core/plot_reference_geometry.py",
+    "tests/test_plot_caption_context.py"
   ],
   "python_modules": [
-    "tests.test_narrow_heading_frames",
-    "tests.test_table_geometry",
-    "tests.test_caption_grid_binding",
-    "tests.test_caption_locator_ownership",
-    "tests.test_heading_source_ownership.HeadingSourceOwnershipTests",
-    "tests.test_heading_panel_scope.HeadingPanelScopeTests.test_parallel_closed_original_panels_do_not_borrow_the_other_heading",
-    "tests.test_heading_panel_scope.HeadingPanelScopeTests.test_serialized_consumers_and_original_readback_share_the_panel_source",
-    "tests.test_heading_panel_scope.HeadingPanelScopeTests.test_rival_crossing_diagram_or_crossing_text_remains_unresolved",
-    "tests.test_source_role_terms.SourceRoleTermTests.test_literal_intermediate_record_and_sar_guards_are_consistent",
-    "tests.test_source_role_terms.SourceRoleTermTests.test_nonfinal_product_view_and_model_admission_share_the_literal_role",
-    "tests.test_caption_locator_native",
+    "tests.test_plot_caption_context",
+    "tests.test_plot_reference_layout.PlotLayoutTests.test_independent_outer_member_vetoes_an_incomplete_primary_numeric_row",
+    "tests.test_plot_reference_layout.PlotLayoutTests.test_independent_native_axis_addition_vetoes_an_otherwise_qualified_plot",
+    "tests.test_plot_source_nomination.PhysicalPlotNominationTests.test_axis_stroke_windows_keep_full_outer_word_extents_not_their_centres",
+    "tests.test_plot_source_nomination.PhysicalPlotNominationTests.test_partial_coarse_row_can_nominate_but_cannot_prove_complete_axes",
     "tests.test_cell_observation_epochs",
     "tests.test_contract_version_types",
     "tests.test_release_policy.ReleaseNumberTests",

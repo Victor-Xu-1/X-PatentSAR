@@ -2898,6 +2898,15 @@ readable numbers' envelope; unrelated unaligned notes are not axis members.
 The original cross-axis boundary separates later aligned synthesis sections.
 Unaligned unread ink inside the numeric envelope still vetoes qualification.
 Refinement must keep every observed word in the final axis, not just its reads.
+Dense text/numbers after a below-legend Figure caption no longer consume the
+figure's nomination budget: capture and source replay use the same caption
+boundary as the existing full x-word strip. Full original page words remain
+recorded, and no in-strip unknown or over-budget source is trimmed. Actual
+source strokes, literal cells, complete words and original replay remain
+mandatory; a nearby true synthesis heading remains an independent obligation.
+Binding66/binder77 refresh derived source roles; proof7 and all raw/manual,
+activity, model/dependency and SAR numerical policies are unchanged. Controlled
+generated-reader checks are not native OCR accuracy or real-patent acceptance.
 The global table OCR orientation policy is unchanged.
 
 Graph-only numeric comparison uses exact bounded Decimal coefficients: `.00001`,
