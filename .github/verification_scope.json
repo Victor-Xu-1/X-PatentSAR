@@ -1,54 +1,34 @@
 {
   "schema_version": 1,
-  "base_sha": "226b6b0d257a3a4dd44861e79b19a6bfdad8a5e9",
+  "base_sha": "c65620623f69b53eccc9015229a7706fdeba6e02",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
     "docs/OPERATIONS.md",
     "docs/PROJECT_MANIFEST.md",
-    "frontend/e2e/jobs-project-recovery.spec.ts",
+    "frontend/e2e/session-job-recovery.spec.ts",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/api/decoders.ts",
-    "frontend/src/api/types.ts",
-    "frontend/src/features/jobs/JobActions.tsx",
-    "frontend/src/features/projects/ProjectReadIssue.tsx",
-    "frontend/src/features/projects/ProjectsPage.tsx",
-    "frontend/src/features/results/ExtractionNotice.tsx",
-    "frontend/src/features/results/Metrics.tsx",
-    "frontend/src/features/sar/SARImport.tsx",
-    "frontend/src/i18n/catalogs/jobs.ts",
-    "frontend/tests/project-read-isolation.test.tsx",
-    "src/patent_sar_extractor/contracts.py",
-    "src/patent_sar_extractor/web/models.py",
-    "src/patent_sar_extractor/web/project_views.py",
-    "src/patent_sar_extractor/web/sar/project_inputs.py",
-    "src/patent_sar_extractor/web/service.py",
-    "tests/test_project_read_isolation.py"
+    "frontend/src/features/results/ResultsPane.tsx",
+    "frontend/src/features/workspace/Workspace.tsx",
+    "frontend/tests/results-empty-state.test.tsx",
+    "src/patent_sar_extractor/contracts.py"
   ],
   "python_modules": [
-    "tests.test_project_read_isolation",
-    "tests.test_web_projection_ownership",
-    "tests.test_web_review_counts",
-    "tests.test_web_results",
-    "tests.test_activity_observation_transport",
-    "tests.test_activity_source_scopes",
     "tests.test_release_policy.ReleaseNumberTests",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
-    "frontend/tests/project-read-isolation.test.tsx",
-    "frontend/tests/jobs-metadata-recovery.test.tsx",
-    "frontend/tests/jobs-state-trust.test.tsx",
-    "frontend/tests/sar-import.test.tsx",
-    "frontend/tests/prediction-contract.test.ts",
-    "frontend/tests/record-coverage.test.tsx",
-    "frontend/tests/extraction-state.test.tsx",
-    "frontend/tests/history-resources.test.tsx"
+    "frontend/tests/results-empty-state.test.tsx",
+    "frontend/tests/jobs-poll-observation.test.tsx",
+    "frontend/tests/jobs-read-recovery.test.tsx",
+    "frontend/tests/results-workspace.test.tsx",
+    "frontend/tests/workspace-navigation.test.tsx",
+    "frontend/tests/project-read-isolation.test.tsx"
   ],
   "browser_tests": [
-    "frontend/e2e/jobs-project-recovery.spec.ts",
+    "frontend/e2e/session-job-recovery.spec.ts",
     "frontend/e2e/product-version.spec.ts"
   ]
 }

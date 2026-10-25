@@ -1,5 +1,93 @@
 import { expect, test } from '@playwright/test';
-import { job } from '../tests/fixtures';
+import { job, results } from '../tests/fixtures';
+
+for (const width of [390, 1672]) {
+  test(`pending result copy survives a background detail read at ${width}`, async ({
+    page,
+  }, info) => {
+    const origin = new URL(process.env.PATENTSAR_E2E_BASE_URL!);
+    expect(['127.0.0.1', 'localhost', '[::1]']).toContain(origin.hostname);
+    expect(Number(origin.port)).toBeGreaterThanOrEqual(18766);
+    expect(Number(origin.port)).toBeLessThanOrEqual(18866);
+    expect(process.env.PATENTSAR_E2E_RUN_JOBS).toBe('0');
+    const projectId = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID!;
+    const current = { ...job, id: 'controlled-pending-read-job', project_id: projectId };
+    let holdNextDetail = false,
+      detailPending = false;
+    let releaseDetail: (() => void) | undefined;
+    const writes: string[] = [],
+      errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.route('**/api/v1/**', async (route) => {
+      const request = route.request(),
+        url = new URL(request.url());
+      if (request.method() !== 'GET') {
+        writes.push(url.pathname);
+        return route.abort();
+      }
+      const list = url.pathname === '/api/v1/jobs';
+      const detail = url.pathname === `/api/v1/jobs/${current.id}`;
+      if (detail && holdNextDetail) {
+        holdNextDetail = false;
+        detailPending = true;
+        await new Promise<void>((resolve) => {
+          releaseDetail = resolve;
+        });
+        detailPending = false;
+      }
+      if (list || detail) return route.fulfill({ json: list ? { items: [current] } : current });
+      if (url.pathname === `/api/v1/projects/${projectId}/results`)
+        return route.fulfill({ json: { ...results, project_id: projectId, items: [], total: 0 } });
+      return route.continue();
+    });
+    try {
+      await page.setViewportSize({ width, height: 940 });
+      await page.goto(`/#/projects/${projectId}`);
+      const cancel = page.getByRole('button', { name: 'Cancel task', exact: true });
+      const waiting = page.getByText('Results will appear automatically when ready', {
+        exact: true,
+      });
+      await expect(cancel).toBeEnabled();
+      await expect(waiting).toBeVisible();
+      holdNextDetail = true;
+      await expect.poll(() => detailPending, { timeout: 10000 }).toBe(true);
+      await expect(cancel).toBeDisabled();
+      await expect(waiting).toBeVisible();
+      await expect(
+        page.getByText('No confirmed numbered products yet', { exact: true }),
+      ).toHaveCount(0);
+      await expect(page.getByRole('button', { name: 'Run extraction', exact: true })).toHaveCount(
+        0,
+      );
+      await page.screenshot({
+        path: info.outputPath('pending-read-en.png'),
+        animations: 'disabled',
+      });
+      await page
+        .getByRole('combobox', { name: 'Interface language', exact: true })
+        .selectOption('zh-CN');
+      const chineseWaiting = page.getByText('结果就绪后将自动显示', { exact: true });
+      const chineseCancel = page.getByRole('button', { name: '取消任务', exact: true });
+      await expect(chineseWaiting).toBeVisible();
+      await expect(chineseCancel).toBeDisabled();
+      await expect(page.getByText('暂无已确认的编号终产物', { exact: true })).toHaveCount(0);
+      await page.screenshot({
+        path: info.outputPath('pending-read-zh.png'),
+        animations: 'disabled',
+      });
+      releaseDetail?.();
+      await expect(chineseCancel).toBeEnabled();
+      await expect(chineseWaiting).toBeVisible();
+      expect(
+        await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1),
+      ).toBe(true);
+      expect(writes).toEqual([]);
+      expect(errors).toEqual([]);
+    } finally {
+      releaseDetail?.();
+    }
+  });
+}
 
 // Same-origin GET faults over a real installed service and synthetic source.
 // No cookie inspection, user source, mutation, model or actual task execution.

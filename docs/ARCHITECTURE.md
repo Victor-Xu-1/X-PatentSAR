@@ -648,8 +648,13 @@ before a successful response. `useJobs.presentationVerified` composes the list
 and matching current detail for workspace/history presentation. Existing
 `verified` checks still disable task mutations while any required read is pending
 or failed. No new poller, retry, session/authentication policy or job writer exists.
-The same JobRecord/StageStrip views render the confirmed server observation;
-unknown/error states are not converted into running, success or permission to run.
+The same JobRecord/StageStrip views render the confirmed server observation.
+Workspace forwards that existing presentation confirmation to ResultsPane's
+read-only pending-row message too; the stricter mutation flag still belongs to
+JobActions. A routine detail poll cannot turn a known active unpublished result
+into an unconfirmed-product empty state. Unknown/foreign/terminal tasks, actual
+read errors, filters, and genuinely empty originals retain their separate states;
+none is converted into running, success, invented rows or permission to run.
 
 ## Declared text shares the unresolved-only auxiliary source path
 
