@@ -6,6 +6,7 @@ import fitz
 
 from .cell_frame_proof import inside_box as _inside
 from .cell_frame_proof import valid_cell_frame
+from .source_section_roles import heading_role_prefix
 
 HEADING_PADDING = (-2, -3, 2, 5)
 MAX_HEADING_HEIGHT = 128
@@ -15,6 +16,15 @@ MAX_HEADING_ROWS = 8
 def heading_bounds(box, page_size):
     """Capture and replay use the same rendered-PDF rectangle arithmetic."""
     return (fitz.Rect(box) + HEADING_PADDING) & fitz.Rect(0, 0, *page_size)
+
+
+def heading_row_gap(first_text, row_index, row_height):
+    """One physical join bound shared by capture and saved-source replay."""
+    return (
+        row_height
+        if row_index == 1 and heading_role_prefix(first_text)
+        else row_height / 2
+    )
 
 
 def _nomination(hint, bounds):
@@ -46,7 +56,9 @@ def _nomination(hint, bounds):
             height = max(prior[3] - prior[1], current[3] - current[1])
             if not (
                 current[1] > prior[1]
-                and -2 <= current[1] - prior[3] <= height / 2
+                and -2
+                <= current[1] - prior[3]
+                <= heading_row_gap(rows[0]["text"], index, height)
                 and rows[0]["bbox"][0] - 2 <= current[0] <= rows[0]["bbox"][2]
             ):
                 return False

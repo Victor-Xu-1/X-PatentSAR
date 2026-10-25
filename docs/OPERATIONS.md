@@ -73,6 +73,21 @@ The existing256px model-row and complete source-window/pixel limits are
 unchanged: larger input may still fail explicitly. Resizing or raising those
 limits needs its own model-preparation validation, not a passing scope test.
 
+For a wrapped role/title, retain every original row, not just the row containing
+the number. A complete literal intermediate or assay prefix shares the existing
+source window with a same-column, same-source adjacent numbered row. Capture
+and proof replay use the same first-gap bound of one observed row height;
+ordinary continuation gaps retain their half-height bound and all row/pixel
+limits remain. A role title followed immediately by a numbered nomination but
+not joined stays an explicit unresolved source; do not erase it, borrow it for
+another column, or guess a product role. An ordinary non-numbered experimental
+section followed by procedure prose does not create a missing molecule; its
+activity-source completeness remains independently required.
+Source strings, original IDs and qualified contradictory observations are never
+rewritten. Binding64/binder75 and Activity45/extractor57/coverage25 refresh
+derived proof only; older results remain historical without altering raw OCR,
+drawings, model generations or manual audit.
+
 The shared auxiliary replayer now returnsfalse consistently for changed or
 unavailable actual originals, including historical V1 packets. Normal callers
 still report explicit source failure; do not interpretfalse or an old saved
@@ -135,6 +150,14 @@ the shared partition marks qualified grid lines and exact original captions as
 already consumed. Their full reads remain saved, but the text parser must not
 duplicate them. Independent unruled text is retained. Empty/unknown grids remain
 explicit; another successful table does not resolve them.
+
+Use the same required-page projection for source capture and final original
+readback, including newly discovered failed/header-only/non-activity grid pages,
+not merely `owned_pages`. Populate their text through the existing cached
+reader before initializing the text planner. A nonempty native page is read
+once; an unsupported grid still fails its own gate even if an independent
+outside result on that page can now be retained. Do not repair this failure by
+removing the final missing-page check or certifying unknown grid ownership.
 
 Saved ownership must match original regions and current grid geometry. A missing
 line, changed owner, moved reading, competing owner, removed grid or changed

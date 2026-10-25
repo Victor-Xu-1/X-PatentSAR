@@ -201,9 +201,9 @@ def declared_text_cells(payload):
                 yield int(key), reading
 
 
-def original_text_pages_errors(coverage, document):
-    pages, sources = coverage.get("text_pages", {}), coverage.get("text_sources", {})
-    required = {
+def required_text_page_keys(coverage):
+    """All observed grid pages need text inventory, not only parsed/owned pages."""
+    return {
         str(index + 1)
         for index in (
             *coverage.get("seed_pages", ()),
@@ -214,6 +214,11 @@ def original_text_pages_errors(coverage, document):
         for region in coverage.get("regions", ())
         if region.get("kind") == "grid"
     }
+
+
+def original_text_pages_errors(coverage, document):
+    pages, sources = coverage.get("text_pages", {}), coverage.get("text_sources", {})
+    required = required_text_page_keys(coverage)
     if not required <= set(pages):
         return [
             "Activity source pages lack their complete coordinate/text partition inventory."

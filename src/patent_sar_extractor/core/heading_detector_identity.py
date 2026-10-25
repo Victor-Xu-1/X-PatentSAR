@@ -9,6 +9,7 @@ from .ocr_claims import qualified_observation_runs
 from .printed_identifiers import identifier_key
 from .source_section_roles import (
     heading_members,
+    heading_role_prefix,
     nonfinal_original_label,
     section_heading,
 )
@@ -16,6 +17,31 @@ from .source_section_roles import (
 
 def declaration_identity(value):
     return value["label_kind"], value["role"], heading_members(value)
+
+
+def _complete_role_fragment(text, whole_text, declaration):
+    """A detector row cannot discard a qualified whole title's explicit role."""
+    if declaration["role"] == "compound_heading":
+        return False
+    whole = section_heading(whole_text)
+    if whole is None or declaration_identity(whole) != declaration_identity(
+        declaration
+    ):
+        return False
+    normalized = " ".join(text.split()).casefold()
+    if normalized not in {
+        " ".join(row.split()).casefold() for row in whole_text.splitlines()
+    }:
+        return False
+    observed = section_heading(text)
+    if observed is not None:
+        return (
+            observed["label_kind"] == declaration["label_kind"]
+            and heading_members(observed) == heading_members(declaration)
+            and observed["role"] in {"compound_heading", declaration["role"]}
+        )
+    prefix = heading_role_prefix(text)
+    return bool(prefix and declaration["role"] in {prefix, "ambiguous_heading"})
 
 
 def detector_conflicts(readings, declaration, *, whole_cell=None):
@@ -53,6 +79,8 @@ def detector_conflicts(readings, declaration, *, whole_cell=None):
                 and compact not in re.sub(r"\s+", "", whole_text).casefold()
             ):
                 return True  # Retain full original ID and literal elution notes.
+            if _complete_role_fragment(part["text"], whole_text, declaration):
+                continue
             if (
                 observed
                 and declaration_identity(observed) != declaration_identity(declaration)

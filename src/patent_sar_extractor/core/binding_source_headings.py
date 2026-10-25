@@ -33,7 +33,11 @@ from .plot_reference import observe_plot_reference
 from .source_document import document_sha256 as _document_sha256
 from .source_evidence_identity import proof_id
 from .source_geometry import source_layout
-from .source_section_roles import heading_list_hint, heading_members, section_heading
+from .source_section_roles import (
+    heading_list_hint,
+    heading_members,
+    section_heading,
+)
 from .structure_declaration_roles import (
     declaration_label_reference,
     declaration_role_index,
@@ -116,7 +120,9 @@ def observed_heading_blocks(
                     # original heading proof must still qualify it below, or it
                     # remains an explicit unproved source, never a product.
                     observation = section_heading(legend[2])
-            if observation is None and heading_list_hint(line["text"]):
+            if observation is None and (
+                heading_list_hint(line["text"]) or line.get("unresolved_role_prefix")
+            ):
                 observation = {
                     "role": "unproved_heading",
                     "identifier": "",

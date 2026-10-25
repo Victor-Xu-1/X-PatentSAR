@@ -93,9 +93,30 @@ rendering exception where current recovered windows already returnfalse.
 Historical parsing/display and complete-source admission remain distinct; this
 reader consistency change admits no previously rejected source or saved flag.
 
-Binding63/binder74 refresh affected derived observations. Activity43/source4/
-role6, raw originals, manual/history, OCSR/SMILES6, API/SQL, environments/models,
-activation and SAR numerical policies remain unchanged. Controlled generated
+The same literal heading authority retains an explicit role-only title row
+before its numbered row. `Intermediate` or an existing assay-title phrase cannot
+disappear simply because the number is printed on the next physical line.
+Capture and replay share one bounded join: the first role-to-number gap may be
+at most one observed row height; subsequent continuation rows keep the ordinary
+half-height gap. Column, source, eight-row and128pt limits are unchanged.
+An unjoined role-only title immediately followed by a numbered nomination
+remains an unresolved source occurrence, never an implicit terminal-product
+declaration or an invisible completeness exemption. A non-numbered section title
+followed by ordinary procedure prose does not invent a molecular declaration;
+the independent activity-source inventory still owns experimental completeness.
+
+Single-line and wrapped versions use the same existing literal vocabulary and
+paragraph-locator authority; raw titles and identifiers remain unchanged.
+Detector fragments of a fully qualified nonfinal title are interpreted only in
+that same complete original title. Different IDs, extra/conflicting text and
+independently qualified native/primary contradictions still refuse. Conflicting
+assay and synthesis declarations remain ambiguous. Original replay and saved
+row geometry prevent dropping the role row; this does not certify a drawing.
+
+Binding64/binder75 and Activity45/extractor57/coverage25 refresh affected derived
+source interpretation. Source4/role6, raw originals, manual/history,
+OCSR/SMILES6, API/SQL, environments/models, activation and SAR numerical
+policies remain unchanged. Controlled generated
 checks prove source/caller contracts, not model accuracy or private-patent
 acceptance. Earlier binding-version entries below document release history.
 
@@ -187,6 +208,13 @@ unknown source, empty grid, source conflict or completeness gate is waived.
 Every nominated/coordinate page requires its complete text catalog even when its
 projection is blank, so removing an outside table and its entire catalog together
 cannot turn partial extraction into complete acceptance.
+`activity_text_sources.required_text_page_keys` is the shared page-selection
+authority for capture and original replay: every observed physical grid page is
+included regardless of parse/ownership status. The facade populates each required
+page through its existing cached reader before the initial text projection.
+A newly discovered but unsupported grid cannot omit its page or hide an
+independent literal result below it. Unknown grids remain rejected; no row,
+metric, condition or page role is fabricated to complete the inventory.
 The mixed-page release introduced source3 / Activity42 / extractor54 / coverage23;
 the current role6/source4 contracts are recorded above. Both refresh derived
 proof only. The mixed-page change left raw originals, manual corrections,

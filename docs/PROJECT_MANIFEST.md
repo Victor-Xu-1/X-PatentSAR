@@ -31,8 +31,15 @@
   retained raw claims, known conflicts, actual-original pixels, missingdrawing
   refusal and unchanged model/source budgets remain mandatory. No competing
   parser/recognizer/store, spelling/ID repair, implicit resize or policy exists.
-  Binding63/binder74 refresh derived proof only; raw/manual/history,
-  Activity43/source4/role6, OCSR/SMILES6/API/SQL/dependencies/activation/SAR
+  Literal role-only prefixes and numbered rows use this same window/grammar:
+  one observed row-height first gap, then ordinary half-height continuation
+  gaps; same-source/column and all existing bounds remain. Unjoined prefixes
+  immediately before numbered nominations stay explicit unresolved sources;
+  non-numbered experimental sections do not invent molecular declarations.
+  Independent activity-source completeness remains. Complete-title detector fragments
+  cannot drop the original negative role, change IDs or erase qualified conflicts.
+  Binding64/binder75 and Activity45/extractor57/coverage25 refresh derived proof
+  only; raw/manual/history, source4/role6, OCSR/SMILES6/API/SQL/dependencies/activation/SAR
   numerical policies remain unchanged. Generated controls prove contracts, not
   native-model or scientific acceptance. Earlier epochs below are release history.
   Shared auxiliary replay keeps one fail-closed boolean boundary for current and
@@ -80,6 +87,12 @@
   SAR and tenth-strongest/percentage/log scientific policies are unchanged.
   That source3 entry documents the mixed-page release; current role6/source4
   authority is above. Older entries are release history, not alternate paths.
+  `activity_text_sources.required_text_page_keys` now also owns the identical
+  all-observed-grid page set for the facade and original readback. Required text
+  is populated through the existing cached reader before projection; failed or
+  header-only newly discovered grids cannot hide a page/independent result.
+  Parsing/ownership status never exempts a physical source. Activity45/
+  extractor57/coverage25 above cover this combined derived-source refresh.
 
 - Literal record-role guard: `source_role_terms.intermediate_source_label` owns
   the shared declared intermediate-label predicate for core binding, OCSR input,

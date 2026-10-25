@@ -7,7 +7,7 @@ from typing import Any
 
 from .activity_identity import PRINTED_ID, printed_identifier_key
 from .printed_identifiers import identifier_width
-from .source_paragraphs import PARAGRAPH_LOCATOR
+from .source_paragraphs import PARAGRAPH_LOCATOR, strip_paragraph_locator
 from .source_role_terms import (
     INTERMEDIATE_CJK,
     INTERMEDIATE_PLURAL,
@@ -58,6 +58,17 @@ _INTERMEDIATE_TARGET = re.compile(
     rf"{INTERMEDIATE_SINGULAR}(?=[\s:.：0-9-]|$)",
     re.IGNORECASE,
 )
+_INTERMEDIATE_PREFIX = re.compile(
+    r"(?:(?:Synthesis|Preparation|制备|合成)\s*(?:of\s+)?)?"
+    rf"{INTERMEDIATE_TERM}[.:：]?",
+    re.IGNORECASE,
+)
+_ROLE_TITLE = re.compile(
+    rf"(?:{PARAGRAPH_LOCATOR}\s*)?"
+    rf"(?:(?P<intermediate>{_INTERMEDIATE_PREFIX.pattern})|(?P<assay>{_ASSAY_TITLE.pattern}))"
+    r"(?P<body>\s+.+)?",
+    re.IGNORECASE,
+)
 _PROCEDURE = re.compile(
     rf"^(?:{PARAGRAPH_LOCATOR}|(?:Step|Stage|步骤|中间体|Intermediate)\b|"
     r"[A-Z][.)]\s|To\s+(?:a|an|the)\s|A\s+(?:solution|mixture)\b|"
@@ -91,13 +102,40 @@ def procedure_heading_boundary(text):
     )
 
 
+def heading_role_prefix(text: object) -> str | None:
+    """An entire role-only title row, not a word found inside procedure prose."""
+    raw = str(text or "").strip()
+    if len(raw) > 4096:
+        return None
+    source = " ".join(identifier_width(raw).split())
+    match = _ROLE_TITLE.fullmatch(source)
+    return _prefix_role(match) if match and match["body"] is None else None
+
+
+def _prefix_role(match):
+    return "intermediate_section" if match["intermediate"] else "assay_section"
+
+
+def _heading_match(raw):
+    source = " ".join(identifier_width(raw).split())
+    match = _GROUP.fullmatch(source) or _HEADING.fullmatch(source)
+    if match:
+        return match, None
+    qualifier = _ROLE_TITLE.fullmatch(source)
+    if qualifier and qualifier["body"]:
+        body = qualifier["body"].strip()
+        match = _GROUP.fullmatch(body) or _HEADING.fullmatch(body)
+        if match:
+            return match, _prefix_role(qualifier)
+    return None, None
+
+
 def section_heading(text: object) -> dict[str, Any] | None:
     """Observe a bounded literal heading, never infer a role from its number."""
     raw = str(text or "").strip()
     if len(raw) > 4096:
         return None
-    source = " ".join(identifier_width(raw).split())
-    match = _GROUP.fullmatch(source) or _HEADING.fullmatch(source)
+    match, prefix = _heading_match(raw)
     if not match:
         return None
     tail = match["tail"].strip()
@@ -130,6 +168,14 @@ def section_heading(text: object) -> dict[str, Any] | None:
             if match["preparation"] or _PREPARATION.match(title)
             else "assay_section"
         )
+    if prefix:
+        role = (
+            "ambiguous_heading"
+            if role not in {"compound_heading", prefix}
+            or prefix == "assay_section"
+            and (match["preparation"] or _PREPARATION.match(title))
+            else prefix
+        )
     members = (
         [
             printed_identifier_key(item)
@@ -161,14 +207,16 @@ def section_body_boundary(text: object) -> dict[str, Any] | None:
     observed = section_heading(text)
     if observed is None:
         return None
-    source = " ".join(identifier_width(str(text or "").strip()).split())
-    match = _GROUP.fullmatch(source) or _HEADING.fullmatch(source)
+    raw = str(text or "").strip()
+    match, prefix = _heading_match(raw)
     title = match["tail"].lstrip(".:：) ")
     return (
         observed
         if (
             match["preparation"]
             or _PREPARATION.match(title)
+            or prefix
+            and _PREPARATION.match(strip_paragraph_locator(identifier_width(raw)))
             or observed["role"] == "assay_section"
         )
         else None
