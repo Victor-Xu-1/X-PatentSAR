@@ -31,6 +31,7 @@ _SOURCE_READ_REFUSALS = frozenset(
 
 
 def project_view(service: WorkspaceService, project_id: str) -> Project:
+    retained = service.store.project(project_id)
     try:
         row = service._current_project(project_id)
     except WebError as error:
@@ -39,6 +40,15 @@ def project_view(service: WorkspaceService, project_id: str) -> Project:
         # Recheck visibility after the failed read. A concurrently deleted
         # project must not reappear through its retained source metadata.
         row = service.store.project(project_id)
+        if any(
+            row.get(field) != retained.get(field)
+            for field in ("run_root", "sha256", "expected_sha256", "snapshot")
+        ):
+            raise WebError(
+                409,
+                "projection_changed",
+                "Source view changed during metadata recovery; retry the read.",
+            ) from error
         return Project(
             **_identity(row),
             is_historical=True,

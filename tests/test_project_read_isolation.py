@@ -98,12 +98,34 @@ class ProjectReadIsolationTests(WebFixture, unittest.TestCase):
             patch.object(
                 service.store,
                 "project",
-                side_effect=WebError(404, "project_not_found", "No visible project"),
+                side_effect=[
+                    {"run_root": "retained"},
+                    WebError(404, "project_not_found", "No visible project"),
+                ],
             ),
             self.assertRaises(WebError) as failure,
         ):
             service.project("a-deleted-project")
         self.assertEqual(failure.exception.status, 404)
+
+    def test_changed_source_during_refusal_is_not_an_old_error_on_new_work(self):
+        service = WorkspaceService(self.state)
+        with (
+            patch.object(
+                service,
+                "_current_project",
+                side_effect=WebError(422, "invalid_artifact", "Old source invalid"),
+            ),
+            patch.object(
+                service.store,
+                "project",
+                side_effect=[{"run_root": "old"}, {"run_root": "new"}],
+            ),
+            self.assertRaises(WebError) as failure,
+        ):
+            service.project("changing-source")
+        self.assertEqual(failure.exception.status, 409)
+        self.assertEqual(failure.exception.code, "projection_changed")
 
     def test_nul_and_wrong_type_are_not_repaired_or_truncated(self):
         for index, field in enumerate(("IC50\x00(nM)", 12)):
@@ -125,6 +147,7 @@ class ProjectReadIsolationTests(WebFixture, unittest.TestCase):
             with (
                 self.subTest(error=error),
                 patch.object(service, "_current_project", side_effect=error),
+                patch.object(service.store, "project", return_value={"run_root": None}),
                 self.assertRaises(type(error)),
             ):
                 service.project("not-an-authorized-project")

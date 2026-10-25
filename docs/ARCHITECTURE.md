@@ -8,7 +8,8 @@ retain the original identity/PDF reference when a known saved-source validation
 or bounded-file refusal prevents rebuilding results. Additive `read_error` is an
 explicit unavailable state: acceptance is failed, summary is not available, and
 no retained compound projection or acceptance stamp is published or rewritten.
-Visibility is checked again after the failure; unknown implementation failures,
+Visibility and unchanged source/snapshot ownership are rechecked after the
+failure; unknown implementation failures,
 authentication/visibility errors and concurrent projection conflicts propagate.
 
 Scientific result/correction paths still use strict `_current_project`; the SAR

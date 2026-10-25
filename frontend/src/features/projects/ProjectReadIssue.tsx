@@ -15,14 +15,13 @@ export function ProjectReadIssue({
   if (!project?.read_error) return null;
   const label = t('结果数据需修复');
   return (
-    <span
+    <output
       id={id}
       className={`badge failed ${className}`}
-      role="status"
       aria-label={label}
       title={project.read_error.message}
     >
       {label}
-    </span>
+    </output>
   );
 }

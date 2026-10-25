@@ -2039,7 +2039,8 @@
 - Project metadata ownership: `web/project_views.py` projects identity and explicit
   additive `read_error` separately from result admission. Known saved-source
   refusals retain a visible failed project, never current counts/acceptance;
-  visibility is rechecked and raw/snapshot/manual data is not rewritten. Other
+  visibility/source ownership is rechecked; raw/snapshot/manual data is not
+  rewritten. Other
   projects remain readable. Unknown, authentication and concurrent-state errors
   propagate. Results/corrections retain strict `_current_project`; SAR rejects
   unreadable source before constructing a snapshot. The shared UI issue marker
