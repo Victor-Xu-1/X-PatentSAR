@@ -67,9 +67,17 @@ def detect_ruled_table_regions(
     bw = cv2.threshold(img, 200, 255, cv2.THRESH_BINARY_INV)[1]
     scale = 72.0 / dpi
 
-    h_kernel = cv2.getStructuringElement(
-        cv2.MORPH_RECT, (max(35, int(img.shape[1] * 0.06)), 1)
+    # Caption consumers explicitly request one column. Its closed frame can
+    # be narrower than an assay table and cannot grow with blank page width.
+    # This only nominates geometry: complete outer rules and the consumer's
+    # unchanged original-cell/text/role proof still decide source ownership.
+    minimum_horizontal_span = 12 if minimum_columns == 1 else 80
+    horizontal_kernel = (
+        max(12, round(minimum_horizontal_span / scale))
+        if minimum_columns == 1
+        else max(35, int(img.shape[1] * 0.06))
     )
+    h_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (horizontal_kernel, 1))
     v_kernel = cv2.getStructuringElement(
         # A whole-page-relative kernel erases legitimate single-row/header-only
         # grids. Rule length is physical, not proportional to page whitespace.
@@ -93,7 +101,7 @@ def detect_ruled_table_regions(
     contours = cv2.findContours(h_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)[0]
     for contour in contours:
         x, y, w, h = cv2.boundingRect(contour)
-        if w * scale >= 80:
+        if w * scale >= minimum_horizontal_span:
             h_segments.append(
                 {
                     "x0": x * scale,

@@ -113,7 +113,17 @@ independently qualified native/primary contradictions still refuse. Conflicting
 assay and synthesis declarations remain ambiguous. Original replay and saved
 row geometry prevent dropping the role row; this does not certify a drawing.
 
-Binding64/binder75 and Activity45/extractor57/coverage25 refresh affected derived
+The same `table_geometry` detector gives explicitly requested single-column
+caption frames a physical12pt rule-span/kernel, independent of blank page width.
+It no longer applies a multi-column assay's80pt/page-relative horizontal gate
+to a narrow numbered frame. Default multi-column detection is unchanged.
+Every enclosing edge, closed-cell ink witness, literal role/ID and actual-original
+replay is still required. A small chemical rectangle is geometry only, never a
+terminal-product catalogue; missing edges and unexplained marginal ink refuse.
+The heading reader selects the existing whole cell before its normal two primary
+reads, not a successful token crop or an extra model pass.
+
+Binding65/binder76 and Activity45/extractor57/coverage25 refresh affected derived
 source interpretation. Source4/role6, raw originals, manual/history,
 OCSR/SMILES6, API/SQL, environments/models, activation and SAR numerical
 policies remain unchanged. Controlled generated
