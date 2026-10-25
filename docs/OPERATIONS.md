@@ -151,6 +151,14 @@ already consumed. Their full reads remain saved, but the text parser must not
 duplicate them. Independent unruled text is retained. Empty/unknown grids remain
 explicit; another successful table does not resolve them.
 
+Use the same required-page projection for source capture and final original
+readback, including newly discovered failed/header-only/non-activity grid pages,
+not merely `owned_pages`. Populate their text through the existing cached
+reader before initializing the text planner. A nonempty native page is read
+once; an unsupported grid still fails its own gate even if an independent
+outside result on that page can now be retained. Do not repair this failure by
+removing the final missing-page check or certifying unknown grid ownership.
+
 Saved ownership must match original regions and current grid geometry. A missing
 line, changed owner, moved reading, competing owner, removed grid or changed
 original remains a failure. Internal PDF object order cannot bridge scientific

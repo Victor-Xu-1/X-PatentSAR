@@ -208,6 +208,13 @@ unknown source, empty grid, source conflict or completeness gate is waived.
 Every nominated/coordinate page requires its complete text catalog even when its
 projection is blank, so removing an outside table and its entire catalog together
 cannot turn partial extraction into complete acceptance.
+`activity_text_sources.required_text_page_keys` is the shared page-selection
+authority for capture and original replay: every observed physical grid page is
+included regardless of parse/ownership status. The facade populates each required
+page through its existing cached reader before the initial text projection.
+A newly discovered but unsupported grid cannot omit its page or hide an
+independent literal result below it. Unknown grids remain rejected; no row,
+metric, condition or page role is fabricated to complete the inventory.
 The mixed-page release introduced source3 / Activity42 / extractor54 / coverage23;
 the current role6/source4 contracts are recorded above. Both refresh derived
 proof only. The mixed-page change left raw originals, manual corrections,

@@ -28,6 +28,7 @@ from .activity_observations import (
 from .activity_source_discovery import discover_activity_sources
 from .activity_text import extract_text_tables
 from .activity_text_capture import capture_text_page
+from .activity_text_sources import required_text_page_keys
 from .page_ocr_cache import load_page_ocr_cache, page_text, save_page_ocr_cache
 from .text_ocr.configuration import owns_auxiliary_text
 
@@ -91,8 +92,19 @@ def extract(
                 dirty = True
             return observed
 
+        text_pages = sorted(
+            int(key) - 1
+            for key in required_text_page_keys(
+                {
+                    "seed_pages": sorted(set(source_pages) | cells.owned_pages),
+                    "regions": cells.coverage,
+                }
+            )
+        )
+        for page_index in text_pages:
+            text_for_page(page_index)
         text = extract_text_tables(
-            sorted(set(source_pages) | cells.owned_pages),
+            text_pages,
             text_map,
             page_count=len(doc),
             page_reader=text_for_page,

@@ -87,6 +87,12 @@
   SAR and tenth-strongest/percentage/log scientific policies are unchanged.
   That source3 entry documents the mixed-page release; current role6/source4
   authority is above. Older entries are release history, not alternate paths.
+  `activity_text_sources.required_text_page_keys` now also owns the identical
+  all-observed-grid page set for the facade and original readback. Required text
+  is populated through the existing cached reader before projection; failed or
+  header-only newly discovered grids cannot hide a page/independent result.
+  Parsing/ownership status never exempts a physical source. Activity45/
+  extractor57/coverage25 above cover this combined derived-source refresh.
 
 - Literal record-role guard: `source_role_terms.intermediate_source_label` owns
   the shared declared intermediate-label predicate for core binding, OCSR input,
