@@ -31,8 +31,15 @@
   retained raw claims, known conflicts, actual-original pixels, missingdrawing
   refusal and unchanged model/source budgets remain mandatory. No competing
   parser/recognizer/store, spelling/ID repair, implicit resize or policy exists.
-  Binding63/binder74 refresh derived proof only; raw/manual/history,
-  Activity43/source4/role6, OCSR/SMILES6/API/SQL/dependencies/activation/SAR
+  Literal role-only prefixes and numbered rows use this same window/grammar:
+  one observed row-height first gap, then ordinary half-height continuation
+  gaps; same-source/column and all existing bounds remain. Unjoined prefixes
+  immediately before numbered nominations stay explicit unresolved sources;
+  non-numbered experimental sections do not invent molecular declarations.
+  Independent activity-source completeness remains. Complete-title detector fragments
+  cannot drop the original negative role, change IDs or erase qualified conflicts.
+  Binding64/binder75 and Activity45/extractor57/coverage25 refresh derived proof
+  only; raw/manual/history, source4/role6, OCSR/SMILES6/API/SQL/dependencies/activation/SAR
   numerical policies remain unchanged. Generated controls prove contracts, not
   native-model or scientific acceptance. Earlier epochs below are release history.
   Shared auxiliary replay keeps one fail-closed boolean boundary for current and

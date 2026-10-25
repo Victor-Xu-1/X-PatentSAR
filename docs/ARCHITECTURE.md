@@ -93,9 +93,30 @@ rendering exception where current recovered windows already returnfalse.
 Historical parsing/display and complete-source admission remain distinct; this
 reader consistency change admits no previously rejected source or saved flag.
 
-Binding63/binder74 refresh affected derived observations. Activity43/source4/
-role6, raw originals, manual/history, OCSR/SMILES6, API/SQL, environments/models,
-activation and SAR numerical policies remain unchanged. Controlled generated
+The same literal heading authority retains an explicit role-only title row
+before its numbered row. `Intermediate` or an existing assay-title phrase cannot
+disappear simply because the number is printed on the next physical line.
+Capture and replay share one bounded join: the first role-to-number gap may be
+at most one observed row height; subsequent continuation rows keep the ordinary
+half-height gap. Column, source, eight-row and128pt limits are unchanged.
+An unjoined role-only title immediately followed by a numbered nomination
+remains an unresolved source occurrence, never an implicit terminal-product
+declaration or an invisible completeness exemption. A non-numbered section title
+followed by ordinary procedure prose does not invent a molecular declaration;
+the independent activity-source inventory still owns experimental completeness.
+
+Single-line and wrapped versions use the same existing literal vocabulary and
+paragraph-locator authority; raw titles and identifiers remain unchanged.
+Detector fragments of a fully qualified nonfinal title are interpreted only in
+that same complete original title. Different IDs, extra/conflicting text and
+independently qualified native/primary contradictions still refuse. Conflicting
+assay and synthesis declarations remain ambiguous. Original replay and saved
+row geometry prevent dropping the role row; this does not certify a drawing.
+
+Binding64/binder75 and Activity45/extractor57/coverage25 refresh affected derived
+source interpretation. Source4/role6, raw originals, manual/history,
+OCSR/SMILES6, API/SQL, environments/models, activation and SAR numerical
+policies remain unchanged. Controlled generated
 checks prove source/caller contracts, not model accuracy or private-patent
 acceptance. Earlier binding-version entries below document release history.
 

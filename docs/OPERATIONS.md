@@ -73,6 +73,21 @@ The existing256px model-row and complete source-window/pixel limits are
 unchanged: larger input may still fail explicitly. Resizing or raising those
 limits needs its own model-preparation validation, not a passing scope test.
 
+For a wrapped role/title, retain every original row, not just the row containing
+the number. A complete literal intermediate or assay prefix shares the existing
+source window with a same-column, same-source adjacent numbered row. Capture
+and proof replay use the same first-gap bound of one observed row height;
+ordinary continuation gaps retain their half-height bound and all row/pixel
+limits remain. A role title followed immediately by a numbered nomination but
+not joined stays an explicit unresolved source; do not erase it, borrow it for
+another column, or guess a product role. An ordinary non-numbered experimental
+section followed by procedure prose does not create a missing molecule; its
+activity-source completeness remains independently required.
+Source strings, original IDs and qualified contradictory observations are never
+rewritten. Binding64/binder75 and Activity45/extractor57/coverage25 refresh
+derived proof only; older results remain historical without altering raw OCR,
+drawings, model generations or manual audit.
+
 The shared auxiliary replayer now returnsfalse consistently for changed or
 unavailable actual originals, including historical V1 packets. Normal callers
 still report explicit source failure; do not interpretfalse or an old saved

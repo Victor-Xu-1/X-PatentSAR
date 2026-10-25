@@ -4,8 +4,14 @@ from .heading_source_geometry import (
     HEADING_PADDING,
     MAX_HEADING_HEIGHT,
     MAX_HEADING_ROWS,
+    heading_row_gap,
 )
-from .source_section_roles import heading_assay_tail, heading_list_hint, section_heading
+from .source_section_roles import (
+    heading_assay_tail,
+    heading_list_hint,
+    heading_role_prefix,
+    section_heading,
+)
 
 
 def heading_line_windows(lines):
@@ -17,7 +23,8 @@ def heading_line_windows(lines):
         parts = [first]
         declaration = section_heading(first["text"])
         hinted = heading_list_hint(first["text"])
-        if declaration or hinted:
+        prefix = heading_role_prefix(first["text"])
+        if declaration or hinted or prefix:
             while index + len(parts) < len(lines):
                 following = lines[index + len(parts)]
                 last, box = parts[-1], first["bbox"]
@@ -27,7 +34,7 @@ def heading_line_windows(lines):
                     last["bbox"][3] - last["bbox"][1], next_box[3] - next_box[1]
                 )
                 continues = (
-                    hinted
+                    (hinted or prefix)
                     and declaration is None
                     or (
                         declaration
@@ -44,7 +51,7 @@ def heading_line_windows(lines):
                 if not (
                     continues
                     and first["source"] == following["source"]
-                    and -2 <= gap <= height / 2
+                    and -2 <= gap <= heading_row_gap(first["text"], len(parts), height)
                     and box[0] - 2 <= next_box[0] <= box[2]
                     and next_box[1] > last["bbox"][1]
                     and next_box[3] - box[1]
@@ -75,6 +82,12 @@ def heading_line_windows(lines):
                         for part in parts
                     ],
                 }
+            elif prefix and index + 1 < len(lines):
+                following = lines[index + 1]
+                if section_heading(following["text"]) or heading_list_hint(
+                    following["text"]
+                ):
+                    first = {**first, "unresolved_role_prefix": True}
         output.append(first)
         index += len(parts)
     return output
