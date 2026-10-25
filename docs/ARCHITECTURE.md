@@ -2120,6 +2120,14 @@ The original inner-envelope conflict veto remains mandatory even for unaligned
 or shifted-font words; extending a family does not replace that source guard.
 The refined x-axis nomination must retain every observed word in the complete
 strip, including displaced numeric/unknown members, not merely read then omit it.
+The nomination now shares that strip's caption boundary before its resource
+checks: when the caption is below the legend, unrelated body words/numbers
+starting below it are not candidate ticks. The full page/source inventory is
+unchanged. In-figure unknowns and the256candidate bound still refuse; no numeric
+subset, cropped success or guessed plotted measurement is introduced.
+Binding66/binder77 refresh derived role ownership only; proof7, Activity45/
+extractor57/coverage25, original sources/manual audit, models and SAR policy
+remain unchanged. Generated transport controls are not a native OCR benchmark.
 
 `plot_legend_locator` may nominate the literal compound suffix of an original
 OCR line containing its graphic key. Complete original line text/bounds and its
