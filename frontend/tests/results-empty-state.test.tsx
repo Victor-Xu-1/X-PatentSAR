@@ -76,7 +76,7 @@ it.each(['complete', 'failed', 'cancelled', 'interrupted'] as const)(
   'does not claim preparation from old running stage facts after a %s task',
   (status) => {
     render(<ResultsPane {...paneProps()} job={{ ...job, status }} />);
-    expect(screen.getByText('暂无提取结果')).toBeVisible();
+    expect(screen.getByText('暂无已确认的编号终产物')).toBeVisible();
     expect(screen.queryByText('结果就绪后将自动显示')).not.toBeInTheDocument();
   },
 );
@@ -95,7 +95,7 @@ it.each(['unverified', 'other-project', 'unknown'] as const)(
         }
       />,
     );
-    expect(screen.getByText('暂无提取结果')).toBeVisible();
+    expect(screen.getByText('暂无已确认的编号终产物')).toBeVisible();
     expect(screen.queryByText('结果就绪后将自动显示')).not.toBeInTheDocument();
   },
 );
@@ -199,8 +199,8 @@ it.each([true, false])(
 );
 
 it.each([
-  ['en', 'Results will appear automatically when ready', 'No extraction results yet'],
-  ['zh-CN', '结果就绪后将自动显示', '暂无提取结果'],
+  ['en', 'Results will appear automatically when ready', 'No confirmed numbered products yet'],
+  ['zh-CN', '结果就绪后将自动显示', '暂无已确认的编号终产物'],
 ] as const)('renders truthful active and unknown empty states in %s', (locale, active, neutral) => {
   setLocale(locale);
   const props = paneProps();
@@ -210,3 +210,76 @@ it.each([
   expect(screen.getByText(neutral)).toBeVisible();
   expect(props.resource.reload).not.toHaveBeenCalled();
 });
+
+it.each([
+  ['en', 'No extraction results yet', 'No confirmed numbered products yet'],
+  ['zh-CN', '暂无提取结果', '暂无已确认的编号终产物'],
+] as const)(
+  'distinguishes an empty original from an unconfirmed product inventory in %s',
+  (locale, empty, unconfirmed) => {
+    setLocale(locale);
+    render(
+      <ResultsPane
+        {...paneProps()}
+        project={{ ...project, summary: { ...project.summary, structures: 0 } }}
+        job={{ ...job, status: 'complete' }}
+      />,
+    );
+    expect(screen.getByText(empty)).toBeVisible();
+    expect(screen.queryByText(unconfirmed)).not.toBeInTheDocument();
+  },
+);
+
+it.each([
+  [
+    'en',
+    'Results will appear automatically when ready',
+    'No confirmed numbered products yet',
+    'Cancel task',
+  ],
+  ['zh-CN', '结果就绪后将自动显示', '暂无已确认的编号终产物', '取消任务'],
+] as const)(
+  'keeps pending result presentation without write authority during a %s job refresh',
+  async (locale, waiting, unconfirmed, cancelLabel) => {
+    setLocale(locale);
+    vi.spyOn(api, 'results').mockResolvedValue({ ...results, items: [], total: 0 });
+    const create = vi.spyOn(api, 'createJob');
+    const cancel = vi.spyOn(api, 'cancelJob');
+    const props: ComponentProps<typeof Workspace> = {
+      project: { ...project, summary: { ...project.summary, structures: 9 } },
+      route: { ...emptyRoute, projectId: project.id },
+      navigate: vi.fn(),
+      query: '',
+      onQuery: vi.fn(),
+      ready: false,
+      job,
+      jobVerified: true,
+      jobPresentationVerified: true,
+      onJobChange: vi.fn(),
+      onProjectReload: vi.fn(),
+      onUpload: vi.fn(),
+      onAttach: vi.fn(),
+    };
+    const { rerender } = render(<Workspace {...props} />);
+    expect(await screen.findByText(waiting)).toBeVisible();
+
+    rerender(<Workspace {...props} jobVerified={false} />);
+    expect(screen.getByText(waiting)).toBeVisible();
+    expect(screen.queryByText(unconfirmed)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: cancelLabel })).toBeDisabled();
+    expect(create).not.toHaveBeenCalled();
+    expect(cancel).not.toHaveBeenCalled();
+
+    rerender(<Workspace {...props} jobVerified={false} jobPresentationVerified={false} />);
+    expect(screen.queryByText(waiting)).not.toBeInTheDocument();
+    expect(screen.getByText(unconfirmed)).toBeVisible();
+    expect(create).not.toHaveBeenCalled();
+    expect(cancel).not.toHaveBeenCalled();
+
+    rerender(<Workspace {...props} />);
+    expect(screen.getByText(waiting)).toBeVisible();
+    expect(screen.getByRole('button', { name: cancelLabel })).toBeEnabled();
+    expect(create).not.toHaveBeenCalled();
+    expect(cancel).not.toHaveBeenCalled();
+  },
+);
