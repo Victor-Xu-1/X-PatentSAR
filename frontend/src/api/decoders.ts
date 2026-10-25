@@ -106,6 +106,16 @@ const projectShape = object({
 export const decodeProject: Decoder<Project> = (input, path = '$') => {
   const project = projectShape(input, path);
   const fields = input as Record<string, unknown>;
+  const readError = Object.hasOwn(fields, 'read_error')
+    ? {
+        read_error: nullable(object({ code: string, message: string }))(
+          fields.read_error,
+          `${path}.read_error`,
+        ),
+      }
+    : {};
+  if (readError.read_error && project.acceptance.state !== 'failed')
+    throw new ContractError(`${path}.read_error`);
   const rawSummary = fields.summary as Record<string, unknown>;
   const summary = {
     ...project.summary,
@@ -123,11 +133,11 @@ export const decodeProject: Decoder<Project> = (input, path = '$') => {
         }
       : {}),
   };
-  if (!Object.hasOwn(fields, 'first_structure_page')) return { ...project, summary };
+  if (!Object.hasOwn(fields, 'first_structure_page')) return { ...project, summary, ...readError };
   const first = nullable(positive)(fields.first_structure_page, `${path}.first_structure_page`);
   if (first !== null && project.pdf.page_count > 0 && first > project.pdf.page_count)
     throw new ContractError(`${path}.first_structure_page`);
-  return { ...project, summary, first_structure_page: first };
+  return { ...project, summary, ...readError, first_structure_page: first };
 };
 export const decodeReview: Decoder<Review> = object({
   decision: oneOf(['approved', 'rejected', 'needs_review']),

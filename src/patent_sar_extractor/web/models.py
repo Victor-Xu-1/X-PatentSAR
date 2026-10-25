@@ -334,6 +334,11 @@ class Project(DTO):
     acceptance: Acceptance
     last_job: Job | None
     first_structure_page: int | None = Field(default=None, ge=1, strict=True)
+    # When present, summary is unavailable, never a zero-compound result or
+    # authority to use stale scientific rows. Identity/original stay readable.
+    read_error: Error | None = Field(
+        default=None, exclude_if=lambda value: value is None
+    )
 
 
 class Annotation(DTO):

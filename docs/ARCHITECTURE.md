@@ -1,5 +1,24 @@
 # X-PatentSAR architecture
 
+## Project identity survives rejected saved-result reads
+
+`WorkspaceService.project` delegates only metadata formatting to
+`web/project_views.py`. Both the project catalogue and single-project metadata
+retain the original identity/PDF reference when a known saved-source validation
+or bounded-file refusal prevents rebuilding results. Additive `read_error` is an
+explicit unavailable state: acceptance is failed, summary is not available, and
+no retained compound projection or acceptance stamp is published or rewritten.
+Visibility is checked again after the failure; unknown implementation failures,
+authentication/visibility errors and concurrent projection conflicts propagate.
+
+Scientific result/correction paths still use strict `_current_project`; the SAR
+source adapter rejects this metadata before any snapshot work. A 300-character
+field limit remains 300, not an invitation to truncate or extend raw headers.
+One shared UI issue marker distinguishes a saved-data problem from task state.
+Run/resume/import stay disabled for that source; verified live-job cancellation
+is independent. Source titles and scientific strings do not change with locale.
+No queue, model, scientific epoch, persistence schema or source fallback is added.
+
 ## Exact numeric literals survive source intake into SAR
 
 `measurement_literals` is the shared pure scalar/censored/interval authority,

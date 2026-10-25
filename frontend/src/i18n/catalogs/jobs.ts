@@ -1,5 +1,6 @@
 /** Jobs, recorded stages and observations. */
 export const jobs: Readonly<Record<string, string>> = {
+  结果数据需修复: 'Results need repair',
   核对图注: 'Checking captions',
   核对表格来源: 'Checking table sources',
   核对编号单元格: 'Checking ID cells',

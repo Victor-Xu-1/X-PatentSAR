@@ -2,6 +2,7 @@ import { useTranslation } from '../../i18n';
 import type { Project } from '../../api/types';
 export function Metrics({ project }: { project: Project | null }) {
   const { t } = useTranslation();
+  if (project?.read_error) return null;
   const coverage = [
     { label: t('未关联活性'), value: project?.summary.structure_only },
     { label: t('结构待定位'), value: project?.summary.activity_only },

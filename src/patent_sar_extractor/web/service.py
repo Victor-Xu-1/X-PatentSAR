@@ -24,7 +24,6 @@ from .history_storage import (
     ensure_job_visible,
     ensure_project_visible,
     retained_count,
-    tombstone,
 )
 from .lead_storage import LeadStore
 from .leads import LeadService
@@ -34,7 +33,6 @@ from .models import (
     Compound,
     Error,
     Job,
-    PDFInfo,
     Project,
     Results,
     Summary,
@@ -42,6 +40,7 @@ from .models import (
 from .pdf import UploadedPDF, copy_original, filename_title, open_pdf
 from .prediction_storage import PredictionStore
 from .processes import runtime_identity_matches
+from .project_views import project_view
 from .result_queries import ResultQueries
 from .source_epoch import EPOCH_MARKER
 from .storage import Store, encode, now
@@ -524,60 +523,7 @@ class WorkspaceService:
         return acceptance
 
     def project(self, project_id: str) -> Project:
-        row = self._current_project(project_id)
-        snapshot = json.loads(row["snapshot"])
-        with self.store.connect() as connection:
-            connection.execute("BEGIN")
-            ensure_project_visible(connection, project_id)
-            latest = connection.execute(
-                "SELECT * FROM jobs WHERE project_id=? ORDER BY created_at DESC,rowid DESC LIMIT 1",
-                (project_id,),
-            ).fetchone()
-            latest_deleted = (
-                latest is not None
-                and tombstone(connection, "job", latest["id"])["deleted_at"] is not None
-            )
-            review_counts = connection.execute(
-                "SELECT COUNT(c.id) AS total, "
-                "COALESCE(SUM(CASE WHEN r.decision IN ('approved','rejected') "
-                "THEN 1 ELSE 0 END),0) AS decided "
-                "FROM compounds c LEFT JOIN reviews r "
-                "ON r.project_id=c.project_id AND r.compound_id=c.id "
-                "WHERE c.project_id=?",
-                (project_id,),
-            ).fetchone()
-        first_structure = snapshot.get("first_structure_page")
-        if type(first_structure) is not int or not 1 <= first_structure <= min(
-            row["page_count"] or 20000, 20000
-        ):
-            first_structure = None
-        retained_job = self._job(dict(latest)) if latest else None
-        last_job = retained_job if not latest_deleted else None
-        acceptance = self._project_acceptance(row, dict(latest) if latest else None)
-        return Project(
-            id=row["id"],
-            title=row["title"],
-            patent_id=row["patent_id"],
-            created_at=row["created_at"],
-            updated_at=row["updated_at"],
-            pdf=PDFInfo(
-                available=bool(row["pdf_rel"]),
-                page_count=row["page_count"],
-                sha256=row["sha256"] or row["expected_sha256"],
-            ),
-            is_historical=bool(row["historical"]),
-            summary=Summary.model_validate(
-                {
-                    **snapshot.get("summary", {}),
-                    "manually_reviewed": review_counts["decided"],
-                    "manual_review_pending": review_counts["total"]
-                    - review_counts["decided"],
-                }
-            ),
-            acceptance=acceptance,
-            last_job=last_job,
-            first_structure_page=first_structure,
-        )
+        return project_view(self, project_id)
 
     def project_ids(self) -> list[str]:
         with self.store.connect() as connection:

@@ -27,6 +27,7 @@ export interface Project {
   updated_at: string;
   pdf: { available: boolean; page_count: number; sha256: string | null };
   is_historical: boolean;
+  read_error?: { code: string; message: string } | null;
   first_structure_page?: number | null;
   summary: {
     structures: number;

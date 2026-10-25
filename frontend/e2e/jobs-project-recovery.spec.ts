@@ -1,10 +1,94 @@
 import { expect, test, type Page, type TestInfo } from '@playwright/test';
+import { job as controlledJob } from '../tests/fixtures';
 
 async function capture(page: Page, info: TestInfo, name: string) {
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(
     true,
   );
   await page.screenshot({ path: info.outputPath(name + '.png'), animations: 'disabled' });
+}
+
+for (const width of [390, 1672]) {
+  test(`one unreadable source is visible without blocking task controls at ${width}px`, async ({
+    page,
+  }, info) => {
+    const origin = new URL(process.env.PATENTSAR_E2E_BASE_URL!);
+    expect(['127.0.0.1', 'localhost', '[::1]']).toContain(origin.hostname);
+    expect(Number(origin.port)).toBeGreaterThanOrEqual(18766);
+    expect(Number(origin.port)).toBeLessThanOrEqual(18866);
+    const writes: string[] = [],
+      errors: string[] = [];
+    let sourceId = '',
+      sourceTitle = '',
+      fault = true;
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.route('**/api/v1/**', async (route) => {
+      const request = route.request(),
+        url = new URL(request.url());
+      if (request.method() !== 'GET') {
+        writes.push(url.pathname);
+        return route.abort();
+      }
+      if (url.pathname === '/api/v1/projects') {
+        const response = await route.fetch();
+        const body = await response.json();
+        expect(body.items.length).toBeGreaterThan(0);
+        sourceId = body.items[0].id;
+        sourceTitle = body.items[0].title;
+        if (fault)
+          body.items[0] = {
+            ...body.items[0],
+            is_historical: true,
+            acceptance: { state: 'failed', errors: ['Controlled invalid saved source'] },
+            read_error: { code: 'invalid_artifact', message: 'Controlled invalid saved source' },
+          };
+        return route.fulfill({ response, json: body });
+      }
+      if (url.pathname === '/api/v1/jobs') {
+        // This GET-only synthetic fixture is not a private patent or real job.
+        return route.fulfill({
+          json: {
+            items: [
+              {
+                ...controlledJob,
+                id: 'd'.repeat(32),
+                project_id: sourceId,
+                status: 'failed',
+                can_resume: true,
+              },
+            ],
+          },
+        });
+      }
+      return route.continue();
+    });
+    await page.setViewportSize({ width, height: width === 390 ? 844 : 1060 });
+    await page.goto('/#/projects');
+    await expect(page.getByRole('status', { name: 'Results need repair' })).toBeVisible();
+    await page.getByRole('button', { name: 'Tasks', exact: true }).click();
+    const panel = page.locator('.jobs-page');
+    const select = panel.getByRole('combobox', { name: 'Filter tasks by project' });
+    await expect(select).toBeEnabled();
+    await expect(panel.getByRole('button', { name: sourceTitle, exact: true })).toBeVisible();
+    await expect(panel.getByRole('status', { name: 'Results need repair' })).toBeVisible();
+    await expect(panel.getByRole('button', { name: 'Run extraction', exact: true })).toBeDisabled();
+    await expect(
+      panel.getByRole('button', { name: 'Resume extraction', exact: true }),
+    ).toBeDisabled();
+    await capture(page, info, 'source-error-isolated-en');
+    const language = page.getByRole('combobox', { name: 'Interface language' });
+    await language.selectOption('zh-CN');
+    await expect(panel.getByRole('status', { name: '结果数据需修复' })).toBeVisible();
+    await expect(panel.getByRole('button', { name: sourceTitle, exact: true })).toBeVisible();
+    await capture(page, info, 'source-error-isolated-zh');
+    // Only the intercepted GET recovers; original files are unchanged.
+    fault = false;
+    await panel.getByRole('button', { name: '刷新任务记录', exact: true }).click();
+    await expect(panel.getByRole('status', { name: '结果数据需修复' })).toHaveCount(0);
+    await expect(panel.getByRole('button', { name: '继续提取', exact: true })).toBeEnabled();
+    expect(writes).toEqual([]);
+    expect(errors).toEqual([]);
+  });
 }
 
 // Browser-only GET faults/empty catalog responses. No source/record write,
