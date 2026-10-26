@@ -40,7 +40,10 @@ def _matching_original_window(proof, prior):
 
 
 def _known_original_agrees(prior, declaration, text):
-    if not native_heading_agrees(prior, text):
+    original = prior["native_source"]
+    if source_observation_status(
+        original, prior["bbox"], original["text"]
+    ) == "qualified" and not native_heading_agrees(prior, text):
         return False
     known = []
     known.extend(

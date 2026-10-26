@@ -1,12 +1,14 @@
 """Complete optical titles conserve every qualified original native fragment."""
 
 import copy
+import hashlib
 import json
 import unittest
 from unittest.mock import patch
 
 import fitz
 
+from patent_sar_extractor.core.heading_observation import observe_heading
 from patent_sar_extractor.core.heading_original_replay import validate_original_heading
 from patent_sar_extractor.core.heading_source_proof import proved_heading_declaration
 from tests.test_native_heading_coverage import heading, original_cell
@@ -98,6 +100,35 @@ class PartialNativeHeadingTests(unittest.TestCase):
             self.assertEqual(declaration["role"], "compound_heading")
             self.assertEqual(declaration["identifier"], "008B")
             self.assertEqual(len(calls), 2)
+            validate_original_heading(page, proof)
+
+    def test_unqualified_locator_edge_does_not_veto_the_actual_complete_native_cell(
+        self,
+    ):
+        with fitz.open() as document:
+            page = document.new_page(width=400, height=180)
+            page.draw_rect(fitz.Rect(30, 40, 280, 90), width=0.4)
+            page.insert_text((50, 65), "Compound 11: Synthesis", fontsize=11)
+            words = page.get_text("words")
+            hint = {
+                "text": "Compound 11",
+                "source": "page_ocr",
+                "geometry_space": "rendered",
+                "bbox": [words[0][0], words[0][1], words[-1][0] - 1, words[0][3]],
+            }
+            digest = hashlib.sha256(document.tobytes(no_new_id=True)).hexdigest()
+            with patch(
+                "patent_sar_extractor.core.heading_observation.get_ocr_engine",
+                side_effect=AssertionError("Complete native cell needs no model"),
+            ):
+                proof = observe_heading(page, hint, digest)
+            self.assertEqual(proof["version"], 2)
+            self.assertEqual(
+                proof["original_heading"]["native_source"]["status"], "unqualified"
+            )
+            self.assertIsNotNone(proved_heading_declaration(proof))
+            self.assertEqual(proof["native_source"]["text"], "Compound 11: Synthesis")
+            self.assertEqual(proof["observations"], [])
             validate_original_heading(page, proof)
 
     def test_complete_native_source_cannot_be_replaced_with_added_role_words(self):

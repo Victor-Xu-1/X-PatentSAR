@@ -79,6 +79,8 @@ only while preserving every whole native word, member and paint. Reading just
 `Compound 11` again does not account for the extra ink. Added/changed suffixes,
 invented members, a different native nomination, repeated/embedded matches,
 covered native words and retained qualified optical conflicts remain refused.
+An unqualified narrow-window edge remains an observation, not a qualified veto
+of the complete original cell; the outer cell still requires every original word.
 Confirmed negative roles stay outside the numbered-terminal-product pool; the
 same rule also admits genuinely complete terminal preparation titles without
 loading auxiliary OCR. This changes derived heading admission only. A locator

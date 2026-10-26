@@ -93,6 +93,9 @@ intersect the retained native words. A complete native title remains an exact
 literal veto; echoing only the known subset is not a complete optical read.
 All native/optical observations remain unchanged, and qualified earlier optical
 conflicts, detector conflicts and actual-original replay are still mandatory.
+A locator-edge fragment that was unqualified is not promoted into a known veto
+of a subsequently proved complete original cell; its raw packet stays retained,
+and that whole cell must independently conserve all of its qualified native text.
 A native locator equal to that partial layer cannot independently veto the
 whole observation; a different locator ID remains refused. No spelling, suffix
 or identifier repair, new OCR/model or successful-word crop exists.
