@@ -10,7 +10,7 @@
   segments under the existing paired pixel-closure proof are ruling; literal
   dashed sources keep that same closure/unknown/gap gate. Call-local original
   paint facts serve the normal heading loop, never a global/competing cache.
-  Binding71/binder82 and Activity49/extractor61 refresh derived admission only;
+  Binding72/binder83 and Activity50/extractor62 refresh derived admission only;
   source4/role6/coverage25/SMILES6, raw/history/manual, model/dependency/default
   activation, SQL/API/SAR policies remain unchanged. No second parser/recognizer,
   writer/store/queue, guessed ID/product or cropped successful subset exists.
@@ -23,9 +23,17 @@
   still decide admission. `source_cell_pixels.closed_cell_masks` alone owns
   exact paired ruling projection, with attached/crossing unknown ink refused.
   No new queue, recognizer, writer, image store, implicit role or invented ID is
-  introduced. Ink inventory2 is derived source data; raw originals/manual audit
+  introduced. Ink inventory3 is derived source data; raw originals/manual audit
   remain unchanged. Existing8M-pixel/1MiB evidence and8row/128pt limits apply
-  before model work. Unsupported/parallel/conflicting sources stay explicit.
+  before model work. Unsupported/ambiguous/conflicting sources stay explicit.
+  `title_context_grids` is the single context/ruling authority. Complete physical
+  rows may split only at actual independently closed parallel column bounds;
+  `title_parallel_rows` and `title_parallel_members` conserve all peer/global ink
+  and original literals. Every required reading qualifies before member selection;
+  unknown/staggered/logical ownership stays explicit, not nearest-column inference.
+  `title_source_reuse` shares bounded per-page observations between the existing
+  binder/header consumers after original replay, including weak attempts; no new
+  persistent cache, model, writer, queue or acceptance authority is introduced.
 
 - Numeric source/SAR authority: `core/measurement_literals` owns the exact
   bounded scalar/censored/interval grammar previously embedded in SAR. Both

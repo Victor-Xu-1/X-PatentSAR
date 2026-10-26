@@ -7,7 +7,7 @@ from .caption_role_semantics import continuation_title, nonfinal_catalog_text
 from .source_observations import source_claim_runs
 from .source_table_roles import title_texts
 from .structure_table_headers import aligned_column_edges
-from .title_ink_geometry import caption_title_context
+from .title_context_grids import caption_title_context
 
 MAX_CONTINUATION_DEPTH = 64
 

@@ -5,11 +5,20 @@ from .caption_role_titles import project_caption_titles
 from .source_observations import source_observation_status
 from .source_table_roles import observed_role
 from .source_window_chunks import observe_window_sources
-from .title_ink_geometry import title_context_spec
+from .title_context_grids import title_context_spec
 
 
 def observe_header_context(
-    tokens, size, top, *, geometry=None, logical_window=None, grid_axes=None, page=None
+    tokens,
+    size,
+    top,
+    *,
+    geometry=None,
+    logical_window=None,
+    grid_axes=None,
+    page=None,
+    parallel_grids=None,
+    title_cache=None,
 ):
     def capture(bounds):
         sources = observe_window_sources(tokens, bounds) if bounds else []
@@ -25,8 +34,12 @@ def observe_header_context(
             sources,
             nominations,
             context=title_context_spec(
-                geometry=geometry, logical_window=logical_window, grid_axes=grid_axes
+                geometry=geometry,
+                logical_window=logical_window,
+                grid_axes=grid_axes,
+                parallel_grids=parallel_grids,
             ),
+            title_cache=title_cache,
         )
 
     if logical_window is not None:
@@ -96,7 +109,14 @@ def original_header_context_packets(
 
 
 def original_header_context_role(
-    contexts, top, width, *, geometry=None, logical_window=None, grid_axes=None
+    contexts,
+    top,
+    width,
+    *,
+    geometry=None,
+    logical_window=None,
+    grid_axes=None,
+    parallel_grids=None,
 ):
     from .title_context_source import valid_title_context
 
@@ -110,6 +130,9 @@ def original_header_context_role(
         ),
         contexts=contexts,
         context=title_context_spec(
-            geometry=geometry, logical_window=logical_window, grid_axes=grid_axes
+            geometry=geometry,
+            logical_window=logical_window,
+            grid_axes=grid_axes,
+            parallel_grids=parallel_grids,
         ),
     )

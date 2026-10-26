@@ -19,16 +19,24 @@ from .structure_header_context import (
     original_header_context_role,
 )
 from .structure_table_headers import structure_column_pairs
+from .title_context_grids import (
+    caption_title_context,
+    parallel_title_grids,
+    validate_parallel_title_grids,
+)
 from .unruled_header_readings import original_header_readings
 
 
-def observe_ruled_header(page, tokens, grid, original_sha, *, grids=None):
+def observe_ruled_header(
+    page, tokens, grid, original_sha, *, grids=None, title_cache=None
+):
     xs, ys = list(grid["xs"]), list(grid["ys"])
     bounds, size = [xs[0], ys[0], xs[-1], ys[1]], [page.rect.width, page.rect.height]
     sources = observe_window_sources(tokens, bounds)
     geometry = context_region(grid, [grid_box(g) for g in (grids or [grid])])[
         "context_geometry"
     ]
+    peers = parallel_title_grids(geometry, grids or [grid])
     reading = observe_role_cells(
         page,
         {"xs": xs, "ys": ys[:2]},
@@ -49,20 +57,28 @@ def observe_ruled_header(page, tokens, grid, original_sha, *, grids=None):
         "page_size": size,
         "grid_axes": {"xs": xs, "ys": ys},
         "context_geometry": geometry,
+        **({"parallel_grids": peers} if peers is not None else {}),
         "nomination": [
             cell_text(sources[0]["tokens"], [xs[c], ys[0], xs[c + 1], ys[1]])
             for c in range(len(xs) - 1)
         ],
         "source_observations": sources,
         "context_sources": observe_header_context(
-            tokens, size, ys[0], geometry=geometry, grid_axes=grid_axes(grid), page=page
+            tokens,
+            size,
+            ys[0],
+            geometry=geometry,
+            grid_axes=grid_axes(grid),
+            page=page,
+            parallel_grids=peers,
+            title_cache=title_cache,
         ),
         "role_cells": reading,
     }
 
 
 def ruled_header_roles(scope):
-    if not isinstance(scope, dict) or set(scope) != {
+    if not isinstance(scope, dict) or set(scope) - {"parallel_grids"} != {
         "kind",
         "version",
         "original_pdf_sha256",
@@ -102,6 +118,7 @@ def ruled_header_roles(scope):
         raise ValueError("Invalid original structure-header grid size")
     validate_grid_axes(grid, [xs[0], ys[0], xs[-1], ys[-1]])
     validate_context_geometry(scope["context_geometry"], grid_box(grid))
+    validate_parallel_title_grids(caption_title_context(scope))
     if not 0 <= xs[0] < xs[-1] <= size[0] or not 0 <= ys[0] < ys[-1] <= size[1]:
         raise ValueError("Original structure-header grid leaves its page")
     bounds, sources = [xs[0], ys[0], xs[-1], ys[1]], scope["source_observations"]
@@ -130,6 +147,7 @@ def ruled_header_roles(scope):
         size[0],
         geometry=scope["context_geometry"],
         grid_axes=scope["grid_axes"],
+        parallel_grids=scope.get("parallel_grids"),
     )
     if headers is None or role in {"mixed", "conflict", "unresolved"}:
         return None

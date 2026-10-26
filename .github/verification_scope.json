@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "bbb1d293e4a5af2d3ff653d125a87bd1ae9a0bef",
+  "base_sha": "e6c9c9df0ad5351f2e5ea61340ce2c44b8393e0e",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
@@ -9,14 +9,29 @@
     "frontend/package-lock.json",
     "frontend/package.json",
     "src/patent_sar_extractor/contracts.py",
-    "src/patent_sar_extractor/core/cell_header_lines.py",
-    "src/patent_sar_extractor/core/heading_title_geometry.py",
-    "src/patent_sar_extractor/core/source_cell_pixels.py",
+    "src/patent_sar_extractor/core/caption_grid_binding.py",
+    "src/patent_sar_extractor/core/caption_role_links.py",
+    "src/patent_sar_extractor/core/caption_role_observation.py",
+    "src/patent_sar_extractor/core/caption_role_proof.py",
+    "src/patent_sar_extractor/core/ruled_structure_headers.py",
+    "src/patent_sar_extractor/core/source_table_roles.py",
+    "src/patent_sar_extractor/core/structure_catalogs.py",
+    "src/patent_sar_extractor/core/structure_column_scopes.py",
+    "src/patent_sar_extractor/core/structure_header_context.py",
+    "src/patent_sar_extractor/core/title_context_grids.py",
     "src/patent_sar_extractor/core/title_ink_geometry.py",
     "src/patent_sar_extractor/core/title_ink_source.py",
+    "src/patent_sar_extractor/core/title_parallel_members.py",
+    "src/patent_sar_extractor/core/title_parallel_rows.py",
     "src/patent_sar_extractor/core/title_raster_source.py",
-    "tests/test_title_ink_discovery.py",
-    "tests/test_title_raster_discovery.py"
+    "src/patent_sar_extractor/core/title_source_capture.py",
+    "src/patent_sar_extractor/core/title_source_reuse.py",
+    "src/patent_sar_extractor/core/unruled_structure_observation.py",
+    "tests/parallel_catalogue_support.py",
+    "tests/test_parallel_catalogue_titles.py",
+    "tests/test_parallel_structure_headers.py",
+    "tests/test_title_raster_discovery.py",
+    "tests/test_title_source_reuse.py"
   ],
   "python_modules": [
     "tests.test_title_raster_discovery",
@@ -41,7 +56,14 @@
     "tests.test_caption_reprint_sources.CaptionReprintSourcesTests.test_explicit_selected_caption_reprint_is_retained_and_scheduled",
     "tests.test_release_policy.ReleaseNumberTests",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
-    "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
+    "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority",
+    "tests.test_parallel_catalogue_titles",
+    "tests.test_title_source_reuse",
+    "tests.test_parallel_structure_headers",
+    "tests.test_structure_column_anchors.StructureColumnAnchorTests.test_boxed_header_can_anchor_a_later_original_headerless_part",
+    "tests.test_structure_column_anchors.StructureColumnAnchorTests.test_ruled_first_page_and_unruled_continuation_keep_all_original_rows",
+    "tests.test_structure_column_anchors.StructureColumnAnchorTests.test_nonfinal_role_survives_a_headerless_physical_continuation",
+    "tests.test_structure_column_anchors.StructureColumnAnchorTests.test_original_paragraph_marker_cannot_hide_a_nonfinal_table_role"
   ],
   "frontend_tests": [],
   "browser_tests": [

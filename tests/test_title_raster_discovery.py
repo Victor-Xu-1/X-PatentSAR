@@ -236,7 +236,7 @@ class TitleRasterDiscoveryTests(unittest.TestCase):
         document, _structures, _boxes = raster_catalogue("Table 62. Compounds")
         with (
             document,
-            patch("patent_sar_extractor.core.title_ink_geometry.MAX_CELL_PIXELS", 1),
+            patch("patent_sar_extractor.core.title_context_grids.MAX_CELL_PIXELS", 1),
             patch(
                 "patent_sar_extractor.core.title_raster_source.observe_pixels",
                 side_effect=AssertionError(

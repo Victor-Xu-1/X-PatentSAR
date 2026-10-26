@@ -33,9 +33,12 @@ from .title_source_proof import (
     source_title_text,
     title_nomination_bounds,
 )
+from .title_source_reuse import remember_title_observation, reuse_title_observation
 
 
-def observe_source_title(page, nomination, *, layout, paint_view, ink_source=None):
+def observe_source_title(
+    page, nomination, *, layout, paint_view, ink_source=None, title_cache=None
+):
     raw = raw_title_packet(nomination)
     size = [page.rect.width, page.rect.height]
     nominated = title_nomination_bounds(raw)
@@ -92,6 +95,10 @@ def observe_source_title(page, nomination, *, layout, paint_view, ink_source=Non
         and (native["tokens"] or native.get("boundary_tokens"))
     ):
         return proof
+    if reuse_title_observation(
+        page, proof, title_cache, layout=layout, paint_view=paint_view
+    ):
+        return proof
     if source_title_text(proof) is not None:
         return proof
     if any(
@@ -121,10 +128,11 @@ def observe_source_title(page, nomination, *, layout, paint_view, ink_source=Non
             maximum_rows=MAX_HEADING_ROWS,
             maximum_row_height=MAX_HEADING_HEIGHT,
         )
+    remember_title_observation(proof, title_cache)
     return proof
 
 
-def attach_title_sources(page, sources, nominations, *, context=None):
+def attach_title_sources(page, sources, nominations, *, context=None, title_cache=None):
     """Attach exact nominated witnesses to existing raw parent carriers only."""
     if (
         not isinstance(sources, list)
@@ -148,7 +156,9 @@ def attach_title_sources(page, sources, nominations, *, context=None):
     layout, view = source_layout(page), native_paint_view(page)
     unique = {proof_id(raw_title_packet(p)): raw_title_packet(p) for p in nominations}
     records = [
-        observe_source_title(page, p, layout=layout, paint_view=view)
+        observe_source_title(
+            page, p, layout=layout, paint_view=view, title_cache=title_cache
+        )
         for p in unique.values()
     ]
     ink = None
@@ -169,6 +179,7 @@ def attach_title_sources(page, sources, nominations, *, context=None):
                     layout=layout,
                     paint_view=view,
                     ink_source={"inventory": ink, "row_index": index},
+                    title_cache=title_cache,
                 )
                 for index, row in enumerate(rows[0])
                 if row["requires_read"]

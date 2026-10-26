@@ -71,7 +71,7 @@ def _remove_original_rulings(mask, extent, rulings, size):
     return True
 
 
-def title_raster_marks(packet, bounds, size, rulings):
+def title_raster_marks(packet, bounds, size, rulings, *, components=False):
     """Re-derive every pixel row; unsupported input never returns a good prefix."""
     window = source_window(bounds, size)
     if (
@@ -145,12 +145,30 @@ def title_raster_marks(packet, bounds, size, rulings):
             "physical_row_budget": "title_row_budget",
             "physical_row_height_budget": "title_height_budget",
         }[refusal]
+    observed = (
+        [
+            [
+                int(x) + extent.x0,
+                int(y) + extent.y0,
+                int(x + width) + extent.x0,
+                int(y + height) + extent.y0,
+            ]
+            for x, y, width, height, _area in stats[1:]
+            if int(y) + extent.y0 < target.y1
+            and int(y + height) + extent.y0 > target.y0
+        ]
+        if components
+        else [
+            [target.x0 + x0, target.y0 + y0, target.x0 + x1, target.y0 + y1]
+            for x0, y0, x1, y1 in rows
+        ]
+    )
     return [
         [
-            (target.x0 + x0) * 72 / 400,
-            (target.y0 + y0) * 72 / 400,
-            (target.x0 + x1) * 72 / 400,
-            (target.y0 + y1) * 72 / 400,
+            x0 * 72 / 400,
+            y0 * 72 / 400,
+            x1 * 72 / 400,
+            y1 * 72 / 400,
         ]
-        for x0, y0, x1, y1 in rows
+        for x0, y0, x1, y1 in observed
     ], None
