@@ -2,7 +2,7 @@
 
 ## Original catalogue title and close-frame diagnosis
 
-Current derived admission is Binding71/binder82 and Activity49/extractor61.
+Current derived admission is Binding72/binder83 and Activity50/extractor62.
 Raw PDF/OCR/structure assets, manual audit/history, API/SQL, models and SAR
 numerical policies are unchanged. Do not relabel old accepted/failed evidence as
 current source proof. Old originals remain recoverable inputs to the ordinary
@@ -19,7 +19,7 @@ same original paired pixels, not a claimed rectangle.
 The no-word-nomination path reads every bounded unknown physical row in an
 already-owned catalogue/column context. Raster contexts retain the complete
 400dpi original pixels and3pt boundary support, then use the same physical-row
-partition and complete400/600dpi text reader. Inspect `ink_source` version2 and
+partition and complete400/600dpi text reader. Inspect `ink_source` version3 and
 its `raster_source`; missing/malformed pixel witnesses cannot fall back to saved
 role flags. The locator is not semantic acceptance or proof of blankness. No
 whole-page title OCR, new recognizer or auxiliary activation is introduced.
@@ -29,6 +29,18 @@ or the existing8M-pixel/1MiB/8row/128pt budgets remain explicit refusals, not
 proved title absence. Original replay does not acquire another text reader.
 An unnumbered category title never gains an invented table key. Wrapped/mixed
 categories must not erase the other role or the printed table marker.
+
+For aligned parallel physical catalogues, inspect the complete `parallel_grids`
+family, every original closed first-row witness and all physical title rows.
+An independent title must stay inside its actual original column and retain its
+printed table key. Global/cross-column ink cannot disappear; only the existing
+unique shared-caption proof can authorize a global title. Missing/weak peer reads,
+same-key contradictions, null/malformed peers or changed originals refuse rather
+than publishing the successful subset. Staggered missing-word and logical parallel
+layouts remain explicit limitations. Do not substitute page halves/nearest titles.
+Call-local title reuse is capped by the existing128-source limit, resets per page
+and replays actual source pixels; it is not a persisted acceptance cache. Both
+weak and strong attempts remain evidence, not instructions to retry until success.
 
 Nearby original closed frames are separate even inside the short-row distance
 heuristic; complete continuous outer rules keep one table together. Original

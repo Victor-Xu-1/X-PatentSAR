@@ -71,7 +71,7 @@ def _discovered_titles(contexts, context):
         return None
     observed = [
         {
-            "bbox": row["bbox"],
+            **row,
             "text": readings[index]
             if row["requires_read"]
             else project_source_observation(source["native_source"], row["bbox"])[
@@ -80,6 +80,10 @@ def _discovered_titles(contexts, context):
         }
         for index, row in enumerate(rows[0])
     ]
+    if "parallel_grids" in source["context"]:
+        from .title_parallel_members import parallel_title_text
+
+        return parallel_title_text(observed, source["context"], key_of=title_key)
     selected = title_row_indices(observed, boundary=catalogue_title_boundary)
     return (
         (" ".join(observed[index]["text"] for index in selected),) if selected else ()

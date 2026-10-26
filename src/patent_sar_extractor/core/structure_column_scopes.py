@@ -4,7 +4,7 @@ from .logical_column_partitions import nomination_groups
 from .ruled_structure_headers import ruled_header_roles
 from .structure_header_context import original_header_context_packets
 from .structure_table_headers import aligned_column_edges
-from .title_ink_geometry import title_context_spec
+from .title_context_grids import caption_title_context, title_context_spec
 from .unruled_structure_headers import header_windows, unruled_header_roles
 
 
@@ -51,12 +51,10 @@ def original_column_title_args(scope):
     )
     return {
         "contexts": scope["context_sources"],
-        "context": title_context_spec(
-            geometry=scope.get("context_geometry"),
-            logical_window=logical_window,
-            grid_axes=scope.get("grid_axes")
-            if scope.get("kind") == "original_ruled_columns"
-            else None,
+        "context": caption_title_context(scope)
+        if scope.get("kind") == "original_ruled_columns"
+        else title_context_spec(
+            geometry=scope.get("context_geometry"), logical_window=logical_window
         ),
     }
 

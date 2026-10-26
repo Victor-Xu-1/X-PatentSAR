@@ -155,6 +155,7 @@ def bind_caption_grids(
             result.tokens[page_no] = tokens
         prior_frames = qualified_caption_carries(carries)
         next_carries, consumed = [], set()
+        title_observations = {}
         for region in grids:
             xs, ys = region["xs"], region["ys"]
             if numbered_header_nominee(region, tokens):
@@ -162,7 +163,9 @@ def bind_caption_grids(
             caption = _prefix(
                 tokens, context_region(region, [grid_box(g) for g in grids])
             )
-            role = observe_caption_role(page, region, grids, tokens)
+            role = observe_caption_role(
+                page, region, grids, tokens, title_cache=title_observations
+            )
             role_status = caption_role_status(role, page_no, grid_box(region))
             # A qualified original title may come from independent native text
             # or the existing bounded title reader, not the layout lane. Keep

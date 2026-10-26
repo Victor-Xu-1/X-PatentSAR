@@ -10,7 +10,7 @@ from .caption_role_proof import observed_role
 from .caption_role_titles import project_caption_titles
 from .source_geometry import SourceTokens, native_region
 from .source_observations import source_cell_observation
-from .title_ink_geometry import title_context_spec
+from .title_context_grids import parallel_title_grids, title_context_spec
 from .title_original_replay import reuse_title_sources
 from .title_source_capture import attach_title_sources
 
@@ -93,7 +93,9 @@ def owns_caption_frame(
     return "label" in kinds and "drawing" in kinds
 
 
-def observe_caption_role(page, region, regions, tokens, *, original_role=None):
+def observe_caption_role(
+    page, region, regions, tokens, *, original_role=None, title_cache=None
+):
     """Reuse original context; unknown observed titles may use bounded cell reads."""
     if not isinstance(tokens, SourceTokens):
         return None
@@ -108,9 +110,14 @@ def observe_caption_role(page, region, regions, tokens, *, original_role=None):
     if not native:
         sources.append(source_cell_observation(tokens, window, native=True))
     observed = project_caption_titles(sources, geometry)
-    context = title_context_spec(geometry=geometry, grid_axes=grid_axes(region))
+    peers = parallel_title_grids(geometry, regions)
+    context = title_context_spec(
+        geometry=geometry, grid_axes=grid_axes(region), parallel_grids=peers
+    )
     sources = (
-        attach_title_sources(page, sources, observed, context=context)
+        attach_title_sources(
+            page, sources, observed, context=context, title_cache=title_cache
+        )
         if original_role is None
         else reuse_title_sources(page, sources, original_role.get("sources"))
     )
@@ -127,6 +134,7 @@ def observe_caption_role(page, region, regions, tokens, *, original_role=None):
         "window": window,
         "observations": observed,
         "sources": sources,
+        **({"parallel_grids": peers} if peers is not None else {}),
         "role": role,
         "table_key": key,
     }

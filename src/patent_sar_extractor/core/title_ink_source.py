@@ -5,11 +5,11 @@ from .source_cell_pixels import observe_closed_cell
 from .source_geometry import SourceTokens, source_layout
 from .source_observations import source_cell_observation
 from .source_paint_visibility import native_paint_view
-from .title_ink_geometry import (
+from .title_context_grids import (
     context_ruling_cells,
-    title_ink_rows,
     title_ruling_budget,
 )
+from .title_ink_geometry import title_ink_rows
 from .title_raster_source import observe_title_raster
 
 
@@ -20,7 +20,7 @@ def observe_title_ink(page, bounds, context, *, layout=None, paint_view=None):
     within_budget = title_ruling_budget(cells, size)
     window = observe_native_window(page, bounds, paint_view=paint_view)
     return {
-        "version": 2,
+        "version": 3,
         "page_no": page.number + 1,
         "page_size": size,
         "bbox": list(bounds),

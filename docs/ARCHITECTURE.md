@@ -27,8 +27,27 @@ evidence limits and8row/128pt bounds stay in force, before model acquisition.
 The same paired closed-cell SDK projects only actual original boundary pixels;
 unknown attached or crossing ink cannot be cut away. Complete native anchors,
 paint inventories, confidence and actual-original replay remain mandatory.
-Over-budget, parallel, missing or conflicting sources remain explicit refusals.
+Over-budget, ambiguous, missing or conflicting sources remain explicit refusals.
 This is not universal optical detection or molecular-accuracy acceptance.
+
+`title_context_grids` owns both the existing prefix contract and actual parallel
+grid families. Missing-word title discovery may partition complete physical rows
+only by independently closed, aligned original table columns. Full-width marks
+outside those columns stay global; no ink is discarded in the intervening gap.
+`title_parallel_rows` preserves all row marks and `title_parallel_members` selects
+one literal table member only after every required row has qualified. Independent
+members need original table keys; same-key contradictory titles cannot disagree
+silently. The existing shared-caption validator still owns truly global titles.
+Missing peer readings, weak/conflicting text, changed original pixels, open grids
+and malformed/null peer inventories refuse. Staggered missing-locator and logical
+parallel layouts remain unsupported rather than guessed from proximity.
+
+The existing caption binder and physical-header page loop pass bounded call-local
+title observations through `title_source_reuse`. Only readings for the identical
+physical window are reused, after actual original-source/pixel replay; every
+consumer rederives its role. Weak attempts are retained too, never retried until
+a preferred answer appears. Native-complete sources remain zero-OCR. No global
+cache, persistent admission flag, competing reader or additional model exists.
 
 Ruled and unruled column contexts share the existing bounded prefix and literal
 last-caption/adjacent-wrap selector. A wrapped category cannot erase its printed
@@ -46,7 +65,7 @@ rows together. This nominates geometry only. Native empty identifier cells use
 the existing complete paired empty-grid witness to avoid futile OCR, while the
 missing identifier remains an unresolved gap, never a fabricated record.
 
-Binding71/binder82 and Activity49/extractor61 refresh affected derived admission.
+Binding72/binder83 and Activity50/extractor62 refresh affected derived admission.
 Coverage25/source4/role6, raw observations/original assets/manual audit/history,
 SMILES/OCSR/model preparation, API-v1/SQLite and SAR numerical policies remain
 unchanged. Historical source review is not current acceptance.

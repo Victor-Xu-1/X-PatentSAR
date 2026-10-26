@@ -167,8 +167,16 @@ def observe_unruled_tables(
                     "Original unruled header exceeds its observation budget"
                 )
             headers.append(header)
+        title_observations = {}
         anchors = [
-            observe_ruled_header(page, tokens, grid, original_sha, grids=grids)
+            observe_ruled_header(
+                page,
+                tokens,
+                grid,
+                original_sha,
+                grids=grids,
+                title_cache=title_observations,
+            )
             for grid in physical
         ]
         events = [(scope_axes(h)[1][0], h, None, False, None) for h in headers]

@@ -80,7 +80,7 @@ def catalog_for_caption_scope(scope) -> Catalog:
     from .caption_role_links import MAX_CONTINUATION_DEPTH
     from .caption_role_proof import caption_role_status
     from .source_table_roles import title_texts
-    from .title_ink_geometry import caption_title_context
+    from .title_context_grids import caption_title_context
 
     if (
         not isinstance(scope, dict)

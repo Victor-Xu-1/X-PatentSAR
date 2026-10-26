@@ -12,8 +12,8 @@ from .caption_role_links import MAX_CONTINUATION_DEPTH, valid_role_link
 from .caption_role_titles import project_caption_titles
 from .source_observations import source_observation_status
 from .source_table_roles import observed_role, title_key
+from .title_context_grids import caption_title_context, validate_parallel_title_grids
 from .title_context_source import valid_title_context
-from .title_ink_geometry import caption_title_context
 
 __all__ = [
     "caption_role_status",
@@ -29,7 +29,7 @@ def caption_role_status(scope, page_no, label_cell, *, _depth=0):
         _depth > MAX_CONTINUATION_DEPTH
         or type(page_no) is not int
         or not isinstance(scope, dict)
-        or set(scope) - {"continuation"}
+        or set(scope) - {"continuation", "parallel_grids"}
         != {
             "version",
             "page_no",
@@ -61,6 +61,7 @@ def caption_role_status(scope, page_no, label_cell, *, _depth=0):
     try:
         validate_context_geometry(scope["context_geometry"], table)
         validate_grid_axes(scope["grid_axes"], table)
+        validate_parallel_title_grids(caption_title_context(scope))
         if label_cell != table and (
             (label_cell[0], label_cell[2])
             not in tuple(pairwise(scope["grid_axes"]["xs"]))
