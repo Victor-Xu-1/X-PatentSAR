@@ -198,8 +198,8 @@ def valid_native_window(packet, bounds):
     )
 
 
-def native_window_complete(packet, native):
-    """A native vote needs the WHOLE paint inventory and every original word."""
+def native_window_text_complete(packet, native):
+    """All original native glyphs are retained, independent of other source ink."""
     if (
         not isinstance(native, dict)
         or native.get("origin") != "native"
@@ -207,18 +207,6 @@ def native_window_complete(packet, native):
         != "qualified"
         or not valid_native_window(packet, native["bbox"])
         or packet["refusal"] is not None
-    ):
-        return False
-    rules = {
-        paint["seqno"]
-        for paint in packet["paints"]
-        if packet["boundary_source_id"] is not None
-        and paint["kind"] == "stroke-path"
-        and boundary_rule_path(paint["rule_path"], packet["bbox"])
-    }
-    if any(
-        paint["kind"] != "fill-text" and paint["seqno"] not in rules
-        for paint in packet["paints"]
     ):
         return False
     paints = {
@@ -250,4 +238,17 @@ def native_window_complete(packet, native):
         for token in native["tokens"]
         for character in token["text"]
         if not character.isspace()
+    )
+
+
+def native_window_complete(packet, native):
+    """A native vote needs the WHOLE paint inventory and every original word."""
+    if not native_window_text_complete(packet, native):
+        return False
+    return all(
+        paint["kind"] == "fill-text"
+        or packet["boundary_source_id"] is not None
+        and paint["kind"] == "stroke-path"
+        and boundary_rule_path(paint["rule_path"], packet["bbox"])
+        for paint in packet["paints"]
     )

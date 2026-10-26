@@ -7,9 +7,10 @@ from patent_sar_extractor.contracts import PLOT_REFERENCE_VERSION
 from .cell_text_proof import valid_text_reading
 from .heading_detector_identity import declaration_identity as _identity
 from .heading_detector_identity import detector_conflicts
+from .heading_native_claims import heading_literal as _text
+from .heading_native_claims import native_heading_agrees
 from .heading_source_geometry import MAX_HEADING_HEIGHT, valid_heading_geometry
 from .native_window_coverage import native_window_complete, valid_native_window
-from .printed_identifiers import identifier_width
 from .source_cell_pixels import cell_readings_conserve_ink, closed_cell_masks
 from .source_geometry import overlaps
 from .source_observations import source_observation_status
@@ -17,10 +18,6 @@ from .source_section_roles import (
     heading_members,
     section_heading,
 )
-
-
-def _text(value):
-    return " ".join(identifier_width(value).split()).casefold()
 
 
 def _matching_original_window(proof, prior):
@@ -43,13 +40,9 @@ def _matching_original_window(proof, prior):
 
 
 def _known_original_agrees(prior, declaration, text):
-    original = prior["native_source"]
-    known = (
-        [original["text"]]
-        if source_observation_status(original, prior["bbox"], original["text"])
-        == "qualified"
-        else []
-    )
+    if not native_heading_agrees(prior, text):
+        return False
+    known = []
     known.extend(
         reading["raw_text"]
         for reading, dpi in zip(prior["observations"], (400, 600))
@@ -152,9 +145,7 @@ def heading_observation_status(proof):
         texts = [reading["raw_text"] for reading in readings]
         if _text(texts[0]) != _text(texts[1]):
             return "unresolved", None
-        if native["text"].strip() and (
-            native_status != "qualified" or _text(native["text"]) != _text(texts[0])
-        ):
+        if not native_heading_agrees(proof, texts[0]):
             return "unresolved", None
     elif (
         native_status != "qualified"
@@ -170,7 +161,14 @@ def heading_observation_status(proof):
     members = heading_members(declaration)
     if len(set(members)) != len(members):
         return "unresolved", None
-    if hint["source"] == "native" and _text(hint["text"]) != _text(texts[0]):
+    if (
+        hint["source"] == "native"
+        and _text(hint["text"]) != _text(texts[0])
+        and (
+            _text(hint["text"]) != _text(native["text"])
+            or not native_heading_agrees(proof, texts[0])
+        )
+    ):
         return "unresolved", None
     if prior is not None and not _known_original_agrees(prior, declaration, texts[0]):
         return "unresolved", None

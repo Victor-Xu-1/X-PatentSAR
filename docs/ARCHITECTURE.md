@@ -85,13 +85,23 @@ digest before admission. A saved digest/flag alone grants no source permission.
 
 Heading, scalar/identifier, role and declared-text cells use the same native
 window envelope and `cell_source_status`; actual-original replay reconstructs
-it without OCR. An incomplete native heading may request the existing bounded
-whole-window reader, but no differing qualified native literal is rewritten or
-outvoted. Current native source windows are bounded to4096paints/20000retained
+it without OCR. `heading_native_claims` conserves every qualified native word
+when that SAME window has additional outlined source ink. Both existing complete
+optical observations must add the missing text, preserve the whole-word native
+sequence uniquely and keep its exact declared members. Unknown paint may not
+intersect the retained native words. A complete native title remains an exact
+literal veto; echoing only the known subset is not a complete optical read.
+All native/optical observations remain unchanged, and qualified earlier optical
+conflicts, detector conflicts and actual-original replay are still mandatory.
+A native locator equal to that partial layer cannot independently veto the
+whole observation; a different locator ID remains refused. No spelling, suffix
+or identifier repair, new OCR/model or successful-word crop exists.
+Current native source windows are bounded to4096paints/20000retained
 primitives, below the unchanged page/source/render bounds; exceeded work retains
 an explicit refusal, not a successful prefix. No model pass is required for a
-complete native source. Binding67/binder78 and Activity46/extractor58 refresh
-affected derived proof only; raw observations, original assets, manual/history,
+complete native source. Binding68/binder79 refresh heading admission; the earlier
+native-window release introduced Activity46/extractor58, unchanged by this
+heading-only repair. Raw observations, original assets, manual/history,
 source/role/coverage/chemical models, API/SQL and SAR policies are unchanged.
 This is bounded original-window completeness, not all-page detector recall,
 automatic recognition of every outlined glyph, or real-patent acceptance.

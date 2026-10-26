@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "c573e1e661a9c1eed183a82455250c0992df7bb5",
+  "base_sha": "35000df1e3cf1b84f7285e448d672c2f29cf6c4b",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
@@ -9,23 +9,14 @@
     "frontend/package-lock.json",
     "frontend/package.json",
     "src/patent_sar_extractor/contracts.py",
-    "src/patent_sar_extractor/core/activity_grid_cells.py",
-    "src/patent_sar_extractor/core/activity_grid_role_observation.py",
-    "src/patent_sar_extractor/core/activity_grid_role_proof.py",
-    "src/patent_sar_extractor/core/activity_text_capture.py",
-    "src/patent_sar_extractor/core/heading_observation.py",
-    "src/patent_sar_extractor/core/heading_original_replay.py",
+    "src/patent_sar_extractor/core/heading_native_claims.py",
     "src/patent_sar_extractor/core/heading_source_proof.py",
-    "src/patent_sar_extractor/core/native_cell_replay.py",
     "src/patent_sar_extractor/core/native_window_coverage.py",
-    "src/patent_sar_extractor/core/native_window_rules.py",
-    "src/patent_sar_extractor/core/source_cell_claims.py",
-    "src/patent_sar_extractor/core/source_paint_visibility.py",
-    "src/patent_sar_extractor/core/table_cells.py",
-    "tests/test_heading_inventory.py",
-    "tests/test_native_heading_coverage.py"
+    "tests/test_partial_native_headings.py"
   ],
   "python_modules": [
+    "tests.test_partial_native_headings",
+    "tests.test_heading_recovery_scope",
     "tests.test_native_heading_coverage",
     "tests.test_native_activity_source",
     "tests.test_native_paint_view",
