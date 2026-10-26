@@ -10,6 +10,7 @@ from .title_ink_geometry import (
     title_ink_rows,
     title_ruling_budget,
 )
+from .title_raster_source import observe_title_raster
 
 
 def observe_title_ink(page, bounds, context, *, layout=None, paint_view=None):
@@ -17,8 +18,9 @@ def observe_title_ink(page, bounds, context, *, layout=None, paint_view=None):
     size = [page.rect.width, page.rect.height]
     cells = context_ruling_cells(context, bounds)
     within_budget = title_ruling_budget(cells, size)
+    window = observe_native_window(page, bounds, paint_view=paint_view)
     return {
-        "version": 1,
+        "version": 2,
         "page_no": page.number + 1,
         "page_size": size,
         "bbox": list(bounds),
@@ -26,7 +28,12 @@ def observe_title_ink(page, bounds, context, *, layout=None, paint_view=None):
         "native_source": source_cell_observation(
             SourceTokens(layout.native, layout), bounds, native=True
         ),
-        "native_window": observe_native_window(page, bounds, paint_view=paint_view),
+        "native_window": window,
+        "raster_source": observe_title_raster(page, bounds)
+        if within_budget
+        and window["refusal"] is None
+        and any(p["kind"] == "fill-image" for p in window["paints"])
+        else None,
         "ruling_sources": [
             {
                 "cell": cell,

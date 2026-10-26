@@ -39,7 +39,9 @@ def _relative(box, origin, dpi):
     ]
 
 
-def _interior(mask, cell, window, dpi, reading, *, content_only=False):
+def _interior(
+    mask, cell, window, dpi, reading, *, content_only=False, boundary_only=False
+):
     point_origin = retained_pixel_origin(reading, window, dpi)
     ox, oy = [round(value * dpi / 72) for value in point_origin]
     origin = fitz.IRect(ox, oy, ox + mask.shape[1], oy + mask.shape[0])
@@ -64,6 +66,8 @@ def _interior(mask, cell, window, dpi, reading, *, content_only=False):
     for indices in bands[2:]:
         allowed[y0:y1, indices] = True
     include_original_rule_joints(mask, allowed, bands)
+    if boundary_only:
+        return mask & allowed
     if content_only:
         # Exact closed-grid rules, not a guessed margin, may be excluded for
         # the already-owned grid's blank-cell check. Every other pixel survives.
@@ -75,9 +79,15 @@ def _interior(mask, cell, window, dpi, reading, *, content_only=False):
     return mask[reading_box[1] : reading_box[3], reading_box[0] : reading_box[2]]
 
 
-def closed_cell_masks(packet, cell, size, *, content_only=False):
+def closed_cell_masks(packet, cell, size, *, content_only=False, boundary_only=False):
+    """Interior masks, or exact rule pixels in the full retained source frame.
+
+    Boundary projection is subordinate to this same complete paired closure
+    proof; it never supplies fabricated, dilated or inferred boundary pixels.
+    """
     if (
-        not inside_box(cell, [0, 0, *size])
+        (content_only and boundary_only)
+        or not inside_box(cell, [0, 0, *size])
         or not isinstance(packet, dict)
         or set(packet) != {"bbox", "readings"}
     ):
@@ -94,7 +104,15 @@ def closed_cell_masks(packet, cell, size, *, content_only=False):
         mask = retained_pixels(reading, window, dpi, MAX_CELL_PIXELS)
         if mask is None:
             return None
-        inner = _interior(mask, cell, window, dpi, reading, content_only=content_only)
+        inner = _interior(
+            mask,
+            cell,
+            window,
+            dpi,
+            reading,
+            content_only=content_only,
+            boundary_only=boundary_only,
+        )
         if inner is None:
             return None
         masks.append(inner)

@@ -15,6 +15,42 @@ from .cell_text_row_readings import (
 )
 
 
+def physical_row_bounds(ink, dpi, *, maximum_row_height, maximum_rows):
+    """One complete pixel-row partition shared by capture and source discovery."""
+    if (
+        ink.ndim != 2
+        or any(dimension <= 0 for dimension in ink.shape)
+        or ink.dtype not in (np.dtype(bool), np.dtype(np.uint8))
+        or ink.size > 8_000_000
+        or type(dpi) is not int
+        or dpi not in {400, 600}
+        or type(maximum_rows) is not int
+        or not 2 <= maximum_rows <= 4096
+    ):
+        raise ValueError("Invalid original pixel-row inventory")
+    limit = row_pixel_limit(dpi, maximum_row_height=maximum_row_height)
+    occupied = np.flatnonzero(ink.any(axis=1))
+    if not len(occupied):
+        return [], None
+    groups = np.split(
+        occupied,
+        np.flatnonzero(
+            np.diff(occupied) > max(1, math.ceil(dpi / 72 * PHYSICAL_ROW_GAP))
+        )
+        + 1,
+    )
+    if len(groups) > maximum_rows:
+        return [], "physical_row_budget"
+    bounds = []
+    for rows in groups:
+        y0, y1 = int(rows[0]), int(rows[-1]) + 1
+        if y1 - y0 > limit:
+            return [], "physical_row_height_budget"
+        x = np.flatnonzero(ink[y0:y1].any(axis=0))
+        bounds.append([int(x[0]), y0, int(x[-1]) + 1, y1])
+    return bounds, None
+
+
 def header_line_frame(image, border, dpi, *, maximum_row_height=12, maximum_rows=8):
     if (
         type(maximum_rows) is not int
@@ -59,19 +95,10 @@ def physical_line_frame(
     ):
         raise ValueError("Invalid original header line frame")
     ink = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY) < 180
-    occupied = np.flatnonzero(ink.any(axis=1))
-    if not len(occupied):
-        return None
-    groups = np.split(
-        occupied,
-        np.flatnonzero(
-            np.diff(occupied) > max(1, math.ceil(dpi / 72 * PHYSICAL_ROW_GAP))
-        )
-        + 1,
+    bounds, refusal = physical_row_bounds(
+        ink, dpi, maximum_row_height=maximum_row_height, maximum_rows=maximum_rows
     )
-    if len(groups) == 1 and groups[0][-1] - groups[0][0] + 1 <= row_pixel_limit(
-        dpi, maximum_row_height=maximum_row_height
-    ):
+    if refusal is None and len(bounds) < 2:
         return None
     packet = {
         "version": 1,
@@ -81,16 +108,8 @@ def physical_line_frame(
         "row_bounds": [],
         "ink_pixels": int(ink.sum()),
     }
-    if not 2 <= len(groups) <= maximum_rows:
-        return packet
-    for rows in groups:
-        y0, y1 = int(rows[0]), int(rows[-1]) + 1
-        x = np.flatnonzero(ink[y0:y1].any(axis=0))
-        x0, x1 = int(x[0]), int(x[-1]) + 1
-        packet["row_bounds"].append([x0, y0, x1, y1])
-        if y1 - y0 > row_pixel_limit(dpi, maximum_row_height=maximum_row_height):
-            packet["row_bounds"] = []
-            return packet
+    if refusal is None:
+        packet["row_bounds"] = bounds
     return packet
 
 

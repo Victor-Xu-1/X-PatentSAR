@@ -10,11 +10,22 @@
   segments under the existing paired pixel-closure proof are ruling; literal
   dashed sources keep that same closure/unknown/gap gate. Call-local original
   paint facts serve the normal heading loop, never a global/competing cache.
-  Binding70/binder81 and Activity48/extractor60 refresh derived admission only;
+  Binding71/binder82 and Activity49/extractor61 refresh derived admission only;
   source4/role6/coverage25/SMILES6, raw/history/manual, model/dependency/default
   activation, SQL/API/SAR policies remain unchanged. No second parser/recognizer,
   writer/store/queue, guessed ID/product or cropped successful subset exists.
   Generated controls do not establish all-format/chemical/real-patent success.
+
+- Raster title discovery authority: `title_raster_source` retains complete owned
+  context pixels at400dpi with3pt boundary support, not successful OCR boxes.
+  The shared `cell_header_lines.physical_row_bounds` partitions every physical
+  row; complete400/600dpi observations and the existing original title replay
+  still decide admission. `source_cell_pixels.closed_cell_masks` alone owns
+  exact paired ruling projection, with attached/crossing unknown ink refused.
+  No new queue, recognizer, writer, image store, implicit role or invented ID is
+  introduced. Ink inventory2 is derived source data; raw originals/manual audit
+  remain unchanged. Existing8M-pixel/1MiB evidence and8row/128pt limits apply
+  before model work. Unsupported/parallel/conflicting sources stay explicit.
 
 - Numeric source/SAR authority: `core/measurement_literals` owns the exact
   bounded scalar/censored/interval grammar previously embedded in SAR. Both
