@@ -14,6 +14,7 @@ from .structure_declaration_scopes import (
     PAGE_ROLE,
     PAGE_STATUS,
     declaration_scopes,
+    declaration_title_nominations,
     nonfinal_declaration_diagrams,
 )
 from .structure_table_headers import possible_structure_header
@@ -83,6 +84,13 @@ def observe_declaration_pages(
             ),
             "page_grids": [grid_axes(grid) for grid in grids_for_page(page)],
         }
+        from .title_source_capture import attach_title_sources
+
+        nominations = declaration_title_nominations(source)
+        parents = [p for chunk in source["page_context"] for p in chunk["sources"]]
+        observed = iter(attach_title_sources(page, parents, nominations))
+        for chunk in source["page_context"]:
+            chunk["sources"] = [next(observed) for _ in chunk["sources"]]
         scopes = declaration_scopes(source)
         if not scopes:
             continue

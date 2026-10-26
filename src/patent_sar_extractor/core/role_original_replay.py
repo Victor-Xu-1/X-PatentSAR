@@ -25,6 +25,36 @@ def original_role_source_errors(document, sources):
             if type(page_no) is not int or not 1 <= page_no <= len(document):
                 return ["Original role-text page ownership is unavailable."]
             page = document[page_no - 1]
+            if cell.get("method") == "original_title_context":
+                if set(cell) != {"method", "title_context"}:
+                    return ["Malformed original title context carrier."]
+                from .title_context_source import replay_title_context
+
+                if page_no not in layouts:
+                    layouts[page_no] = source_layout(page)
+                    paints[page_no] = native_paint_view(page)
+                replay_title_context(
+                    page,
+                    cell["title_context"],
+                    layout=layouts[page_no],
+                    paint_view=paints[page_no],
+                )
+                continue
+            if cell.get("method") == "original_title":
+                if set(cell) != {"method", "title_source"}:
+                    return ["Malformed original title source carrier."]
+                from .title_original_replay import replay_source_title
+
+                if page_no not in layouts:
+                    layouts[page_no] = source_layout(page)
+                    paints[page_no] = native_paint_view(page)
+                replay_source_title(
+                    page,
+                    cell["title_source"],
+                    layout=layouts[page_no],
+                    paint_view=paints[page_no],
+                )
+                continue
             bounds = cell.get("bbox")
             if not inside_box(bounds, [0, 0, page.rect.width, page.rect.height]):
                 return ["Original role-text cell leaves its original page."]

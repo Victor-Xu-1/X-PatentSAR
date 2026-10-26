@@ -93,6 +93,7 @@ def observe_unruled_header(page, tokens, nomination, original_pdf_sha256, *, gri
             logical_window=[xs[0], ys[0], xs[-1], ys[-1]]
             if nomination["band"] != [0, size[0]]
             else None,
+            page=page,
         ),
         "role_cells": reading,
     }
@@ -181,7 +182,7 @@ def unruled_header_roles(scope):
     headers = original_header_readings(scope["role_cells"], xs, ys, sources)
     if headers is None:
         return None
-    if role in {"mixed", "conflict"}:
+    if role in {"mixed", "conflict", "unresolved"}:
         return None
     pairs = structure_column_pairs(headers)
     if (

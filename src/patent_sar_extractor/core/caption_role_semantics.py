@@ -3,7 +3,11 @@
 import re
 
 from .source_role_terms import CATALOG_COMPOUND_CJK, INTERMEDIATE_CJK, role_words
-from .source_table_markers import TABLE_CAPTION_START, caption_table_marker
+from .source_table_markers import (
+    TABLE_CAPTION_START,
+    caption_table_marker,
+    table_body_boundary,
+)
 
 _NONFINAL = re.compile(
     r"\b(?:intermediates?|starting\s+materials?|building\s+blocks?|reactants?|reagents?)\b"
@@ -15,6 +19,7 @@ _COMPOUNDS = re.compile(
     rf"|{CATALOG_COMPOUND_CJK}",
     re.IGNORECASE,
 )
+_INTERMEDIATE_MODIFIER = re.compile(rf"intermediate|{INTERMEDIATE_CJK}", re.IGNORECASE)
 _NEGATION = re.compile(
     r"\b(?:not|no|without|except|excluding)\s+"
     r"(?:(?:a|an|any|the|these|those|such)\s+)?$"
@@ -22,6 +27,24 @@ _NEGATION = re.compile(
     r"|(?:非|不含|不包括|不包含|不是|并非|並非)\s*$",
     re.IGNORECASE,
 )
+_CATEGORY_NOUN = (
+    rf"(?:(?:{_NONFINAL.pattern})(?:\s+compounds?)?|(?:{_COMPOUNDS.pattern}))"
+)
+_CATEGORY_TITLE = re.compile(
+    rf"\s*(?:(?:selected|representative)\s+)?"
+    rf"(?:(?:not|no|excluding|non[-\s]+)\s*)?{_CATEGORY_NOUN}"
+    rf"(?:(?:\s*(?:and|or|&|/|,|，|和|与|與|及)\s*|\s+){_CATEGORY_NOUN})*[\s.:：]*",
+    re.IGNORECASE,
+)
+
+
+def catalogue_title_boundary(text):
+    """A table marker or whole category noun phrase, never an incidental mention."""
+    return bool(
+        isinstance(text, str)
+        and len(text) <= 2048
+        and (table_body_boundary(text) or _CATEGORY_TITLE.fullmatch(role_words(text)))
+    )
 
 
 def nonfinal_catalog_text(text):
@@ -54,9 +77,12 @@ def catalog_title_role(text):
         return "unknown"
     start = TABLE_CAPTION_START.match(text)
     if start is None:
-        return "unknown"
-    marker = caption_table_marker(text)
-    title = role_words(text[marker.end() if marker else start.end() :])
+        if not _CATEGORY_TITLE.fullmatch(role_words(text)):
+            return "unknown"
+        title = role_words(text)
+    else:
+        marker = caption_table_marker(text)
+        title = role_words(text[marker.end() if marker else start.end() :])
     nonfinal = tuple(_NONFINAL.finditer(title))
     compounds = tuple(_COMPOUNDS.finditer(title))
     # A negative category is not positive evidence for either admission or
@@ -70,6 +96,7 @@ def catalog_title_role(text):
         if any(
             not any(
                 part.end() <= compound.start()
+                and _INTERMEDIATE_MODIFIER.fullmatch(part.group())
                 and not title[part.end() : compound.start()].strip()
                 for part in nonfinal
             )

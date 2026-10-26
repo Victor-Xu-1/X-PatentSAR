@@ -128,16 +128,8 @@ def _identifier_lists(chunks, page, body, lanes):
     return lists if any(any(item["identifiers"]) for item in lists) else []
 
 
-def declaration_scopes(source):
-    """No artificial columns/rows: titles, complete contexts and actual diagrams."""
-    validate_declaration_page(source)
-    size, chunks = source["page_size"], source["page_context"]
-    page = [0, 0, *size]
-    lanes = [
-        window_source_tokens(chunks, page, native=native) for native in (False, True)
-    ]
-    page_source_id = proof_id(source)
-    output = []
+def _title_windows(source, lanes):
+    size = source["page_size"]
     captions = table_caption_nominees(lanes[0], size, native_tokens=lanes[1])
     logical_headers = nominate_unruled_headers(lanes[0], size, native_tokens=lanes[1])
     for caption in captions:
@@ -154,6 +146,35 @@ def declaration_scopes(source):
         title = _title_window(caption, lanes, size, band)
         if title[3] >= size[1]:
             continue
+        yield caption, band, title
+
+
+def declaration_title_nominations(source):
+    validate_declaration_page(source)
+    size, chunks = source["page_size"], source["page_context"]
+    page = [0, 0, *size]
+    lanes = [
+        window_source_tokens(chunks, page, native=native) for native in (False, True)
+    ]
+    return [
+        p
+        for _caption, _band, title in _title_windows(source, lanes)
+        for c in project_source_window(chunks, page, title)
+        for p in c["sources"]
+        if p["text"].strip()
+    ]
+
+
+def declaration_scopes(source):
+    """No artificial columns/rows: titles, complete contexts and actual diagrams."""
+    validate_declaration_page(source)
+    size, chunks = source["page_size"], source["page_context"]
+    page = [0, 0, *size]
+    lanes = [
+        window_source_tokens(chunks, page, native=native) for native in (False, True)
+    ]
+    page_source_id, output = proof_id(source), []
+    for caption, band, title in _title_windows(source, lanes):
         title_chunks = project_source_window(chunks, page, title)
         packets = [p for c in title_chunks for p in c["sources"] if p["text"].strip()]
         role, _key = observed_role(packets)
@@ -184,7 +205,7 @@ def declaration_scopes(source):
         )
         if (
             not diagrams
-            and role not in {"nonfinal", "conflict"}
+            and role not in {"nonfinal", "conflict", "unresolved"}
             and not lists
             and not unproved_nonfinal
         ):
@@ -208,6 +229,7 @@ def declaration_scopes(source):
                 "trusted_bottom": extent["trusted_bottom"],
                 "unproved_boundaries": extent["unproved_boundaries"],
                 "unproved_nonfinal_role": unproved_nonfinal,
+                "unproved_title": role == "unresolved",
             }
         )
     return output

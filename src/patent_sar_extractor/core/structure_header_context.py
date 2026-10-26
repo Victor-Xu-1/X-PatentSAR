@@ -2,43 +2,45 @@
 
 from .activity_context_geometry import context_floor
 from .caption_role_titles import project_caption_titles
-from .source_cell_tokens import cell_lines, cell_text
 from .source_observations import source_observation_status
-from .source_table_markers import table_body_boundary
 from .source_table_roles import observed_role
 from .source_window_chunks import observe_window_sources
+from .title_ink_geometry import title_context_spec
 
 
-def observe_header_context(tokens, size, top, *, geometry=None, logical_window=None):
+def observe_header_context(
+    tokens, size, top, *, geometry=None, logical_window=None, grid_axes=None, page=None
+):
+    def capture(bounds):
+        sources = observe_window_sources(tokens, bounds) if bounds else []
+        if page is None or not sources:
+            return sources
+        from .title_source_capture import attach_title_sources
+
+        nominations = original_header_context_packets(
+            sources, top, size[0], geometry=geometry, logical_window=logical_window
+        )
+        return attach_title_sources(
+            page,
+            sources,
+            nominations,
+            context=title_context_spec(
+                geometry=geometry, logical_window=logical_window, grid_axes=grid_axes
+            ),
+        )
+
     if logical_window is not None:
         if geometry is not None:
             raise ValueError(
                 "Logical source capture cannot declare physical grid context"
             )
         floor = max(0, top - 310)
-        return (
-            observe_window_sources(tokens, [0, floor, size[0], top])
-            if floor < top
-            else []
-        )
+        return capture([0, floor, size[0], top]) if floor < top else []
     if geometry is not None:
         floor = context_floor(geometry)
-        return (
-            observe_window_sources(tokens, [0, floor, size[0], top])
-            if floor < top
-            else []
-        )
-    window, starts = [0, 0, size[0], top], []
-    for lane in (tokens, getattr(tokens, "native_tokens", ())):
-        titles = [
-            line
-            for line in cell_lines(lane, window)
-            if table_body_boundary(cell_text(line, window))
-        ]
-        if titles:
-            starts.append(max(0, min(part["bbox"][1] for part in titles[-1]) - 2))
-    bounds = [0, min(starts), size[0], top] if starts and min(starts) < top else None
-    return observe_window_sources(tokens, bounds) if bounds else []
+        return capture([0, floor, size[0], top]) if floor < top else []
+    floor = max(0, top - 310)
+    return capture([0, floor, size[0], top]) if floor < top else []
 
 
 def original_header_context_packets(
@@ -82,14 +84,32 @@ def original_header_context_packets(
             return project_caption_titles(contexts, None, logical_window=logical_window)
         if contexts:
             raise ValueError("Original zero-height logical context is not empty")
-    return [p for p in contexts if p["text"].strip()]
+    floor = max(0, top - 310)
+    if floor < top:
+        expected = [0, floor, width, top]
+        if not contexts or any(packet["bbox"] != expected for packet in contexts):
+            raise ValueError("Incomplete original header-only title context")
+        return project_caption_titles(contexts, None, context_window=expected)
+    if contexts:
+        raise ValueError("Original zero-height title context is not empty")
+    return []
 
 
 def original_header_context_role(
-    contexts, top, width, *, geometry=None, logical_window=None
+    contexts, top, width, *, geometry=None, logical_window=None, grid_axes=None
 ):
+    from .title_context_source import valid_title_context
+
+    if any(not valid_title_context(context, width=width) for context in contexts):
+        return "unresolved", ""
+    if top == 0 and not contexts:
+        return "unknown", ""
     return observed_role(
         original_header_context_packets(
             contexts, top, width, geometry=geometry, logical_window=logical_window
-        )
+        ),
+        contexts=contexts,
+        context=title_context_spec(
+            geometry=geometry, logical_window=logical_window, grid_axes=grid_axes
+        ),
     )

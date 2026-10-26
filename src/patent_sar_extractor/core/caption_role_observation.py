@@ -8,9 +8,11 @@ from .activity_context_geometry import (
 )
 from .caption_role_proof import observed_role
 from .caption_role_titles import project_caption_titles
-from .caption_title_refinement import observe_title_refinement, refined_title_role
 from .source_geometry import SourceTokens, native_region
 from .source_observations import source_cell_observation
+from .title_ink_geometry import title_context_spec
+from .title_original_replay import reuse_title_sources
+from .title_source_capture import attach_title_sources
 
 
 def _proved_prefixed_frame(page, region, role, kinds, original_bindings):
@@ -68,13 +70,13 @@ def owns_caption_frame(
     from .caption_role_proof import caption_role_status
 
     role = observe_caption_role(
-        page, region, regions, tokens, refine=original_role is None
+        page, region, regions, tokens, original_role=original_role
     )
     if role is None:
         return False  # Untyped transport cannot prove a current caption owner.
     if original_role is not None:
         claimed = caption_role_status(original_role, page.number + 1, grid_box(region))
-        fields = {"role", "table_key", "continuation", "refinement"}
+        fields = {"role", "table_key", "continuation"}
         if claimed not in {"compound", "nonfinal", "unknown"} or {
             key: value for key, value in original_role.items() if key not in fields
         } != {key: value for key, value in role.items() if key not in fields}:
@@ -91,7 +93,7 @@ def owns_caption_frame(
     return "label" in kinds and "drawing" in kinds
 
 
-def observe_caption_role(page, region, regions, tokens, *, refine=True):
+def observe_caption_role(page, region, regions, tokens, *, original_role=None):
     """Reuse original context; unknown observed titles may use bounded cell reads."""
     if not isinstance(tokens, SourceTokens):
         return None
@@ -106,7 +108,16 @@ def observe_caption_role(page, region, regions, tokens, *, refine=True):
     if not native:
         sources.append(source_cell_observation(tokens, window, native=True))
     observed = project_caption_titles(sources, geometry)
-    role, key = observed_role(observed)
+    context = title_context_spec(geometry=geometry, grid_axes=grid_axes(region))
+    sources = (
+        attach_title_sources(page, sources, observed, context=context)
+        if original_role is None
+        else reuse_title_sources(page, sources, original_role.get("sources"))
+    )
+    if sources is None:
+        return None
+    observed = project_caption_titles(sources, geometry)
+    role, key = observed_role(observed, contexts=sources, context=context)
     scope = {
         "version": 1,
         "page_no": page.number + 1,
@@ -119,11 +130,4 @@ def observe_caption_role(page, region, regions, tokens, *, refine=True):
         "role": role,
         "table_key": key,
     }
-    if refine and role == "unknown":
-        reading = observe_title_refinement(page, scope, tokens)
-        if reading is not None:
-            scope["refinement"] = reading
-            selected = refined_title_role(scope)
-            if selected is not None:
-                scope["role"], scope["table_key"] = selected
     return scope

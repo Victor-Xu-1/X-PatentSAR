@@ -155,6 +155,10 @@ def declaration_issues(sections, scope, entries, *, nonfinal_diagrams):
                 issues.append(
                     {**finding, "reason": "unproved_original_nonfinal_declaration"}
                 )
+            if original["unproved_title"]:
+                issues.append(
+                    {**finding, "reason": "unproved_original_catalogue_title"}
+                )
             excluded = {d["id"] for d in nonfinal_declaration_diagrams(original)}
             for diagram in original["diagrams"]:
                 owners = [

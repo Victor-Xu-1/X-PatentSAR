@@ -37,6 +37,10 @@ class ColumnHeaderConsumerTests(unittest.TestCase):
         write_json_atomic(consumer.metadata, fixture.metadata)
         write_json_atomic(str(consumer.metadata) + ".manifest.json", fixture.manifest)
         header.update(page_no=5, original_pdf_sha256=fixture.original_sha)
+        for parent in header["context_sources"]:
+            parent["title_context"]["page_no"] = 5
+            for title in parent["original_titles"]:
+                title["page_no"] = 5
         consumer.payload = {
             "source_sections": [
                 {
@@ -69,7 +73,11 @@ class ColumnHeaderConsumerTests(unittest.TestCase):
             side_effect=AssertionError("Source plan cannot load OCR"),
         ):
             plan = consumer.load(consumer.payload)
-        self.assertEqual(len(plan.proven.role_text), 2)
+        self.assertEqual(len(plan.proven.role_text), 4)
+        self.assertEqual(
+            {cell.get("method") for _, cell in plan.proven.role_text},
+            {"cell_ocr_400dpi", "original_title", "original_title_context"},
+        )
         self.assertEqual({number for number, _ in plan.proven.role_text}, {5})
         self.assertEqual(len(plan.proven.work_items), 1)
         self.assertEqual(len(plan.work_items), 1)
@@ -83,7 +91,7 @@ class ColumnHeaderConsumerTests(unittest.TestCase):
             document.save(changed)
         self.adopt(consumer, header, changed)
         # Self-consistent current document identity cannot authorize old text pixels.
-        self.assertEqual(len(tuple(role_text_cells(consumer.payload))), 2)
+        self.assertEqual(len(tuple(role_text_cells(consumer.payload))), 4)
         with self.assertRaisesRegex(
             ValueError, "Original binding/source replay failed"
         ):

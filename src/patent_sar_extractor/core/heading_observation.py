@@ -1,12 +1,7 @@
 """One bounded native/raster heading observer using the existing text-cell SDK."""
 
-from dataclasses import replace
-
 import fitz
 
-from .cell_ocr_observation import observe_cell
-from .cell_raster import render_cell_raster
-from .cell_text_scope import text_scope
 from .heading_cell_source import observe_cell_source
 from .heading_source_geometry import (
     MAX_HEADING_HEIGHT,
@@ -18,6 +13,7 @@ from .heading_title_geometry import title_scope_bounds
 from .heading_title_scope import closed_title_scope, observe_title_scope
 from .native_window_coverage import native_window_complete, observe_native_window
 from .page_ocr_cache import get_ocr_engine
+from .paired_text_observation import observe_paired_text
 from .source_geometry import SourceTokens, overlaps, source_layout
 from .source_observations import source_cell_observation, source_observation_status
 from .source_paint_visibility import visible_native_tokens
@@ -128,25 +124,14 @@ def _observe_window(page, proof, layout, *, paint_view=None):
     ):
         engine = get_ocr_engine()
         if engine and engine[0] == "rapidocr":
-            for dpi in (400, 600):
-                raster = render_cell_raster(page, list(bounds), dpi, purpose="text")
-                reading = observe_cell(
-                    raster.image,
-                    "heading",
-                    dpi,
-                    engine[1],
-                    lambda raw, _kind: raw if section_heading(raw) else "",
-                    maximum_text_rows=MAX_HEADING_ROWS,
-                    maximum_row_height=MAX_HEADING_HEIGHT,
-                )
-                reading = replace(
-                    reading,
-                    source_frame=raster.frame,
-                    source_window=raster.source_window,
-                    text_scope=text_scope(MAX_HEADING_ROWS, MAX_HEADING_HEIGHT),
-                )
-                proof["observations"].append(reading.evidence(dpi, bounds))
-                proof["rendered_frames"].append(raster.frame)
+            proof["observations"], proof["rendered_frames"] = observe_paired_text(
+                page,
+                bounds,
+                engine[1],
+                lambda raw, _kind: raw if section_heading(raw) else "",
+                maximum_rows=MAX_HEADING_ROWS,
+                maximum_row_height=MAX_HEADING_HEIGHT,
+            )
     proof["status"], _ = heading_observation_status(proof)
     if proof["status"] == "unresolved" and len(proof["observations"]) == 2:
         from .text_ocr.source_capture import refine_source_text

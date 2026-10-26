@@ -138,3 +138,22 @@ class SourceTableCaptionSemanticsTests(unittest.TestCase):
         self.assertEqual(
             catalog_title_role("See Table 12. Intermediate compounds"), "unknown"
         )
+
+    def test_exact_unnumbered_category_titles_are_not_prose_or_invented_keys(self):
+        from patent_sar_extractor.core.source_table_roles import title_key
+
+        for text, role in (
+            ("Intermediate compounds", "nonfinal"),
+            ("Building blocks", "nonfinal"),
+            ("起始原料", "nonfinal"),
+            ("Selected compounds", "compound"),
+            ("Compounds and intermediates", "mixed"),
+            ("Intermediates Compounds", "mixed"),
+            ("Not compounds", "conflict"),
+            ("The intermediate compounds were prepared as follows.", "unknown"),
+            ("Examples of compounds in Table 2", "unknown"),
+            ("Compound 7", "unknown"),
+        ):
+            with self.subTest(text=text):
+                self.assertEqual(catalog_title_role(text), role)
+                self.assertEqual(title_key(text), "")

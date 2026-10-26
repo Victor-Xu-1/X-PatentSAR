@@ -10,7 +10,7 @@
   segments under the existing paired pixel-closure proof are ruling; literal
   dashed sources keep that same closure/unknown/gap gate. Call-local original
   paint facts serve the normal heading loop, never a global/competing cache.
-  Binding69/binder80 and Activity47/extractor59 refresh derived admission only;
+  Binding70/binder81 and Activity48/extractor60 refresh derived admission only;
   source4/role6/coverage25/SMILES6, raw/history/manual, model/dependency/default
   activation, SQL/API/SAR policies remain unchanged. No second parser/recognizer,
   writer/store/queue, guessed ID/product or cropped successful subset exists.
@@ -1124,12 +1124,19 @@
   exclusions require the same complete prior tail as split cells; saved role
   links replay it. No new per-checkpoint epoch or product bump is introduced
   within this unpublished Binding21/binder30/visible21/v0.2.34 candidate.
-  `caption_title_refinement` owns original-title bounded reads/replay through
-  the shared physical-cell authority. Unknown initial semantics may be resolved;
-  known role/table identity conflicts remain vetoes, mixed/unknown roles stay
-  explicit, and continuation consumes the same proved title. Raw source packets
-  are not rewritten. Fresh-frame admission reuse does not launch another read.
-  This remains within the same unpublished scientific epoch and product release.
+  Current title ownership is `title_source_capture/proof` and
+  `title_original_replay`, through the same paired physical text-cell SDK.
+  The obsolete title-only producer is removed. `title_ink_geometry/source` can
+  nominate bounded original rows when catalogue word locators miss them; only
+  independently closed original cells may supply ruling exemptions. All unknown
+  rows and native anchors remain, with explicit budgets/ambiguity/refusal.
+  `title_source_inventory` carries caption/column/declaration/proposal sources
+  through the existing worker/Web original replay. Complete native titles do not
+  load OCR; reuse does not reread optical text. Unnumbered category titles do not
+  invent table IDs; mixed/prose/negative roles gain no final-product admission.
+  Raw PDF/OCR/structure/manual/history, the default DECIMER engine and resource
+  permissions remain unchanged. This is source-contract coverage, not universal
+  raster detection, native-model accuracy or scientific acceptance.
 
 - `source_role_terms` owns the finite literal intermediate vocabulary consumed by
   original headings/captions/cell claims, characterization identity, record filters

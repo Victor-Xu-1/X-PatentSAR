@@ -1,5 +1,46 @@
 # X-PatentSAR architecture
 
+## Catalogue titles conserve their complete original source
+
+`title_source_capture` uses the same `paired_text_observation` and physical-cell
+SDK as heading capture. `title_source_proof` owns typed geometry, all retained
+native words, both complete optical observations and their frames;
+`title_original_replay` reopens actual native/paint/pixel facts without acquiring
+a model. The former isolated `caption_title_refinement` path is removed.
+Catalogue role, table identity, subset/reprint and continuation consumers use the
+same complete source, not successful page-token fragments or saved role flags.
+
+If both word locators miss a title, a proved catalogue/column context can nominate
+rows through `title_ink_geometry` and `title_ink_source`. These retain the complete
+original paint/native inventory and only separate table ruling supported by the
+caller's actual first-row cells and paired closed-cell pixels. Every unknown row
+must be read; all native words remain anchors. Missing rows, crossing paint,
+ambiguous parallel owners and row/height/pixel budgets refuse before model work.
+Full-page declaration inventories do not become title OCR requests. Raster pages
+with no usable word nomination remain explicitly unresolved; vector recovery is
+not a claim of universal optical detection or molecular accuracy.
+
+Ruled and unruled column contexts share the existing bounded prefix and literal
+last-caption/adjacent-wrap selector. A wrapped category cannot erase its printed
+table marker. Whole unnumbered category noun phrases may declare a role but never
+invent a table identifier; narrative mentions and mixed/negative categories do
+not gain final-product admission. Raw observations remain unchanged.
+`title_source_inventory` extends the existing explicit role-source ledger for
+captions, columns, declarations and rejected proposals. Worker, raw reuse and Web
+consumers replay those same original sources before numbered OCSR. There is no
+new recognizer, queue, store, raw writer or acceptance path.
+
+The shared grid detector separates observed closed frames even when their gap
+fits the old short-row heuristic; continuous outer edges still keep a table's
+rows together. This nominates geometry only. Native empty identifier cells use
+the existing complete paired empty-grid witness to avoid futile OCR, while the
+missing identifier remains an unresolved gap, never a fabricated record.
+
+Binding70/binder81 and Activity48/extractor60 refresh affected derived admission.
+Coverage25/source4/role6, raw observations/original assets/manual audit/history,
+SMILES/OCSR/model preparation, API-v1/SQLite and SAR numerical policies remain
+unchanged. Historical source review is not current acceptance.
+
 ## Project identity survives rejected saved-result reads
 
 `WorkspaceService.project` delegates only metadata formatting to
@@ -2309,17 +2350,10 @@ result, without a second OCR/cell pass. Page-wide/header-key nomination cannot
 silently discard a proved caption claim; the existing shared claim resolver still
 decides any real ownership conflict.
 
-`caption_title_refinement` owns bounded rereads only when a complete observed
-original title has an unknown role. Its padded window is rederived from the same
-source tokens, stays inside the original prefix, and uses the existing physical
-cell reader at400/600dpi. Complete reads, original confidence/frames and every
-known table-ID/role conflict are replayed; no string repair or new OCR path is
-introduced. Mixed/unknown roles remain mixed/unknown. The same proved title feeds
-the existing continuation-word check, while all raw packets remain unchanged.
-Admission reuse checks fresh original facts without repeating those cell reads.
-Native-qualified titles, absent titles and known roles do not trigger extra OCR.
-Height/cell/pixel bounds refuse unsupported work explicitly; this is not a
-document-wide retry or a proof of chemical-graph accuracy.
+The earlier title-only refinement producer has been removed. Current catalogue
+titles use the complete source/capture/replay authority described above;
+recognized-word fragments and stored role flags are not independent admission.
+Original observations and historical failed attempts remain immutable.
 
 `caption_boundary_context` retains the complete original context after every
 frame, including an already completed catalogue, using the shared source-window

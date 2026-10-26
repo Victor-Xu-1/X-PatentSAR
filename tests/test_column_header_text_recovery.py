@@ -7,7 +7,7 @@ from unittest.mock import patch
 import fitz
 
 from patent_sar_extractor.core import activity_grid_role_observation as observer
-from patent_sar_extractor.core import cell_raster
+from patent_sar_extractor.core import cell_raster, paired_text_observation
 from patent_sar_extractor.core.logical_column_partitions import nominate_unruled_headers
 from patent_sar_extractor.core.ruled_structure_headers import (
     observe_ruled_header,
@@ -83,6 +83,7 @@ class ColumnHeaderTextRecoveryTests(unittest.TestCase):
         weak_auxiliary=False,
     ):
         page, grid, tokens, reference = self.source(ruled=ruled, native=native)
+        title = native_cell_text(reference, [0, 0, 500, 40])
         current = {"text": "", "dpi": 0}
         auxiliary = ControlledAuxiliary()
         original_render, original_observe = (
@@ -106,8 +107,13 @@ class ColumnHeaderTextRecoveryTests(unittest.TestCase):
         def primary(image, *, use_det, use_cls):
             if use_det:
                 return [], None
-            known = qualified or conflict and current["dpi"] == 400
-            text = "Other known column" if conflict and known else current["text"]
+            is_title = current["text"] == title
+            known = is_title or qualified or conflict and current["dpi"] == 400
+            text = (
+                "Other known column"
+                if conflict and known and not is_title
+                else current["text"]
+            )
             return [[text if known else "weak", 0.99 if known else 0.2]], None
 
         with (
@@ -116,6 +122,11 @@ class ColumnHeaderTextRecoveryTests(unittest.TestCase):
             ) as main,
             patch.object(observer, "render_cell_raster", render),
             patch.object(cell_raster, "render_cell_raster", render),
+            patch.object(paired_text_observation, "render_cell_raster", render),
+            patch(
+                "patent_sar_extractor.core.page_ocr_cache.get_ocr_engine",
+                return_value=("rapidocr", primary),
+            ),
             patch(
                 "patent_sar_extractor.core.text_ocr.source_capture.get_auxiliary_text_runtime",
                 return_value=auxiliary if enabled else None,
@@ -227,7 +238,17 @@ class ColumnHeaderTextRecoveryTests(unittest.TestCase):
             ]
         }
         sources = tuple(role_text_cells(payload))
-        self.assertEqual(len(sources), 2)
+        self.assertEqual(len(sources), 4)
+        self.assertEqual(
+            len(
+                [
+                    cell
+                    for _, cell in sources
+                    if cell["method"] in {"original_title", "original_title_context"}
+                ]
+            ),
+            2,
+        )
         self.assertEqual({number for number, _cell in sources}, {1})
         with patch(
             "patent_sar_extractor.core.text_ocr.source_capture.get_auxiliary_text_runtime",
@@ -266,7 +287,14 @@ class ColumnHeaderTextRecoveryTests(unittest.TestCase):
                         }
                     )
                 )
-                self.assertEqual(len(sources), 2 if native else 4)
+                original_cells = [
+                    cell
+                    for _, cell in sources
+                    if cell["method"]
+                    not in {"original_title", "original_title_context"}
+                ]
+                self.assertEqual(len(original_cells), 2 if native else 4)
+                self.assertEqual(len(sources) - len(original_cells), 2)
                 self.assertEqual(original_role_source_errors(page.parent, sources), [])
 
     def test_header_recovery_keeps_eight_row_twelve_point_authority(self):

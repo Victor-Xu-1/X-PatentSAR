@@ -4,9 +4,10 @@ from .activity_context_geometry import validate_grid_axes
 from .activity_grid_context import _prefix
 from .caption_boundary_context import valid_caption_tail
 from .caption_role_semantics import continuation_title, nonfinal_catalog_text
-from .caption_title_refinement import confirmed_title_texts
 from .source_observations import source_claim_runs
+from .source_table_roles import title_texts
 from .structure_table_headers import aligned_column_edges
+from .title_ink_geometry import caption_title_context
 
 MAX_CONTINUATION_DEPTH = 64
 
@@ -51,10 +52,14 @@ def valid_role_link(scope, link, prior_role, prior_key, local_key):
             raw = _prefix(packet["tokens"], region)
             if nonfinal_catalog_text(raw):
                 return False  # An explicit new role cannot borrow the old role.
-        titles = confirmed_title_texts(scope)
+        titles = title_texts(
+            scope["observations"],
+            contexts=scope["sources"],
+            context=caption_title_context(scope),
+        )
         return bool(
             (local_key and titles and all(continuation_title(text) for text in titles))
-            or not scope["observations"]
+            or not titles
         )
     except (TypeError, ValueError, KeyError, AttributeError):
         return False
