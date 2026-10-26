@@ -67,11 +67,25 @@ table rules require the existing complete paired pixel witness. Unexplained ink,
 missing edges, changed source, unknown paint and work limits remain review-only.
 The same observation/status/original-replay chain serves headings, values,
 identifiers, role cells and declared-text rows; there is no second OCR or writer.
-Binding67/binder78 and Activity46/extractor58 reject stale derived admissions,
+Binding68/binder79 and Activity46/extractor58 reject stale derived admissions,
 without modifying raw source caches, structures, historical attempts or audits.
 This does not prove the locator found every original role word or that an unread
 outlined word can be automatically recovered. Keep these separate accuracy gates
 and the authorized frontend-only private extraction/SAR workflow.
+
+For a bounded heading containing native `Compound 11` and an outlined role
+prefix, the two complete original400/600dpi readings may confirm the full title
+only while preserving every whole native word, member and paint. Reading just
+`Compound 11` again does not account for the extra ink. Added/changed suffixes,
+invented members, a different native nomination, repeated/embedded matches,
+covered native words and retained qualified optical conflicts remain refused.
+An unqualified narrow-window edge remains an observation, not a qualified veto
+of the complete original cell; the outer cell still requires every original word.
+Confirmed negative roles stay outside the numbered-terminal-product pool; the
+same rule also admits genuinely complete terminal preparation titles without
+loading auxiliary OCR. This changes derived heading admission only. A locator
+whose bounds omit the role prefix is a separate nomination-completeness problem,
+not solved by the agreement of readers inside an already-bounded window.
 
 Keep one heading typography scope through primary400/600dpi capture, retained
 observations, auxiliary recovery, serialized proof and actual-original replay.

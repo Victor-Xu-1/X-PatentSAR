@@ -60,8 +60,16 @@
   share this same envelope/status path. Unknown/outlined/interior/raster/hidden
   paint cannot be waived by a readable native subset. Multi-line native operations
   retain geometry-bound original rows without extra OCR.4096paints/20000retained
-  primitive bounds refuse whole windows, not truncate success. Binding67/binder78
-  and Activity46/extractor58 refresh derived admission only. Raw/history/manual,
+  primitive bounds refuse whole windows, not truncate success. The shared
+  `heading_native_claims` authority treats a qualified partial native layer as
+  retained whole words/members, not a whole-title vote. Both existing complete
+  optical readings must add missing source text without changing any native
+  claim, intersecting/covering native paint or ignoring qualified prior optical
+  conflicts. Complete native literals remain exact; a repeated subset alone
+  cannot account for unexplained ink. No new parser/model/store/admission path
+  or fuzzy ID repair is introduced. Binding68/binder79 refresh heading admission;
+  Activity46/extractor58 from the native-window release are unchanged here.
+  Raw/history/manual,
   coverage25/role6/source4, chemical/models/dependencies/activation, SQL/API and
   SAR policies stay unchanged. No competing reader, store, queue, fuzzy literal
   repair or acceptance authority is added. Bounded source checks do not certify
