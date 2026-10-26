@@ -58,6 +58,21 @@ caller, heading/binder entry, saved-source readers and installed consumers.
 
 ## A large or wrapped heading fails only when auxiliary recovery is needed
 
+Native text can be incomplete even on a page without embedded images: a role
+word or comparator may be drawn as vector paths beside otherwise readable text.
+Current native windows retain all original paint kinds and use actual glyph
+geometry to account for the whole owned window. A multi-line PDF paint operation
+is not a license to merge rows; ordinary native rows still need no model. Closed
+table rules require the existing complete paired pixel witness. Unexplained ink,
+missing edges, changed source, unknown paint and work limits remain review-only.
+The same observation/status/original-replay chain serves headings, values,
+identifiers, role cells and declared-text rows; there is no second OCR or writer.
+Binding67/binder78 and Activity46/extractor58 reject stale derived admissions,
+without modifying raw source caches, structures, historical attempts or audits.
+This does not prove the locator found every original role word or that an unread
+outlined word can be automatically recovered. Keep these separate accuracy gates
+and the authorized frontend-only private extraction/SAR workflow.
+
 Keep one heading typography scope through primary400/600dpi capture, retained
 observations, auxiliary recovery, serialized proof and actual-original replay.
 The ordinary heading caller owns the existing8row/128pt bounds; short assay

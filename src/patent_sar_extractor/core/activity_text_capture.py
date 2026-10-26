@@ -12,6 +12,7 @@ from .cell_frame_proof import inside_box
 from .cell_raster import render_cell_raster
 from .cell_text_chunks import observe_text_cell
 from .native_cell_replay import original_native_cell_matches
+from .native_window_coverage import native_cell_packet
 from .page_ocr_cache import get_ocr_engine
 from .source_geometry import (
     SourceTokens,
@@ -35,6 +36,9 @@ def _line_readings(page, bounds, tokens, layout, paints):
         "source_observation": source_cell_observation(tokens, bounds, native=True),
     }
     if native:
+        observation = native_cell_packet(
+            page, observation["source_observation"], paint_view=paints
+        )
         if not original_native_cell_matches(
             page, observation, layout=layout, paint_view=paints
         ):

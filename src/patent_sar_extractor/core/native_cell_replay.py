@@ -1,6 +1,10 @@
 """Original native-cell identity and visibility, without OCR or role inference."""
 
 from .cell_frame_proof import inside_box
+from .native_window_coverage import (
+    native_window_complete,
+    observe_native_window,
+)
 from .source_cell_claims import cell_source_status, native_witness
 from .source_cell_pixels import original_grid_cell_is_empty
 from .source_geometry import (
@@ -53,8 +57,12 @@ def original_native_cell_matches(page, cell, *, layout=None, paint_view=None):
         and overlaps(layout.raster_bounds, bounds)
     ):
         return False
+    window = observe_native_window(page, bounds, paint_view=paint_view)
+    if "native_window" in cell and cell["native_window"] != window:
+        return False
     return (
-        visible_native_tokens(page, profile, paint_view=paint_view)
+        native_window_complete(window, profile)
+        and visible_native_tokens(page, profile, paint_view=paint_view)
         if text.strip()
         else original_grid_cell_is_empty(page, bounds)
     )

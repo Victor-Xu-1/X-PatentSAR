@@ -69,6 +69,33 @@ spelling repair, confidence votes or replacement of a retained known claim.
 
 ## Heading typography belongs to the same original source throughout recovery
 
+The native fast path proves complete original-window paint coverage, not only
+visibility of a recognized subset. `native_window_coverage` shares the existing
+call-local `source_paint_visibility` inventory and records every intersecting
+paint. Visible native glyphs are selected by their actual original geometry;
+one PDF text operation spanning several rows does not merge those rows or require
+OCR. Unread outlined role words, comparator paths, hidden/raster/unknown ink and
+unexplained interior marks cannot disappear behind a readable native number.
+Only simple axial boundary strokes with the existing paired closed-cell pixel
+proof can be treated as ruling, never arbitrary rectangles or inset erasure.
+The native capsule pins that complete paired boundary observation by its existing
+content digest; it does not serialize duplicate raster payloads for every native
+cell. Mandatory actual-original replay regenerates the strict witness and exact
+digest before admission. A saved digest/flag alone grants no source permission.
+
+Heading, scalar/identifier, role and declared-text cells use the same native
+window envelope and `cell_source_status`; actual-original replay reconstructs
+it without OCR. An incomplete native heading may request the existing bounded
+whole-window reader, but no differing qualified native literal is rewritten or
+outvoted. Current native source windows are bounded to4096paints/20000retained
+primitives, below the unchanged page/source/render bounds; exceeded work retains
+an explicit refusal, not a successful prefix. No model pass is required for a
+complete native source. Binding67/binder78 and Activity46/extractor58 refresh
+affected derived proof only; raw observations, original assets, manual/history,
+source/role/coverage/chemical models, API/SQL and SAR policies are unchanged.
+This is bounded original-window completeness, not all-page detector recall,
+automatic recognition of every outlined glyph, or real-patent acceptance.
+
 The existing heading observer passes `MAX_HEADING_ROWS` and
 `MAX_HEADING_HEIGHT` to both primary capture and on-demand auxiliary recovery.
 Both retained primary views carry the existing typed `text_scope`; the same

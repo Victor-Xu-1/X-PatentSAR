@@ -14,6 +14,7 @@ from .heading_source_geometry import (
     heading_bounds,
 )
 from .heading_source_proof import heading_observation_status
+from .native_window_coverage import native_window_complete, observe_native_window
 from .page_ocr_cache import get_ocr_engine
 from .source_geometry import SourceTokens, overlaps, source_layout
 from .source_observations import source_cell_observation
@@ -42,6 +43,7 @@ def observe_heading(page, line, original_pdf_sha256, *, layout=None, grids=None)
             **({"rows": line["heading_rows"]} if "heading_rows" in line else {}),
         },
         "native_source": native,
+        "native_window": observe_native_window(page, list(bounds)),
         "raster_bounds": list(layout.raster_bounds) if layout.raster_bounds else None,
         "observations": [],
         "rendered_frames": [],
@@ -67,6 +69,7 @@ def observe_heading(page, line, original_pdf_sha256, *, layout=None, grids=None)
         "native_source": source_cell_observation(
             SourceTokens(layout.native, layout), tuple(cell_source["cell"]), native=True
         ),
+        "native_window": observe_native_window(page, cell_source["cell"]),
         "original_heading": proof,
         "cell_source": cell_source,
         "observations": [],
@@ -81,7 +84,11 @@ def _observe_window(page, proof, layout):
     native = proof["native_source"]
     status, _ = heading_observation_status(proof)
     raster = layout.raster_bounds is not None and overlaps(layout.raster_bounds, bounds)
-    if status != "confirmed" and (raster or not native["text"].strip()):
+    if status != "confirmed" and (
+        raster
+        or not native["text"].strip()
+        or not native_window_complete(proof["native_window"], native)
+    ):
         engine = get_ocr_engine()
         if engine and engine[0] == "rapidocr":
             for dpi in (400, 600):

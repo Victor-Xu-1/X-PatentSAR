@@ -16,11 +16,13 @@ from .activity_grid_roles import (
 )
 from .cell_raster import cell_pixel_rect, render_cell_raster
 from .cell_text_chunks import observe_text_cell
+from .native_window_coverage import native_cell_packet
 from .page_ocr_cache import get_ocr_engine
 from .role_grid_windows import MAX_ROLE_CELLS, role_grid_shape, role_work_windows
 from .source_cell_pixels import original_grid_cell_is_empty
 from .source_geometry import native_cell_text, native_region
 from .source_observations import source_cell_observation
+from .source_paint_visibility import native_paint_view
 from .source_role_observations import role_failure
 from .table_cells import CellRenderLimit, cell_image
 
@@ -100,15 +102,14 @@ def _observe_role_cells(
                     native = False
                     break
     if native:
+        if getattr(tokens, "native_paint_view", None) is None:
+            tokens.native_paint_view = native_paint_view(page)
         observed = [
-            {
-                "method": "native_cell",
-                "text": native_cell_text(tokens, cell),
-                "bbox": list(cell),
-                "source_observation": source_cell_observation(
-                    tokens, cell, native=True
-                ),
-            }
+            native_cell_packet(
+                page,
+                source_cell_observation(tokens, cell, native=True),
+                paint_view=tokens.native_paint_view,
+            )
             for cell in cells
         ]
         observations.append(

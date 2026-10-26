@@ -114,7 +114,8 @@ def valid_role_scope(record):
                 return False
             if method == "native_cells":
                 if (
-                    set(cell) - {"source_observation"} != {"method", "text", "bbox"}
+                    set(cell) - {"source_observation", "native_window"}
+                    != {"method", "text", "bbox"}
                     or cell.get("method") != "native_cell"
                     or cell["text"] != hints[row][column]
                     or cell_source_status(cell) not in {"legacy", "qualified", "empty"}

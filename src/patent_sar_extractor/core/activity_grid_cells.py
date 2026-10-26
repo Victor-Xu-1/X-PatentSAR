@@ -14,6 +14,7 @@ from .activity_values import (
     normalize_activity_value_token,
 )
 from .cell_cross_observation import printed_cross_valid
+from .native_window_coverage import native_cell_packet
 from .source_cell_claims import cell_source_conflict, cell_source_status
 from .source_cell_tokens import cell_text, cell_tokens, crosses_cell
 from .source_geometry import native_region
@@ -128,9 +129,11 @@ def read_activity_cell(
         profile = source_cell_observation(tokens, bounds, native=True)
         visible = True
         if profile is not None:
-            observations[0].update(bbox=list(bounds), source_observation=profile)
             if tokens.native_paint_view is None:
                 tokens.native_paint_view = native_paint_view(page)
+            observations[0] = native_cell_packet(
+                page, profile, paint_view=tokens.native_paint_view
+            )
             visible = visible_native_tokens(
                 page, profile, paint_view=tokens.native_paint_view
             )

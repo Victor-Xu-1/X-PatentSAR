@@ -4,6 +4,7 @@ import hashlib
 
 from .cell_raster import original_reading_image
 from .heading_source_proof import proved_heading_declaration
+from .native_window_coverage import native_window_complete, observe_native_window
 from .source_geometry import SourceTokens, source_layout
 from .source_observations import source_cell_observation
 from .source_paint_visibility import visible_native_tokens
@@ -31,10 +32,15 @@ def validate_original_heading(page, proof):
         list(layout.raster_bounds) if layout.raster_bounds else None
     ):
         raise ValueError("Original literal heading text or geometry differs")
+    window = observe_native_window(page, proof["bbox"])
+    if proof.get("native_window") != window:
+        raise ValueError("Original heading paint inventory is missing or differs")
     if not proof["observations"]:
-        if not visible_native_tokens(page, native):
+        if not native_window_complete(window, native) or not visible_native_tokens(
+            page, native
+        ):
             raise ValueError(
-                "Original native heading is invisible, covered or unproved"
+                "Original native heading is incomplete, invisible or covered"
             )
         return
 
