@@ -25,6 +25,9 @@
   "python_modules": [
     "tests.test_original_title_scope",
     "tests.test_native_reaction_heading",
+    "tests.test_heading_label_roles.HeadingLabelRoleTests.test_full_binder_preserves_true_heading_but_reuses_exact_label_cell_roles",
+    "tests.test_unresolved_caption_roles.UnresolvedCaptionRoleTests.test_missing_drawing_stays_unresolved_without_reclassifying_its_catalogue_label",
+    "tests.test_structure_declarations.StructureDeclarationTests.test_explicit_nonfinal_declaration_overrides_standalone_caption_default",
     "tests.test_partial_native_headings",
     "tests.test_heading_recovery_scope",
     "tests.test_native_heading_coverage",
