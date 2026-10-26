@@ -11,6 +11,7 @@ from .source_section_roles import heading_role_prefix
 HEADING_PADDING = (-2, -3, 2, 5)
 MAX_HEADING_HEIGHT = 128
 MAX_HEADING_ROWS = 8
+NATIVE_TITLE_GAP = 48
 
 
 def heading_bounds(box, page_size):
@@ -92,7 +93,15 @@ def valid_heading_geometry(proof):
             or bounds != packet["cell"]
         ):
             return False
-    elif bounds != list(heading_bounds(hint["bbox"], size)):
+    if "title_scope" in proof:
+        from .heading_title_geometry import title_scope_bounds
+
+        expected = title_scope_bounds(proof["title_scope"], hint["bbox"], size)
+        if expected is None or bounds != expected[0]:
+            return False
+    elif proof.get("version") != 2 and bounds != list(
+        heading_bounds(hint["bbox"], size)
+    ):
         return False
     if raster is not None and not _inside(raster, [0, 0, *size]):
         return False

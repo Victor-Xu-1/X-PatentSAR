@@ -10,6 +10,7 @@ from .heading_detector_identity import detector_conflicts
 from .heading_native_claims import heading_literal as _text
 from .heading_native_claims import native_heading_agrees
 from .heading_source_geometry import MAX_HEADING_HEIGHT, valid_heading_geometry
+from .heading_title_geometry import title_scope_bounds
 from .native_window_coverage import native_window_complete, valid_native_window
 from .source_cell_pixels import cell_readings_conserve_ink, closed_cell_masks
 from .source_geometry import overlaps
@@ -88,6 +89,7 @@ def heading_observation_status(proof):
                 "nomination",
                 "native_source",
                 "native_window",
+                "title_scope",
                 "raster_bounds",
                 "observations",
                 "rendered_frames",
@@ -114,6 +116,22 @@ def heading_observation_status(proof):
     ):
         return "invalid", None
     cell_masks = None
+    if "title_scope" in proof:
+        scoped = title_scope_bounds(
+            proof["title_scope"], proof["nomination"]["bbox"], proof["page_size"]
+        )
+        if scoped is None:
+            return "invalid", None
+        if scoped[1] is not None:
+            return "unresolved", None
+        if proof["title_scope"]["method"] == "closed_cell":
+            cell_masks = closed_cell_masks(
+                proof["title_scope"]["cell_source"]["pixels"],
+                proof["bbox"],
+                proof["page_size"],
+            )
+            if cell_masks is None:
+                return "invalid", None
     if proof["version"] == 2:
         cell_masks = closed_cell_masks(
             proof["cell_source"]["pixels"], proof["bbox"], proof["page_size"]
@@ -134,9 +152,13 @@ def heading_observation_status(proof):
     native_status = source_observation_status(native, bounds, native.get("text"))
     if native.get("origin") != "native" or native_status == "invalid":
         return "invalid", None
+    if (
+        native["tokens"] or native.get("boundary_tokens")
+    ) and "title_scope" not in proof:
+        return "invalid", None
     texts = [native["text"]]
     if readings:
-        if proof["version"] == 2 and not cell_readings_conserve_ink(
+        if cell_masks is not None and not cell_readings_conserve_ink(
             cell_masks, readings
         ):
             return "unresolved", None
@@ -168,7 +190,13 @@ def heading_observation_status(proof):
         hint["source"] == "native"
         and _text(hint["text"]) != _text(texts[0])
         and (
-            _text(hint["text"]) != _text(native["text"])
+            _text(hint["text"])
+            not in {
+                _text(native["text"]),
+                _text(proof["title_scope"]["native_seed"]["text"])
+                if "title_scope" in proof
+                else _text(native["text"]),
+            }
             or not native_heading_agrees(proof, texts[0])
         )
     ):

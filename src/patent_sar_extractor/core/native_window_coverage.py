@@ -6,7 +6,7 @@ import re
 import fitz
 
 from .cell_frame_proof import inside_box
-from .native_window_rules import boundary_rule_path, original_rule_path
+from .native_window_rules import boundary_rule_path, original_rule_path, valid_rule_path
 from .source_cell_pixels import observe_closed_cell
 from .source_evidence_identity import proof_id
 from .source_geometry import overlaps
@@ -179,11 +179,7 @@ def valid_native_window(packet, bounds):
         ):
             return False
         rule = paint["rule_path"]
-        if rule is not None and (
-            not isinstance(rule, dict)
-            or set(rule) != {"width", "segments"}
-            or not isinstance(rule["segments"], list)
-        ):
+        if rule is not None and not valid_rule_path(rule):
             return False
         primitives += len(rule["segments"]) if rule is not None else 1
         characters += len(paint["text"])

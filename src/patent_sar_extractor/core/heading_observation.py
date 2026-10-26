@@ -14,18 +14,35 @@ from .heading_source_geometry import (
     heading_bounds,
 )
 from .heading_source_proof import heading_observation_status
+from .heading_title_geometry import title_scope_bounds
+from .heading_title_scope import closed_title_scope, observe_title_scope
 from .native_window_coverage import native_window_complete, observe_native_window
 from .page_ocr_cache import get_ocr_engine
 from .source_geometry import SourceTokens, overlaps, source_layout
-from .source_observations import source_cell_observation
+from .source_observations import source_cell_observation, source_observation_status
+from .source_paint_visibility import visible_native_tokens
 from .source_section_roles import section_heading
 
 
-def observe_heading(page, line, original_pdf_sha256, *, layout=None, grids=None):
+def observe_heading(
+    page, line, original_pdf_sha256, *, layout=None, grids=None, paint_view=None
+):
     bounds = heading_bounds(line["bbox"], [page.rect.width, page.rect.height])
     if bounds.is_empty or bounds.height > MAX_HEADING_HEIGHT:
         raise ValueError("Original heading exceeds its physical source bounds")
     layout = layout if layout is not None else source_layout(page)
+    scope = observe_title_scope(
+        page, line["bbox"], layout, grids=grids, paint_view=paint_view
+    )
+    scoped = (
+        title_scope_bounds(scope, line["bbox"], [page.rect.width, page.rect.height])
+        if scope is not None
+        else None
+    )
+    if scope is not None and scoped is None:
+        raise ValueError("Original title scope could not be validated")
+    if scoped is not None:
+        bounds = fitz.Rect(scoped[0])
     native = source_cell_observation(
         SourceTokens(layout.native, layout), tuple(bounds), native=True
     )
@@ -43,15 +60,22 @@ def observe_heading(page, line, original_pdf_sha256, *, layout=None, grids=None)
             **({"rows": line["heading_rows"]} if "heading_rows" in line else {}),
         },
         "native_source": native,
-        "native_window": observe_native_window(page, list(bounds)),
+        "native_window": observe_native_window(
+            page, list(bounds), paint_view=paint_view
+        ),
         "raster_bounds": list(layout.raster_bounds) if layout.raster_bounds else None,
         "observations": [],
         "rendered_frames": [],
+        **({"title_scope": scope} if scope is not None else {}),
     }
     # Resolve the physical source before OCR. Reading an arbitrary locator's
     # padded rectangle first can turn a ruling stroke into a spurious digit.
     # The original native window remains retained, never promoted by geometry.
     proof["status"], _ = heading_observation_status(proof)
+    if scoped is not None:
+        if scoped[1] is None:
+            _observe_window(page, proof, layout, paint_view=paint_view)
+        return proof
     if proof["status"] != "unresolved":
         return proof
     if grids is None:
@@ -60,7 +84,7 @@ def observe_heading(page, line, original_pdf_sha256, *, layout=None, grids=None)
         grids = detect_ruled_table_regions(page, dpi=240, minimum_columns=1)
     cell_source = observe_cell_source(page, line["bbox"], grids, MAX_HEADING_HEIGHT)
     if cell_source is None:
-        _observe_window(page, proof, layout)
+        _observe_window(page, proof, layout, paint_view=paint_view)
         return proof
     candidate = {
         **proof,
@@ -75,13 +99,26 @@ def observe_heading(page, line, original_pdf_sha256, *, layout=None, grids=None)
         "observations": [],
         "rendered_frames": [],
     }
-    _observe_window(page, candidate, layout)
+    if (
+        candidate["native_source"]["tokens"]
+        or candidate["native_source"]["boundary_tokens"]
+    ):
+        candidate["title_scope"] = closed_title_scope(
+            page, line["bbox"], layout, cell_source
+        )
+    _observe_window(page, candidate, layout, paint_view=paint_view)
     return candidate
 
 
-def _observe_window(page, proof, layout):
+def _observe_window(page, proof, layout, *, paint_view=None):
     bounds = fitz.Rect(proof["bbox"])
     native = proof["native_source"]
+    if native["text"].strip() and (
+        source_observation_status(native, proof["bbox"], native["text"]) != "qualified"
+        or not visible_native_tokens(page, native, paint_view=paint_view)
+    ):
+        proof["status"] = "unresolved"
+        return  # Retained unreadable/conflicting native claims cannot be outvoted.
     status, _ = heading_observation_status(proof)
     raster = layout.raster_bounds is not None and overlaps(layout.raster_bounds, bounds)
     if status != "confirmed" and (

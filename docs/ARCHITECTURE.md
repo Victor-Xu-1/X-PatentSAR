@@ -69,6 +69,39 @@ spelling repair, confidence votes or replacement of a retained known claim.
 
 ## Heading typography belongs to the same original source throughout recovery
 
+`heading_title_scope` captures the original native seed and complete same-row
+paint/native inventory BEFORE a heading may use its native fast path. Its pure
+`heading_title_geometry` replays the same existing48pt native-row grouping,
+including outlined ink instead of only successfully extracted words. One native
+owner with orphan ink reads the whole row; multiple possible owners refuse
+instead of choosing by distance. Independent native groups remain separate.
+Crossing/over-budget source refuses before model acquisition. The original
+nomination is unchanged, not replaced by a recognized-word crop.
+Retained native text that is unqualified, invisible, covered or crossed cannot
+be repaired by outvoting it with OCR; the same original visibility/claim gate
+now stops that unsatisfiable work before primary or auxiliary model acquisition.
+
+An independently proved closed cell owns its complete text window, but its box
+cannot exempt adjacent outside role ink. The full row inventory stays in the
+same packet; only actual boundary segments supported by the existing complete
+paired cell-pixel proof may be separated as ruling. Solid and literal dashed
+axial paths share that SAME pixel closure requirement; large gaps and attached
+unexplained ink still refuse. Native dotted activity cells therefore refresh
+derived Activity47/extractor59, not values, relations, units or conditions.
+The existing rule authority also owns finite typed segment validation for both
+cell admission and title replay; malformed/NaN geometry is invalid source, not
+an arithmetic crash or a confirmed title.
+
+Capture, pure heading status and mandatory actual-original replay share this
+one scope. Native-bearing packets cannot remove the scope or crop it back to
+the original narrow nomination. Replay re-observes all retained row ink and
+closed-cell pixels, including ink outside the former word box. Call-local page
+paint facts are reused by heading discovery; no persistent cache, second OCR,
+writer/store/queue, fuzzy identifier repair or graphic-to-product rule exists.
+Binding69/binder80 refresh derived source admission. Earlier binding epochs
+below are history. This proves the tested title scope, not every source-role
+interpreter, all-format discovery, native OCR accuracy or scientific acceptance.
+
 The native fast path proves complete original-window paint coverage, not only
 visibility of a recognized subset. `native_window_coverage` shares the existing
 call-local `source_paint_visibility` inventory and records every intersecting

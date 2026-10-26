@@ -33,6 +33,7 @@ from .plot_reference import observe_plot_reference
 from .source_document import document_sha256 as _document_sha256
 from .source_evidence_identity import proof_id
 from .source_geometry import source_layout
+from .source_paint_visibility import native_paint_view
 from .source_section_roles import (
     heading_list_hint,
     heading_members,
@@ -69,6 +70,7 @@ def observed_heading_blocks(
         plot_cache = {}
         group_context = None
         layout = source_layout(page)
+        paint_view = native_paint_view(page)
         regions = (source_regions or {}).get(page_index)
         if regions is None:
             grids = grids_for_page(page) if grids_for_page else None
@@ -190,6 +192,7 @@ def observed_heading_blocks(
                         document_sha256,
                         layout=layout,
                         grids=grids_for_page(page) if grids_for_page else None,
+                        paint_view=paint_view,
                     )
                 declared = proved_heading_declaration(proof)
                 effective = declared or observation

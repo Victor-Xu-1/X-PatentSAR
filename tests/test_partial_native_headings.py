@@ -122,9 +122,9 @@ class PartialNativeHeadingTests(unittest.TestCase):
                 side_effect=AssertionError("Complete native cell needs no model"),
             ):
                 proof = observe_heading(page, hint, digest)
-            self.assertEqual(proof["version"], 2)
+            self.assertEqual(proof["title_scope"]["method"], "closed_cell")
             self.assertEqual(
-                proof["original_heading"]["native_source"]["status"], "unqualified"
+                proof["title_scope"]["native_seed"]["status"], "unqualified"
             )
             self.assertIsNotNone(proved_heading_declaration(proof))
             self.assertEqual(proof["native_source"]["text"], "Compound 11: Synthesis")
