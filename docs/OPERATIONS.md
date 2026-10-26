@@ -2,7 +2,7 @@
 
 ## Original catalogue title and close-frame diagnosis
 
-Current derived admission is Binding70/binder81 and Activity48/extractor60.
+Current derived admission is Binding71/binder82 and Activity49/extractor61.
 Raw PDF/OCR/structure assets, manual audit/history, API/SQL, models and SAR
 numerical policies are unchanged. Do not relabel old accepted/failed evidence as
 current source proof. Old originals remain recoverable inputs to the ordinary
@@ -16,11 +16,17 @@ numbered OCSR. Missing records, page/geometry changes or an unresolved role must
 not be replaced with a saved success flag. Closed ruling exemptions require the
 same original paired pixels, not a claimed rectangle.
 
-The no-word-nomination vector path reads every bounded unknown physical row in
-an already-owned catalogue/column context. It does not start whole-page title
-OCR, acquire a new recognizer or change auxiliary OCR activation. Raster-only
-contexts without usable word nominations, ambiguous parallel owners, crossing
-paint or exceeded budgets remain explicit refusals, not proved title absence.
+The no-word-nomination path reads every bounded unknown physical row in an
+already-owned catalogue/column context. Raster contexts retain the complete
+400dpi original pixels and3pt boundary support, then use the same physical-row
+partition and complete400/600dpi text reader. Inspect `ink_source` version2 and
+its `raster_source`; missing/malformed pixel witnesses cannot fall back to saved
+role flags. The locator is not semantic acceptance or proof of blankness. No
+whole-page title OCR, new recognizer or auxiliary activation is introduced.
+Only exact independently proved closed-cell rule pixels can be separated;
+attached unknown ink stays refused. Ambiguous parallel owners, crossing paint
+or the existing8M-pixel/1MiB/8row/128pt budgets remain explicit refusals, not
+proved title absence. Original replay does not acquire another text reader.
 An unnumbered category title never gains an invented table key. Wrapped/mixed
 categories must not erase the other role or the printed table marker.
 

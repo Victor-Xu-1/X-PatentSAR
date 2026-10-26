@@ -16,9 +16,19 @@ original paint/native inventory and only separate table ruling supported by the
 caller's actual first-row cells and paired closed-cell pixels. Every unknown row
 must be read; all native words remain anchors. Missing rows, crossing paint,
 ambiguous parallel owners and row/height/pixel budgets refuse before model work.
-Full-page declaration inventories do not become title OCR requests. Raster pages
-with no usable word nomination remain explicitly unresolved; vector recovery is
-not a claim of universal optical detection or molecular accuracy.
+Full-page declaration inventories do not become title OCR requests.
+`title_raster_source` can also nominate complete physical rows from the existing
+owned context when an original image has no usable word nominations. A bounded
+400dpi full-context pixel witness with3pt boundary support uses the SAME
+`cell_header_lines.physical_row_bounds` partition as physical text reads. Every
+row then needs the ordinary complete400/600dpi text observations; the400dpi
+locator alone never proves a title or blankness. The existing8M-pixel/1MiB
+evidence limits and8row/128pt bounds stay in force, before model acquisition.
+The same paired closed-cell SDK projects only actual original boundary pixels;
+unknown attached or crossing ink cannot be cut away. Complete native anchors,
+paint inventories, confidence and actual-original replay remain mandatory.
+Over-budget, parallel, missing or conflicting sources remain explicit refusals.
+This is not universal optical detection or molecular-accuracy acceptance.
 
 Ruled and unruled column contexts share the existing bounded prefix and literal
 last-caption/adjacent-wrap selector. A wrapped category cannot erase its printed
@@ -36,7 +46,7 @@ rows together. This nominates geometry only. Native empty identifier cells use
 the existing complete paired empty-grid witness to avoid futile OCR, while the
 missing identifier remains an unresolved gap, never a fabricated record.
 
-Binding70/binder81 and Activity48/extractor60 refresh affected derived admission.
+Binding71/binder82 and Activity49/extractor61 refresh affected derived admission.
 Coverage25/source4/role6, raw observations/original assets/manual audit/history,
 SMILES/OCSR/model preparation, API-v1/SQLite and SAR numerical policies remain
 unchanged. Historical source review is not current acceptance.

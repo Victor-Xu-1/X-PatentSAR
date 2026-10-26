@@ -303,7 +303,7 @@ class TitleInkDiscoveryTests(unittest.TestCase):
             self.assertEqual(calls, 0)
             self.assertEqual(scope["role"], "unresolved")
 
-    def test_raster_context_without_word_nominations_is_explicitly_unresolved(self):
+    def test_raster_context_without_a_text_reader_is_explicitly_unresolved(self):
         document, _structures, _boxes = original_catalogue(fully_outlined=True)
         with document:
             pixels = document[0].get_pixmap(matrix=fitz.Matrix(3, 3), alpha=False)
@@ -313,10 +313,12 @@ class TitleInkDiscoveryTests(unittest.TestCase):
             page.insert_image(page.rect, stream=pixels.tobytes("png"))
             layout = source_layout(page)
             tokens = SourceTokens([], layout, tuple(page.rect))
-            _grids, _tokens, scope, calls = self.observe(
-                raster, "", tokens=tokens, prohibit_reader=True
-            )
-            self.assertEqual(calls, 0)
+            grids = detect_ruled_table_regions(page, dpi=240)
+            with patch(
+                "patent_sar_extractor.core.page_ocr_cache.get_ocr_engine",
+                return_value=None,
+            ):
+                scope = observe_caption_role(page, grids[0], grids, tokens)
             self.assertEqual(scope["role"], "unresolved")
 
     def test_general_page_inventory_cannot_start_a_title_read_without_a_context_owner(

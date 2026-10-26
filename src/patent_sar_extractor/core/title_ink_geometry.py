@@ -98,9 +98,10 @@ def title_ink_rows(source):
             "native_source",
             "native_window",
             "ruling_sources",
+            "raster_source",
         }
         or type(source["version"]) is not int
-        or source["version"] != 1
+        or source["version"] != 2
     ):
         return None
     native, window, bounds, size = (
@@ -161,8 +162,24 @@ def title_ink_rows(source):
     geometry = source["context"]["geometry"]
     if geometry is not None and context_band(geometry) != (0, 100000):
         return [], "ambiguous_title_columns"
+    raster = source["raster_source"]
+    raster_marks = None
+    images = any(p["kind"] == "fill-image" for p in window["paints"])
+    if images:
+        from .title_raster_source import title_raster_marks
+
+        observed = title_raster_marks(raster, bounds, size, rulings)
+        if observed is None:
+            return None
+        raster_marks, refusal = observed
+        if refusal is not None:
+            return [], refusal
+    elif raster is not None:
+        return None
     marks = original_row_marks(
-        {"native_source": native, "window": window}, ruling_cells=proved
+        {"native_source": native, "window": window},
+        ruling_cells=proved,
+        raster_marks=raster_marks,
     )
     if len(marks) > MAX_WINDOW_PAINTS:
         return [], "source_mark_budget"

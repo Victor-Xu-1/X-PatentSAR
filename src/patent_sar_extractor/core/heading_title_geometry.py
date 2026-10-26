@@ -32,10 +32,15 @@ def _characters(value):
     return "".join(character for character in value if not character.isspace())
 
 
-def original_row_marks(row, *, cell=None, ruling_cells=()):
+def original_row_marks(row, *, cell=None, ruling_cells=(), raster_marks=None):
     native, window = row["native_source"], row["window"]
     tokens = [*native["tokens"], *native["boundary_tokens"]]
     marks = [token["bbox"] for token in tokens]
+    if raster_marks is not None:
+        # A complete original-pixel inventory accounts for all visible paints,
+        # including full-page images and white background rectangles. Native
+        # words remain independent anchors; no successful word crop is used.
+        return [*marks, *raster_marks]
     by_paint = {}
     for token in tokens:
         order = token.get("native_paint", {}).get("seqno")
