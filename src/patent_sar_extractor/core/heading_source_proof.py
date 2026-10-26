@@ -8,6 +8,7 @@ from .cell_text_proof import valid_text_reading
 from .heading_detector_identity import declaration_identity as _identity
 from .heading_detector_identity import detector_conflicts
 from .heading_source_geometry import MAX_HEADING_HEIGHT, valid_heading_geometry
+from .native_window_coverage import native_window_complete, valid_native_window
 from .printed_identifiers import identifier_width
 from .source_cell_pixels import cell_readings_conserve_ink, closed_cell_masks
 from .source_geometry import overlaps
@@ -90,6 +91,7 @@ def heading_observation_status(proof):
                 "bbox",
                 "nomination",
                 "native_source",
+                "native_window",
                 "raster_bounds",
                 "observations",
                 "rendered_frames",
@@ -110,6 +112,10 @@ def heading_observation_status(proof):
     ):
         return "invalid", None
     if not valid_heading_geometry(proof):
+        return "invalid", None
+    if "native_window" in proof and not valid_native_window(
+        proof["native_window"], proof["bbox"]
+    ):
         return "invalid", None
     cell_masks = None
     if proof["version"] == 2:
@@ -151,7 +157,11 @@ def heading_observation_status(proof):
         ):
             return "unresolved", None
     elif (
-        native_status != "qualified" or raster is not None and overlaps(raster, bounds)
+        native_status != "qualified"
+        or raster is not None
+        and overlaps(raster, bounds)
+        or "native_window" in proof
+        and not native_window_complete(proof["native_window"], native)
     ):
         return "unresolved", None
     declaration = section_heading(texts[0])

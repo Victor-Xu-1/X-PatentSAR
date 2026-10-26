@@ -7,6 +7,7 @@ from .activity_identity import is_control, is_value, normalize_compound, normali
 from .activity_values import is_explicit_missing_activity_value
 from .cell_caption_identity import caption_fragment_conflict
 from .compound_caption import prefixed_label
+from .native_window_coverage import native_window_complete, valid_native_window
 from .printed_identifiers import (
     LABEL_KIND,
     identifier_fragments_conflict,
@@ -38,9 +39,22 @@ def cell_source_status(observation):
     expected = "native" if observation.get("method") == "native_cell" else "raster"
     if packet.get("origin") != expected:
         return "invalid"
-    return source_observation_status(
+    status = source_observation_status(
         packet, observation.get("bbox", packet.get("bbox")), observation.get("text")
     )
+    if "native_window" in observation:
+        window = observation["native_window"]
+        if expected != "native" or not valid_native_window(
+            window, packet.get("bbox", [])
+        ):
+            return "invalid"
+        if (
+            status == "qualified"
+            and not native_witness(observation)
+            and not native_window_complete(window, packet)
+        ):
+            return "unqualified"
+    return status
 
 
 def _identity_conflict(raw, candidate, kind, *, fragment=False):

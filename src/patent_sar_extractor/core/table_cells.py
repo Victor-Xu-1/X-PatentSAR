@@ -14,6 +14,7 @@ from .cell_ocr_observation import OCRObservation, observe_cell
 from .cell_raster import render_cell_raster
 from .cell_rendering import CellRenderLimit
 from .compound_caption import prefixed_label
+from .native_window_coverage import native_cell_packet
 from .page_ocr_cache import get_ocr_engine
 from .printed_identifiers import identifier_key
 from .source_cell_claims import cell_source_conflict, cell_source_status
@@ -113,6 +114,10 @@ def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> Cell
     profile = source_cell_observation(tokens, bounds, native=native)
     if profile is not None:
         original.update(source_observation=profile)
+        if native:
+            original = native_cell_packet(
+                page, profile, paint_view=tokens.native_paint_view
+            )
     observations = [original]
     native_raw = native_cell_text(tokens, bounds)
     native_value = _normalize(native_raw, kind) if native_raw else ""

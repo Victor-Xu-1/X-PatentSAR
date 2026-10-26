@@ -9,7 +9,6 @@ from unittest.mock import patch
 
 import fitz
 
-from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.binding_source_headings import (
     observed_heading_blocks,
     select_heading_bindings,
@@ -214,17 +213,38 @@ class OriginalHeadingInventoryTests(unittest.TestCase):
         )
 
     def test_formal_and_web_recheck_unmapped_members_not_stored_success(self):
+        from catalog_source_support import original_catalogue
+
+        from patent_sar_extractor import contracts
         from patent_sar_extractor.core.formal_structure import coverage_errors
         from patent_sar_extractor.web.compound_catalog import read_compound_catalog
         from patent_sar_extractor.web.errors import WebError
-        from tests.test_source_led_export import run_fixture
 
         with tempfile.TemporaryDirectory(
             prefix="patentsar-heading-consumers-"
         ) as temporary:
             root = Path(temporary)
-            run_fixture(root)
-            payload = load_json(root / "structure_bindings/bindings.json", {})
+            (root / "structures").mkdir()
+            (root / "structures/metadata.json").write_text(
+                json.dumps(
+                    contracts.artifact_identity(
+                        contracts.STRUCTURES_SCHEMA, contracts.STRUCTURES_SCHEMA_VERSION
+                    )
+                )
+            )
+            # Real native source and vector drawings exercise this catalogue
+            # contract without the export fixture's unrelated raster/model work.
+            with patch(
+                "patent_sar_extractor.core.page_ocr_cache.get_ocr_engine",
+                return_value=None,
+            ):
+                _, _, payload = original_catalogue(
+                    root,
+                    root,
+                    labels=("42", "42A"),
+                    identities=("S42", "S42A"),
+                    selected=False,
+                )
             payload.update(self.observed("Compounds 42 and 42A and 72C"))
             payload["source_issues"] = []
             self.assertTrue(coverage_errors(payload))

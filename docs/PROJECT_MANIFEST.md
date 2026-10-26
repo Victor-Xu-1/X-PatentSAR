@@ -52,6 +52,21 @@
   historical adapter. This reader-contract consistency changes no admission,
   raw packet version or scientific value; normal callers keep explicit failure.
 
+- Complete native-window authority: `native_window_coverage` consumes the existing
+  call-local `source_paint_visibility` original paint/glyph inventory, never model
+  scores or recognized-word crops. `native_window_rules` permits only simple
+  actual axial boundaries subordinate to the existing complete closed-cell pixel
+  proof. Heading, scalar/ID, role and declared-text capture and original replay
+  share this same envelope/status path. Unknown/outlined/interior/raster/hidden
+  paint cannot be waived by a readable native subset. Multi-line native operations
+  retain geometry-bound original rows without extra OCR.4096paints/20000retained
+  primitive bounds refuse whole windows, not truncate success. Binding67/binder78
+  and Activity46/extractor58 refresh derived admission only. Raw/history/manual,
+  coverage25/role6/source4, chemical/models/dependencies/activation, SQL/API and
+  SAR policies stay unchanged. No competing reader, store, queue, fuzzy literal
+  repair or acceptance authority is added. Bounded source checks do not certify
+  universal detector recall, native OCR accuracy or private-patent acceptance.
+
 - Caption occurrence ownership: one page/source index in `caption_label_roles`
   feeds the existing literal path and a typed complete closed-cell locator
   adapter (`caption_locator_proof`/`caption_locator_source`). Only one current
