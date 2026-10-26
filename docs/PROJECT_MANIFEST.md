@@ -1,5 +1,21 @@
 # Project governance manifest
 
+- Original title scope authority: `heading_title_scope` observes/replays the
+  actual source and `heading_title_geometry` derives its complete physical scope
+  for the existing heading reader/status/original admission. Raw nominations,
+  native seeds and full same-row source remain retained. Existing48pt native
+  grouping now includes outlined ink; orphan ink has one owner or remains
+  ambiguous, never silently removed/assigned by proximity. Closed cells retain
+  row context and cannot waive exterior role ink. Only actual axial boundary
+  segments under the existing paired pixel-closure proof are ruling; literal
+  dashed sources keep that same closure/unknown/gap gate. Call-local original
+  paint facts serve the normal heading loop, never a global/competing cache.
+  Binding69/binder80 and Activity47/extractor59 refresh derived admission only;
+  source4/role6/coverage25/SMILES6, raw/history/manual, model/dependency/default
+  activation, SQL/API/SAR policies remain unchanged. No second parser/recognizer,
+  writer/store/queue, guessed ID/product or cropped successful subset exists.
+  Generated controls do not establish all-format/chemical/real-patent success.
+
 - Numeric source/SAR authority: `core/measurement_literals` owns the exact
   bounded scalar/censored/interval grammar previously embedded in SAR. Both
   source intake and SAR use that single parser; `sar.values` keeps its existing

@@ -1,8 +1,13 @@
 """Original axial rule paths subordinate to the existing closed-cell pixel proof."""
 
+import math
+import re
 from itertools import pairwise
 
 from .source_geometry import overlaps
+
+_NUMBER = r"(?:[0-9]+(?:\.[0-9]*)?|\.[0-9]+)"
+_DASHES = re.compile(rf"\[\s*(?:{_NUMBER}(?:\s+{_NUMBER})*)?\s*\]\s*-?{_NUMBER}")
 
 
 def original_rule_path(path, page):
@@ -17,7 +22,9 @@ def original_rule_path(path, page):
         and max(path["color"]) <= 0.45
         and type(path.get("width")) in {int, float}
         and 0 < path["width"] <= 4
-        and path.get("dashes") == "[] 0"
+        and isinstance(path.get("dashes"), str)
+        and len(path["dashes"]) <= 128
+        and _DASHES.fullmatch(path["dashes"]) is not None
         and 0 < len(path.get("items", [])) <= 4096
     ):
         return None
@@ -51,10 +58,8 @@ def original_rule_path(path, page):
     }
 
 
-def boundary_rule_path(path, bounds):
-    """Geometry alone grants nothing: the caller also needs all four pixel edges."""
-    import math
-
+def valid_rule_path(path):
+    """One typed finite geometry contract for admission and title-scope replay."""
     if not isinstance(path, dict) or set(path) != {"width", "segments"}:
         return False
     width, segments = path["width"], path["segments"]
@@ -66,7 +71,6 @@ def boundary_rule_path(path, bounds):
         or not 0 < len(segments) <= 16385
     ):
         return False
-    touched = False
     for segment in segments:
         if (
             not isinstance(segment, list)
@@ -74,6 +78,16 @@ def boundary_rule_path(path, bounds):
             or any(type(v) not in {int, float} or not math.isfinite(v) for v in segment)
         ):
             return False
+    return True
+
+
+def boundary_rule_path(path, bounds):
+    """Geometry alone grants nothing: the caller also needs all four pixel edges."""
+    if not valid_rule_path(path):
+        return False
+    width, segments = path["width"], path["segments"]
+    touched = False
+    for segment in segments:
         x0, y0, x1, y1 = segment
         box = [
             min(x0, x1) - width / 2,

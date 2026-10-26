@@ -11,6 +11,7 @@ import fitz
 from PIL import Image
 
 from .activity_identity import printed_identifier_key
+from .heading_source_geometry import NATIVE_TITLE_GAP
 from .heading_source_proof import proved_heading_declaration
 from .source_geometry import native_lines, source_layout
 from .source_section_roles import (
@@ -103,7 +104,7 @@ def original_heading_lines(page, cached_lines=(), source_lines=()) -> list[dict]
     for _, row in sorted(rows.items()):
         groups = [[]]
         for word in sorted(row, key=lambda item: item[0]):
-            if groups[-1] and word[0] - groups[-1][-1][2] > 48:
+            if groups[-1] and word[0] - groups[-1][-1][2] > NATIVE_TITLE_GAP:
                 groups.append([])
             groups[-1].append(word)
         for group in groups:

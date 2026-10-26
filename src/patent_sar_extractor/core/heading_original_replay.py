@@ -4,6 +4,7 @@ import hashlib
 
 from .cell_raster import original_reading_image
 from .heading_source_proof import proved_heading_declaration
+from .heading_title_scope import replay_title_scope
 from .native_window_coverage import native_window_complete, observe_native_window
 from .source_geometry import SourceTokens, source_layout
 from .source_observations import source_cell_observation
@@ -25,6 +26,8 @@ def validate_original_heading(page, proof):
     ):
         raise ValueError("Original heading observation cannot be replayed")
     layout = source_layout(page)
+    if not replay_title_scope(page, proof, layout):
+        raise ValueError("Original complete title nomination differs or is missing")
     native = source_cell_observation(
         SourceTokens(layout.native, layout), tuple(proof["bbox"]), native=True
     )

@@ -58,6 +58,23 @@ caller, heading/binder entry, saved-source readers and installed consumers.
 
 ## A large or wrapped heading fails only when auxiliary recovery is needed
 
+For a native-only locator, inspect `title_scope`, not just its successful word
+box. The packet preserves its native seed, complete same-row native/paint
+inventory and either the whole original cell or the physically supported row.
+Outlined role words outside the former box must be observed too. Wide blank
+space cannot erase orphan ink: one native owner reads the complete row, while
+several possible owners remain ambiguous. Unknown/crossing/over-budget geometry
+stops before OCR. The caller retains the original nomination and all source facts.
+
+A closed number box does not waive adjoining outside role text. Its original
+pixel proof may separate only actual boundary segments, not crop away external
+source. Dotted native cells require the same complete paired pixel edges;
+`[1 3]` gaps, missing edges, attached marks and malformed scope remain refused.
+Binding69/binder80 and Activity47/extractor59 refresh derived admission only.
+Raw PDF/OCR/structure/model observations, manual audit and historical failures
+are never retagged or corrected. Verify related reference/exemption consumers,
+reaction ownership and the other remaining scientific gates before a real rerun.
+
 Native text can be incomplete even on a page without embedded images: a role
 word or comparator may be drawn as vector paths beside otherwise readable text.
 Current native windows retain all original paint kinds and use actual glyph
