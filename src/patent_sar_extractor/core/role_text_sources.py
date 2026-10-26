@@ -192,3 +192,6 @@ def role_text_cells(payload):
                         "Original role-text inventory exceeds its source bound"
                     )
                 yield page_no, cell
+    from .title_source_inventory import title_source_cells
+
+    yield from title_source_cells(payload)

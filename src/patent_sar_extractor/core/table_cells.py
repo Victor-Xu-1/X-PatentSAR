@@ -18,6 +18,7 @@ from .native_window_coverage import native_cell_packet
 from .page_ocr_cache import get_ocr_engine
 from .printed_identifiers import identifier_key
 from .source_cell_claims import cell_source_conflict, cell_source_status
+from .source_cell_pixels import original_grid_cell_is_empty
 from .source_cell_tokens import cell_text
 from .source_geometry import SourceTokens, native_cell_text, native_region
 from .source_observations import source_cell_observation
@@ -148,6 +149,8 @@ def read_cell(page, bounds, tokens: list[dict], kind: str, native: bool) -> Cell
         # A native page's empty region is not automatically a scanned cell.
         # Check original pixels without invoking an OCR model; outlined/vector
         # ink must still take the existing bounded cell path below.
+        if original_grid_cell_is_empty(page, list(bounds)):
+            return CellReading("", bounds, observations, True)
         image = cell_image(page, bounds, 400)
         if not np.any(image < 180):
             return CellReading("", bounds, observations, True)

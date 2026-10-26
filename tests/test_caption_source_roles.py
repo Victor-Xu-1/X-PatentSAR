@@ -268,6 +268,13 @@ class CaptionRoleProofTests(unittest.TestCase):
         )
         self.caption_boxes = _boxes[1]
         with drawing:
+            original_layout = source_layout(drawing[0])
+            raw_tokens = [
+                {**token, "source": "raster", "confidence": 0.99}
+                for token in original_layout.native
+            ]
+            for token in raw_tokens:
+                token.pop("native_paint", None)
             pixels = drawing[0].get_pixmap(matrix=fitz.Matrix(3, 3), alpha=False)
             png = pixels.tobytes("png")
         doc = fitz.open()
@@ -275,7 +282,18 @@ class CaptionRoleProofTests(unittest.TestCase):
         page = doc.new_page()
         page.insert_image(page.rect, stream=png)
         grids = detect_ruled_table_regions(page, dpi=240)
-        tokens = page_tokens(page, dpi=200, allow_tesseract=False)
+        tokens = SourceTokens(raw_tokens, source_layout(page), tuple(page.rect))
+        literal = " ".join((physical_title or "Table 47. Final products").split())
+
+        def controlled(image, *, use_det, use_cls):
+            return ([], None) if use_det else ([[literal, 0.99]], None)
+
+        self.enterContext(
+            patch(
+                "patent_sar_extractor.core.page_ocr_cache.get_ocr_engine",
+                return_value=("rapidocr", controlled),
+            )
+        )
         # Controlled first-pass error; physical source pixels remain untouched.
         hint = {
             "text": raw_title,
@@ -304,12 +322,12 @@ class CaptionRoleProofTests(unittest.TestCase):
         self.assertEqual(list(tokens), before)
         self.assertIn("Finalproducts", scope["observations"][0]["text"])
         self.assertEqual(caption_role_status(scope, 1, scope["table_bbox"]), "compound")
-        self.assertIn("refinement", scope)
+        self.assertTrue(scope["sources"][0]["original_titles"])
 
     def test_known_nonfinal_role_or_table_identity_cannot_be_overwritten(self):
         for title, role in (
-            ("Table 47. Intermediates", "nonfinal"),
-            ("Table 93. Finalproducts", "unknown"),
+            ("Table 47. Intermediates", "unresolved"),
+            ("Table 93. Finalproducts", "unresolved"),
         ):
             with self.subTest(title=title):
                 page, grids, tokens = self.raster_frame(title)
@@ -321,7 +339,7 @@ class CaptionRoleProofTests(unittest.TestCase):
         scope = observe_caption_role(page, grids[0], grids, tokens)
         self.assertEqual(scope["role"], "compound", scope)
         altered = copy.deepcopy(scope)
-        altered["refinement"]["bbox"][0] += 1
+        altered["sources"][0]["original_titles"][0]["bbox"][0] += 1
         self.assertIsNone(caption_role_status(altered, 1, altered["table_bbox"]))
 
     def test_refined_unknown_and_mixed_titles_keep_their_declared_roles(self):
@@ -346,7 +364,7 @@ class CaptionRoleProofTests(unittest.TestCase):
         scope = observe_caption_role(page, grids[0], grids, tokens)
         self.assertEqual(scope["role"], "compound")
         with patch(
-            "patent_sar_extractor.core.activity_grid_role_observation.observe_role_cells",
+            "patent_sar_extractor.core.page_ocr_cache.get_ocr_engine",
             side_effect=AssertionError("A reused frame must not launch title OCR"),
         ):
             self.assertTrue(
@@ -379,17 +397,13 @@ class CaptionRoleProofTests(unittest.TestCase):
         for change in ("missing_read", "weak_part", "changed_matrix", "missing_frame"):
             with self.subTest(change=change):
                 altered = copy.deepcopy(scope)
-                reading = altered["refinement"]["role_cells"]
+                reading = altered["sources"][0]["original_titles"][0]
                 if change == "missing_read":
                     reading["observations"].pop()
                 elif change == "weak_part":
-                    reading["observations"][0]["cells"][0]["parts"][0]["confidence"] = (
-                        0.2
-                    )
+                    reading["observations"][0]["parts"][0]["confidence"] = 0.2
                 elif change == "changed_matrix":
-                    reading["observations"][1]["matrix"][0][0] = (
-                        "Table 47. Intermediates"
-                    )
+                    reading["observations"][1]["text"] = "Table 47. Intermediates"
                 else:
                     reading["rendered_frames"].pop()
                 self.assertIsNone(
@@ -448,6 +462,7 @@ class CaptionRoleProofTests(unittest.TestCase):
                 xs, ys = grids[0]["xs"], grids[0]["ys"]
                 cell = [xs[0], ys[0], xs[1], ys[1]]
                 self.assertEqual(caption_role_status(scope, 1, cell), "compound", scope)
+                self.assertEqual(scope["table_key"], "TABLE47")
 
     def test_missing_malformed_or_excess_original_scope_is_not_accepted(self):
         original, cell = self.original_scope()

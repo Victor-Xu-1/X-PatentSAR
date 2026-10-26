@@ -10,9 +10,10 @@ from .activity_context_geometry import (
 )
 from .caption_role_links import MAX_CONTINUATION_DEPTH, valid_role_link
 from .caption_role_titles import project_caption_titles
-from .caption_title_refinement import refined_title_role
 from .source_observations import source_observation_status
 from .source_table_roles import observed_role, title_key
+from .title_context_source import valid_title_context
+from .title_ink_geometry import caption_title_context
 
 __all__ = [
     "caption_role_status",
@@ -28,7 +29,7 @@ def caption_role_status(scope, page_no, label_cell, *, _depth=0):
         _depth > MAX_CONTINUATION_DEPTH
         or type(page_no) is not int
         or not isinstance(scope, dict)
-        or set(scope) - {"continuation", "refinement"}
+        or set(scope) - {"continuation"}
         != {
             "version",
             "page_no",
@@ -95,8 +96,21 @@ def caption_role_status(scope, page_no, label_cell, *, _depth=0):
             and window[1] <= box[1] < box[3] <= window[3]
         ):
             return None
-    role, key = observed_role(scope["observations"])
+    role, key = observed_role(
+        scope["observations"],
+        contexts=scope["sources"],
+        context=caption_title_context(scope),
+    )
     try:
+        if (
+            not isinstance(scope["sources"], list)
+            or not 1 <= len(scope["sources"]) <= 2
+            or any(
+                not valid_title_context(packet, page_no=page_no, width=window[2])
+                for packet in scope["sources"]
+            )
+        ):
+            return None
         if any(packet.get("bbox") != window for packet in scope["sources"]):
             return None
         if scope["observations"] != project_caption_titles(
@@ -105,10 +119,6 @@ def caption_role_status(scope, page_no, label_cell, *, _depth=0):
             return None
     except (ValueError, TypeError, KeyError, AttributeError):
         return None
-    if "refinement" in scope:
-        if role != "unknown" or (selected := refined_title_role(scope)) is None:
-            return None
-        role, key = selected
     if "continuation" in scope:
         if role != "unknown":
             return None

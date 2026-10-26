@@ -225,6 +225,13 @@ def project_source_observation(packet, bounds):
         **({"boundary_tokens": boundary} if packet["schema_version"] == 2 else {}),
     }
     projected["status"] = _status(projected)
+    if "original_titles" in packet:
+        records = packet["original_titles"]
+        if not isinstance(records, list) or len(records) > 128:
+            raise ValueError("Malformed original title source inventory")
+        projected["original_titles"] = records
+    if "title_context" in packet:
+        projected["title_context"] = packet["title_context"]
     return projected
 
 

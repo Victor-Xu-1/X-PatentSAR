@@ -4,6 +4,7 @@ from .logical_column_partitions import nomination_groups
 from .ruled_structure_headers import ruled_header_roles
 from .structure_header_context import original_header_context_packets
 from .structure_table_headers import aligned_column_edges
+from .title_ink_geometry import title_context_spec
 from .unruled_structure_headers import header_windows, unruled_header_roles
 
 
@@ -40,7 +41,7 @@ def original_column_roles(scope):
     )
 
 
-def original_column_context(scope):
+def original_column_title_args(scope):
     xs, ys = original_column_axes(scope)
     logical_window = (
         [xs[0], ys[0], xs[-1], ys[-1]]
@@ -48,12 +49,27 @@ def original_column_context(scope):
         and scope["column_band"] != [0, scope["page_size"][0]]
         else None
     )
+    return {
+        "contexts": scope["context_sources"],
+        "context": title_context_spec(
+            geometry=scope.get("context_geometry"),
+            logical_window=logical_window,
+            grid_axes=scope.get("grid_axes")
+            if scope.get("kind") == "original_ruled_columns"
+            else None,
+        ),
+    }
+
+
+def original_column_context(scope):
+    _xs, ys = original_column_axes(scope)
+    context = original_column_title_args(scope)["context"]
     return original_header_context_packets(
         scope["context_sources"],
         ys[0],
         scope["page_size"][0],
-        geometry=scope.get("context_geometry"),
-        logical_window=logical_window,
+        geometry=context["geometry"],
+        logical_window=context["logical_window"],
     )
 
 

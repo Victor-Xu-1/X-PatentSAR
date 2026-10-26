@@ -344,7 +344,7 @@ def bind_caption_grids(
                         "column": col,
                         "review": reading.needs_review
                         or not resolved
-                        or role_status in {"mixed", "conflict"},
+                        or role_status in {"mixed", "conflict", "unresolved"},
                         "observations": reading.observations,
                         "bare": bare,
                         "caption_role": role,

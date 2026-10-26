@@ -1,5 +1,7 @@
 """One integer raster-extent authority for original text-row admission/replay."""
 
+PHYSICAL_ROW_GAP = 0.7
+
 
 def row_pixel_limit(dpi, *, maximum_row_height=12):
     """Cover the point interval and its unknown subpixel render-origin phase.

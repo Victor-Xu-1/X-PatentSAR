@@ -92,6 +92,11 @@ class RoleOriginalConsumerTests(unittest.TestCase):
         packet["text"] = replacement
         for token in packet["tokens"]:
             token["text"] = token["text"].replace("7.2", "8.4")
+        # The complete original-paint inventory is now part of the pure cell
+        # contract too. Make this generated forgery internally consistent;
+        # its actual original pixels/words must still independently reject it.
+        for paint in scope["observations"][0]["cells"][5]["native_window"]["paints"]:
+            paint["text"] = paint["text"].replace("7.2", "8.4")
         self.assertTrue(
             valid_role_scope(record),
             "This remains pure qualified text; original replay must independently refuse it",

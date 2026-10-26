@@ -32,7 +32,7 @@ def _characters(value):
     return "".join(character for character in value if not character.isspace())
 
 
-def _row_marks(row, *, cell=None):
+def original_row_marks(row, *, cell=None, ruling_cells=()):
     native, window = row["native_source"], row["window"]
     tokens = [*native["tokens"], *native["boundary_tokens"]]
     marks = [token["bbox"] for token in tokens]
@@ -47,14 +47,17 @@ def _row_marks(row, *, cell=None):
         ):
             continue
         if (
-            cell is not None
+            (cell is not None or ruling_cells)
             and paint["kind"] == "stroke-path"
             and paint["rule_path"] is not None
         ):
             path = paint["rule_path"]
             for segment in path["segments"]:
-                if boundary_rule_path(
-                    {"width": path["width"], "segments": [segment]}, cell
+                if any(
+                    boundary_rule_path(
+                        {"width": path["width"], "segments": [segment]}, bounds
+                    )
+                    for bounds in ([cell] if cell is not None else ruling_cells)
                 ):
                     continue
                 x0, y0, x1, y1 = segment
@@ -76,7 +79,7 @@ def _row_component(row, nomination, *, cell=None):
     window = row["window"]
     if window["refusal"] is not None:
         return None, window["refusal"]
-    marks = _row_marks(row, cell=cell)
+    marks = original_row_marks(row, cell=cell)
     if len(marks) > MAX_WINDOW_PAINTS:
         return None, "source_mark_budget"
     groups = []

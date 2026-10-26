@@ -1,5 +1,37 @@
 # Operations and troubleshooting
 
+## Original catalogue title and close-frame diagnosis
+
+Current derived admission is Binding70/binder81 and Activity48/extractor60.
+Raw PDF/OCR/structure assets, manual audit/history, API/SQL, models and SAR
+numerical policies are unchanged. Do not relabel old accepted/failed evidence as
+current source proof. Old originals remain recoverable inputs to the ordinary
+frontend workflow; old producer history and manual changes remain immutable.
+
+For a missing/nonfinal catalogue title inspect the parent's `title_context`,
+`original_titles` and optional original-ink inventory. Word nominations are not
+the title itself. Both complete optical frames and retained native anchors must
+agree; worker/Web consumers independently replay the actual original before
+numbered OCSR. Missing records, page/geometry changes or an unresolved role must
+not be replaced with a saved success flag. Closed ruling exemptions require the
+same original paired pixels, not a claimed rectangle.
+
+The no-word-nomination vector path reads every bounded unknown physical row in
+an already-owned catalogue/column context. It does not start whole-page title
+OCR, acquire a new recognizer or change auxiliary OCR activation. Raster-only
+contexts without usable word nominations, ambiguous parallel owners, crossing
+paint or exceeded budgets remain explicit refusals, not proved title absence.
+An unnumbered category title never gains an invented table key. Wrapped/mixed
+categories must not erase the other role or the printed table marker.
+
+Nearby original closed frames are separate even inside the short-row distance
+heuristic; complete continuous outer rules keep one table together. Original
+closed blank identifier cells skip futile OCR but remain missing/needs-review.
+Keep all refusal/failure evidence. Only the actual frontend may submit private
+extraction/resume/retry/SAR; diagnostic scripts must not recompute that patent or
+hand-edit its products. Generated/controlled source checks are engineering
+evidence, not native-model accuracy or private-patent scientific acceptance.
+
 ## A single saved-source read failure does not hide the workspace
 
 Project catalogue/detail metadata can return additive `read_error` while keeping
@@ -70,7 +102,8 @@ A closed number box does not waive adjoining outside role text. Its original
 pixel proof may separate only actual boundary segments, not crop away external
 source. Dotted native cells require the same complete paired pixel edges;
 `[1 3]` gaps, missing edges, attached marks and malformed scope remain refused.
-Binding69/binder80 and Activity47/extractor59 refresh derived admission only.
+The earlier original-heading release used Binding69/binder80 and
+Activity47/extractor59. Current combined admission versions are stated above.
 Raw PDF/OCR/structure/model observations, manual audit and historical failures
 are never retagged or corrected. Verify related reference/exemption consumers,
 reaction ownership and the other remaining scientific gates before a real rerun.

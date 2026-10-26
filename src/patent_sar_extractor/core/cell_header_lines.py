@@ -6,7 +6,7 @@ import math
 import cv2
 import numpy as np
 
-from .cell_text_limits import row_pixel_limit
+from .cell_text_limits import PHYSICAL_ROW_GAP, row_pixel_limit
 from .cell_text_row_readings import (
     qualified_row,
     row_observation,
@@ -64,7 +64,10 @@ def physical_line_frame(
         return None
     groups = np.split(
         occupied,
-        np.flatnonzero(np.diff(occupied) > max(1, math.ceil(dpi / 72 * 0.7))) + 1,
+        np.flatnonzero(
+            np.diff(occupied) > max(1, math.ceil(dpi / 72 * PHYSICAL_ROW_GAP))
+        )
+        + 1,
     )
     if len(groups) == 1 and groups[0][-1] - groups[0][0] + 1 <= row_pixel_limit(
         dpi, maximum_row_height=maximum_row_height

@@ -56,26 +56,31 @@ def _catalog_from_titles(texts) -> Catalog:
 
 def catalog_for_scope(scope) -> Catalog:
     """Use the same qualified original title as role and table-link consumers."""
-    from .source_table_roles import observed_role
-    from .structure_column_scopes import original_column_context
+    from .source_table_roles import observed_role, title_texts
+    from .structure_column_scopes import (
+        original_column_context,
+        original_column_title_args,
+    )
     from .unruled_continuation_titles import anchor_scope
 
     anchor = anchor_scope(scope)
     if anchor is None:
         return Catalog()
     packets = original_column_context(anchor)
-    role, key = observed_role(packets)
+    title_args = original_column_title_args(anchor)
+    role, key = observed_role(packets, **title_args)
     if role not in {"compound", "nonfinal"} or not key:
         return Catalog()
     # A qualified original disagreement never grants selected-reprint exclusion.
-    return _catalog_from_titles(packet["text"] for packet in packets)
+    return _catalog_from_titles(title_texts(packets, **title_args))
 
 
 def catalog_for_caption_scope(scope) -> Catalog:
     """Revalidate the complete original role before using selected-table words."""
     from .caption_role_links import MAX_CONTINUATION_DEPTH
     from .caption_role_proof import caption_role_status
-    from .source_observations import source_observation_status
+    from .source_table_roles import title_texts
+    from .title_ink_geometry import caption_title_context
 
     if (
         not isinstance(scope, dict)
@@ -90,20 +95,13 @@ def catalog_for_caption_scope(scope) -> Catalog:
         scope = scope["continuation"]["previous"]
     else:
         return Catalog()
-    texts = [
-        packet["text"]
-        for packet in scope["observations"]
-        if source_observation_status(packet, packet["bbox"], packet["text"])
-        == "qualified"
-    ]
-    if "refinement" in scope:
-        # Role/key agreement does not imply that both readings say "selected".
-        # Retain both original-resolution variants and qualified original titles.
-        texts.extend(
-            observation["matrix"][0][0]
-            for observation in scope["refinement"]["role_cells"]["observations"]
+    return _catalog_from_titles(
+        title_texts(
+            scope["observations"],
+            contexts=scope["sources"],
+            context=caption_title_context(scope),
         )
-    return _catalog_from_titles(texts)
+    )
 
 
 def repeated_selected_catalogs(cells: Sequence[Any]) -> set[str]:

@@ -35,6 +35,26 @@ def cluster_positions(values: list[float], tolerance: float = 2.0) -> list[float
     return [sum(group) / len(group) for group in groups]
 
 
+def _separate_closed_frames(previous, current, verticals):
+    """An observed end AND new start outrank the short-row proximity heuristic.
+
+    Use the detector's unchanged edge tolerances. This only splits geometry;
+    missing rules, role text and actual cell closure remain consumer checks.
+    Continuous outer rules must never turn an ordinary short row into a break.
+    """
+    return all(
+        any(
+            abs(edge["x"] - boundary) <= 8 and abs(edge["y1"] - previous["y"]) <= 4
+            for edge in verticals
+        )
+        and any(
+            abs(edge["x"] - boundary) <= 8 and abs(edge["y0"] - current["y"]) <= 4
+            for edge in verticals
+        )
+        for boundary in (current["x0"], current["x1"])
+    )
+
+
 def detect_ruled_table_regions(
     page, dpi: int = 300, *, minimum_columns: int = 2
 ) -> list[dict]:
@@ -158,7 +178,16 @@ def detect_ruled_table_regions(
                 )
                 for boundary in (seg["x0"], seg["x1"])
             )
-            if not current or seg["y"] - current[-1]["y"] <= 45 or bridged:
+            separate = (
+                bool(current)
+                and not bridged
+                and _separate_closed_frames(current[-1], seg, v_segments)
+            )
+            if (
+                not current
+                or bridged
+                or (seg["y"] - current[-1]["y"] <= 45 and not separate)
+            ):
                 current.append(seg)
                 continue
             if len(current) >= 2:

@@ -9,10 +9,37 @@ _MAX_ROWS = 2048
 MAX_SOURCE_CELLS = 16384
 
 
+def physical_text_sources(sources):
+    """Expand only the explicit original-title carrier; never recurse arbitrary JSON."""
+    for page_no, cell in sources:
+        if isinstance(cell, dict) and cell.get("method") == "original_title_context":
+            from ..title_context_source import title_context_bounds
+
+            if (
+                set(cell) != {"method", "title_context"}
+                or title_context_bounds(cell["title_context"]) is None
+                or cell["title_context"]["page_no"] != page_no
+            ):
+                raise ValueError("Malformed original title context owner")
+        elif isinstance(cell, dict) and cell.get("method") == "original_title":
+            from ..title_source_proof import source_title_geometry
+
+            if (
+                set(cell) != {"method", "title_source"}
+                or source_title_geometry(cell["title_source"]) is None
+                or cell["title_source"]["page_no"] != page_no
+            ):
+                raise ValueError("Malformed original title text owner")
+            for reading in cell["title_source"]["observations"]:
+                yield page_no, reading
+        else:
+            yield page_no, cell
+
+
 def auxiliary_source_cells(sources):
     """Conserve complete packets and reject one request acquiring two outputs."""
     seen, rows = set(), {}
-    for page_no, cell in sources:
+    for page_no, cell in physical_text_sources(sources):
         if not has_auxiliary_text(cell):
             continue
         if not valid_auxiliary_cell(cell, cell.get("render_dpi")):

@@ -4,7 +4,7 @@ from itertools import chain
 
 from .caption_tail_sources import caption_tail_text_cells
 from .text_ocr.cell_proof import has_auxiliary_text, replay_auxiliary_cell
-from .text_ocr.source_inventory import auxiliary_source_cells
+from .text_ocr.source_inventory import auxiliary_source_cells, physical_text_sources
 
 
 def binding_text_cells(bindings):
@@ -29,7 +29,9 @@ def binding_text_cells(bindings):
 def has_binding_auxiliary(bindings, *, role_text=()):
     return any(
         has_auxiliary_text(cell)
-        for _, cell in chain(binding_text_cells(bindings), role_text)
+        for _, cell in physical_text_sources(
+            chain(binding_text_cells(bindings), role_text)
+        )
     )
 
 

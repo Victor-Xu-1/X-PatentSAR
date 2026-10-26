@@ -4,6 +4,7 @@ import re
 
 from .activity_context_geometry import (
     context_region,
+    grid_axes,
     grid_box,
     validate_context_geometry,
     validate_grid_axes,
@@ -54,7 +55,7 @@ def observe_ruled_header(page, tokens, grid, original_sha, *, grids=None):
         ],
         "source_observations": sources,
         "context_sources": observe_header_context(
-            tokens, size, ys[0], geometry=geometry
+            tokens, size, ys[0], geometry=geometry, grid_axes=grid_axes(grid), page=page
         ),
         "role_cells": reading,
     }
@@ -124,9 +125,13 @@ def ruled_header_roles(scope):
         raise ValueError("Original ruled header nomination differs from its source")
     headers = original_header_readings(scope["role_cells"], xs, ys[:2], sources)
     role, _key = original_header_context_role(
-        scope["context_sources"], ys[0], size[0], geometry=scope["context_geometry"]
+        scope["context_sources"],
+        ys[0],
+        size[0],
+        geometry=scope["context_geometry"],
+        grid_axes=scope["grid_axes"],
     )
-    if headers is None or role in {"mixed", "conflict"}:
+    if headers is None or role in {"mixed", "conflict", "unresolved"}:
         return None
     pairs = structure_column_pairs(headers)
     if (

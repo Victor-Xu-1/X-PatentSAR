@@ -115,12 +115,22 @@ class SharedTableGeometryTests(unittest.TestCase):
             self.assertEqual(len(found[0]["ys"]), 5)
 
     def test_separate_tables_without_connecting_edges_are_not_glued(self):
-        with fitz.open() as doc:
-            page = doc.new_page()
-            for ys in ([90, 115, 140], [280, 305, 330]):
-                grid(page, [60, 160, 260], ys)
-            found = detect_ruled_table_regions(page, dpi=240)
-            self.assertEqual(len(found), 2)
+        for gap in (12, 20, 44, 140):
+            with self.subTest(gap=gap), fitz.open() as doc:
+                page = doc.new_page()
+                for ys in ([90, 115, 140], [140 + gap, 165 + gap, 190 + gap]):
+                    grid(page, [60, 160, 260], ys)
+                found = detect_ruled_table_regions(page, dpi=240)
+                self.assertEqual(len(found), 2)
+
+    def test_a_short_row_gap_with_continuous_outer_edges_is_one_table(self):
+        for gap in (12, 20, 44):
+            with self.subTest(gap=gap), fitz.open() as doc:
+                page = doc.new_page()
+                grid(page, [60, 160, 260], [90, 115, 140, 140 + gap, 190 + gap])
+                found = detect_ruled_table_regions(page, dpi=240)
+                self.assertEqual(len(found), 1)
+                self.assertEqual(len(found[0]["ys"]), 5)
 
 
 if __name__ == "__main__":

@@ -55,3 +55,29 @@ def caption_table_marker(text):
 
 def table_marker_identity(marker: str) -> str:
     return re.sub(r"^Tab[li1]e\s*", "Table ", marker, flags=re.IGNORECASE)
+
+
+def title_row_indices(rows, *, boundary=table_body_boundary):
+    """One last-caption and two adjacent continuation-row selector."""
+    starts = [index for index, row in enumerate(rows) if boundary(row["text"])]
+    if not starts:
+        return []
+    numbered = [index for index in starts if table_body_boundary(rows[index]["text"])]
+    start = numbered[-1] if numbered else starts[-1]
+    if not numbered:
+        for _ in range(2):
+            previous = start - 1
+            if (
+                previous not in starts
+                or rows[start]["bbox"][1] - rows[previous]["bbox"][3] > 18
+            ):
+                break
+            start = previous
+    selected = [start]
+    for index in range(start + 1, min(len(rows), start + 3)):
+        if rows[index]["bbox"][1] - rows[selected[-1]]["bbox"][
+            3
+        ] > 18 or table_body_boundary(rows[index]["text"]):
+            break
+        selected.append(index)
+    return selected
