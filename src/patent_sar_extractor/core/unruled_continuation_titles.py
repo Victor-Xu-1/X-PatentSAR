@@ -31,11 +31,13 @@ def anchor_scope(scope):
 def nominated_table_keys(scope):
     if anchor_scope(scope) is None:
         return set()
-    return {
+    keys = {
         title_key(p["text"])
         for p in original_column_context(anchor_scope(scope))
         if title_key(p["text"])
     }
+    proved = qualified_table_key(scope)
+    return keys | ({proved} if proved else set())
 
 
 def qualified_table_key(scope):

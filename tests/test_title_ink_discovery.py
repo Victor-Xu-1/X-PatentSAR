@@ -253,6 +253,13 @@ class TitleInkDiscoveryTests(unittest.TestCase):
                 roles = unruled_header_roles(scope)
             self.assertIsNotNone(roles)
             self.assertEqual(roles["role"], "nonfinal")
+            from patent_sar_extractor.core.unruled_continuation_titles import (
+                nominated_table_keys,
+                qualified_table_key,
+            )
+
+            self.assertEqual(qualified_table_key(scope), "TABLEF")
+            self.assertIn("TABLEF", nominated_table_keys(scope))
 
     def test_wrapped_unnumbered_categories_cannot_discard_the_other_role(self):
         for first, second in (
