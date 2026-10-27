@@ -120,6 +120,7 @@ def write_binding_result(
         issues, diagnostics, original_pdf_sha256=source_scope["original_pdf_sha256"]
     )
     reference_payload = {
+        "compound_catalog": catalog,
         "source_sections": list(source_sections),
         "source_reference_scope": source_scope,
         "source_role_observations": serialize_role_observations(list(diagnostics)),

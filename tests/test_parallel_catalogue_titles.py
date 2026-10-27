@@ -185,8 +185,8 @@ class ParallelCatalogueTitleTests(ParallelCatalogueControls, unittest.TestCase):
             ):
                 self.assertTrue(original_role_source_errors(document, cells))
 
-    def test_staggered_or_open_unknown_source_windows_do_not_guess_an_owner(self):
-        for options in ({"right_shift": 4}, {"open_right": True}):
+    def test_open_unknown_source_windows_do_not_guess_an_owner(self):
+        for options in ({"open_right": True},):
             with self.subTest(options=options):
                 document, _structures, _boxes, frames = original_parallel_catalogues(
                     "outlined",

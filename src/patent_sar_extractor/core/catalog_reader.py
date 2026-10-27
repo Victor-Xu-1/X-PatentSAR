@@ -19,6 +19,7 @@ from .binding_source_claims import validate_catalog_claims
 from .binding_source_references import reference_issues
 from .pipeline_rules import _label_key, annotate_binding_accuracy
 from .source_binding_proof import annotate_source_binding
+from .title_geometry_memo import title_geometry_call
 
 MAX_CATALOG_RECORDS = MAX_RECOGNITION_SOURCES
 
@@ -56,6 +57,7 @@ def _checked_source(
         raise CatalogValidationError("Printed-ID source proof is malformed.") from exc
 
 
+@title_geometry_call
 def read_catalog_entries(
     payload: dict[str, Any],
     known_structures: set[str] | None = None,

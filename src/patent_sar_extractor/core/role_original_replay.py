@@ -6,8 +6,10 @@ from .native_cell_replay import original_native_cell_matches
 from .source_geometry import source_layout
 from .source_paint_visibility import native_paint_view
 from .text_ocr.cell_proof import has_auxiliary_text
+from .title_geometry_memo import title_geometry_call
 
 
+@title_geometry_call
 def original_role_source_errors(document, sources):
     """Auxiliary packets are checked by the existing shared auxiliary replayer.
 

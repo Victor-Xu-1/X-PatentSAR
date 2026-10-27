@@ -20,7 +20,7 @@ def observe_title_ink(page, bounds, context, *, layout=None, paint_view=None):
     within_budget = title_ruling_budget(cells, size)
     window = observe_native_window(page, bounds, paint_view=paint_view)
     return {
-        "version": 3,
+        "version": 4,
         "page_no": page.number + 1,
         "page_size": size,
         "bbox": list(bounds),

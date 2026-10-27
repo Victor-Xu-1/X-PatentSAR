@@ -133,6 +133,34 @@ def original_grid_cell_is_empty(page, cell):
     return closed_masks_are_empty(masks)
 
 
+def closed_cell_rule_span(packet, cell, size):
+    """Paired original horizontal rule extent under the same closure proof.
+
+    Detected grid coordinates are raster nominations, not exact vector edges.
+    This returns actual retained rule ink at both resolutions, never a fixed
+    coordinate tolerance or a fabricated extension of the original boundary.
+    """
+    if closed_cell_masks(packet, cell, size) is None:
+        return None
+    masks = closed_cell_masks(packet, cell, size, boundary_only=True)
+    if masks is None:
+        return None
+    spans = []
+    for reading, mask, dpi in zip(packet["readings"], masks, (400, 600), strict=True):
+        _yy, xx = np.where(mask)
+        if not len(xx):
+            return None
+        origin = retained_pixel_origin(reading, packet["bbox"], dpi)
+        spans.append(
+            [
+                origin[0] + int(xx.min()) * 72 / dpi,
+                origin[0] + (int(xx.max()) + 1) * 72 / dpi,
+            ]
+        )
+    left, right = max(span[0] for span in spans), min(span[1] for span in spans)
+    return [left, right] if left < right else None
+
+
 def closed_masks_are_empty(masks):
     """The existing paired-resolution closed-grid noise bound has one owner."""
     return (

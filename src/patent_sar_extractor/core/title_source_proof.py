@@ -207,7 +207,23 @@ def source_title_text(proof):
         proof, texts[0]
     ):
         return None
-    nomination = proof["nomination_source"]
+    return (
+        texts[0]
+        if qualified_title_claim_agrees(proof["nomination_source"], texts[0])
+        else None
+    )
+
+
+def qualified_title_claim_agrees(nomination, text):
+    """A complete observation never overrides an already-qualified raster claim."""
+    if (
+        not isinstance(nomination, dict)
+        or source_observation_status(
+            nomination, nomination.get("bbox"), nomination.get("text")
+        )
+        == "invalid"
+    ):
+        return False
     if (
         nomination["origin"] == "raster"
         and source_observation_status(
@@ -220,14 +236,14 @@ def source_title_text(proof):
 
         old_role, new_role = (
             catalog_title_role(nomination["text"]),
-            catalog_title_role(texts[0]),
+            catalog_title_role(text),
         )
         old_key = title_key(nomination["text"])
         if (old_role != "unknown" and old_role != new_role) or (
-            old_key and old_key != title_key(texts[0])
+            old_key and old_key != title_key(text)
         ):
-            return None
-    return texts[0]
+            return False
+    return True
 
 
 def title_packet_text(packet):

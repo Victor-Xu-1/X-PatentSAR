@@ -219,7 +219,41 @@ class CaptionRoleWriterTests(unittest.TestCase):
         doc, structures, boxes, _grids = parallel_catalogues()
         payload, records = self.execute_document(doc, structures, boxes)
         self.assertEqual(
-            len(payload["compound_catalog"]["entries"]), 12, payload["source_issues"]
+            len(payload["compound_catalog"]["entries"]),
+            12,
+            {
+                "issues": [
+                    {
+                        k: v
+                        for k, v in issue.items()
+                        if k in {"cpd", "page_no", "reason"}
+                    }
+                    for issue in payload["source_issues"]
+                ],
+                "pages": [
+                    {
+                        "page_no": section["page_no"],
+                        "grids": section["source"]["page_grids"],
+                        "catalogues": [
+                            {
+                                "bbox": role["table_bbox"],
+                                "role": role["role"],
+                                "key": role["table_key"],
+                                "titles": [p["text"] for p in role["observations"]],
+                                "ink_bounds": [
+                                    p["title_context"]["ink_source"]["bbox"]
+                                    if p["title_context"]["ink_source"]
+                                    else None
+                                    for p in role["sources"]
+                                ],
+                            }
+                            for role in section["source"].get("catalogue_scopes", [])
+                        ],
+                    }
+                    for section in payload["source_sections"]
+                    if section["role"] == "structure_declaration_page"
+                ],
+            },
         )
         self.assertEqual(payload["source_issues"], [])
         self.assertEqual(coverage_errors(payload), [])

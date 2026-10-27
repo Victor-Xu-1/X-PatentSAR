@@ -112,7 +112,10 @@ def observe_caption_role(
     observed = project_caption_titles(sources, geometry)
     peers = parallel_title_grids(geometry, regions)
     context = title_context_spec(
-        geometry=geometry, grid_axes=grid_axes(region), parallel_grids=peers
+        geometry=geometry,
+        grid_axes=grid_axes(region),
+        parallel_grids=peers,
+        page_grids=[grid_axes(grid) for grid in regions] if peers is not None else None,
     )
     sources = (
         attach_title_sources(
@@ -135,6 +138,7 @@ def observe_caption_role(
         "observations": observed,
         "sources": sources,
         **({"parallel_grids": peers} if peers is not None else {}),
+        **({"page_grids": context["page_grids"]} if peers is not None else {}),
         "role": role,
         "table_key": key,
     }

@@ -71,7 +71,34 @@ def _remove_original_rulings(mask, extent, rulings, size):
     return True
 
 
-def title_raster_marks(packet, bounds, size, rulings, *, components=False):
+def _remove_original_bodies(mask, extent, cells, rulings, prior_regions):
+    """Separate positively witnessed table-body owners; retain the raw pixels."""
+    if not cells and not prior_regions:
+        return True
+    known = {tuple(r["cell"]) for r in rulings if r["pixels"] is not None}
+    allowed = np.zeros_like(mask, dtype=bool)
+    if any(tuple(cell) not in known for cell in cells):
+        return False
+    for cell in [*cells, *prior_regions]:
+        source = cell_pixel_rect(cell, 400)
+        left, top = max(source.x0, extent.x0), max(source.y0, extent.y0)
+        right, bottom = min(source.x1, extent.x1), min(source.y1, extent.y1)
+        if left < right and top < bottom:
+            allowed[
+                top - extent.y0 : bottom - extent.y0,
+                left - extent.x0 : right - extent.x0,
+            ] = True
+    _, labels = cv2.connectedComponents(mask, connectivity=8)
+    owners = np.unique(labels[allowed & mask.astype(bool)])
+    if len(owners) and (np.isin(labels, owners) & mask.astype(bool) & ~allowed).any():
+        return False
+    mask[allowed] = 0
+    return True
+
+
+def title_raster_marks(
+    packet, bounds, size, rulings, *, components=False, body_cells=(), prior_regions=()
+):
     """Re-derive every pixel row; unsupported input never returns a good prefix."""
     window = source_window(bounds, size)
     if (
@@ -113,6 +140,8 @@ def title_raster_marks(packet, bounds, size, rulings, *, components=False):
     mask = retained_pixels(pixels["readings"][0], window, 400, MAX_CELL_PIXELS)
     if mask is None or not _remove_original_rulings(mask, extent, rulings, size):
         return None
+    if not _remove_original_bodies(mask, extent, body_cells, rulings, prior_regions):
+        return [], "crossing_title_body_ink"
     target = cell_pixel_rect(bounds, 400)
     count, _labels, stats, _centroids = cv2.connectedComponentsWithStats(
         mask, connectivity=8

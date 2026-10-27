@@ -10,7 +10,7 @@
   segments under the existing paired pixel-closure proof are ruling; literal
   dashed sources keep that same closure/unknown/gap gate. Call-local original
   paint facts serve the normal heading loop, never a global/competing cache.
-  Binding72/binder83 and Activity50/extractor62 refresh derived admission only;
+  Binding73/binder84 and Activity51/extractor63 refresh derived admission only;
   source4/role6/coverage25/SMILES6, raw/history/manual, model/dependency/default
   activation, SQL/API/SAR policies remain unchanged. No second parser/recognizer,
   writer/store/queue, guessed ID/product or cropped successful subset exists.
@@ -23,17 +23,33 @@
   still decide admission. `source_cell_pixels.closed_cell_masks` alone owns
   exact paired ruling projection, with attached/crossing unknown ink refused.
   No new queue, recognizer, writer, image store, implicit role or invented ID is
-  introduced. Ink inventory3 is derived source data; raw originals/manual audit
+  introduced. Ink inventory4 is derived source data; raw originals/manual audit
   remain unchanged. Existing8M-pixel/1MiB evidence and8row/128pt limits apply
   before model work. Unsupported/ambiguous/conflicting sources stay explicit.
   `title_context_grids` is the single context/ruling authority. Complete physical
   rows may split only at actual independently closed parallel column bounds;
   `title_parallel_rows` and `title_parallel_members` conserve all peer/global ink
   and original literals. Every required reading qualifies before member selection;
-  unknown/staggered/logical ownership stays explicit, not nearest-column inference.
+  unknown/logical ownership stays explicit, not nearest-column inference.
+  Staggered physical families retain the full original page-grid inventory;
+  `title_family_geometry` partitions each column only by its independently proved
+  preceding frame/body. Exact paired rule extents, all marks/native glyphs and
+  complete-family original replay stay mandatory. `source_paint_paths` is the
+  sole conservative form-sequence adapter: unique exact axial envelopes only on
+  inconsistent pages, never nearest boxes or offsets. Unknown paints remain so.
+  Version2 declaration pages retain the same observed caption scopes; current
+  writer/formal/Web readers cross-check complete page families and reject a
+  rehashed version1 downgrade. Historical originals/manual changes stay readable.
+  Identifier-free wrapped category references need qualified original title and
+  exact raw-page echo; molecular IDs are not waived. A complete native empty
+  family without image paint still needs independent continuation proof; raster
+  blankness and logical parallel headers remain unproved, not guessed.
   `title_source_reuse` shares bounded per-page observations between the existing
   binder/header consumers after original replay, including weak attempts; no new
   persistent cache, model, writer, queue or acceptance authority is introduced.
+  `title_geometry_memo` only deduplicates pure content-addressed geometry in one
+  synchronous call, with copied results, the existing128-entry bound and finally
+  cleanup. All actual-original replay still executes; no acceptance is cached.
 
 - Numeric source/SAR authority: `core/measurement_literals` owns the exact
   bounded scalar/censored/interval grammar previously embedded in SAR. Both

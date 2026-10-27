@@ -2,7 +2,7 @@
 
 ## Original catalogue title and close-frame diagnosis
 
-Current derived admission is Binding72/binder83 and Activity50/extractor62.
+Current derived admission is Binding73/binder84 and Activity51/extractor63.
 Raw PDF/OCR/structure assets, manual audit/history, API/SQL, models and SAR
 numerical policies are unchanged. Do not relabel old accepted/failed evidence as
 current source proof. Old originals remain recoverable inputs to the ordinary
@@ -19,7 +19,7 @@ same original paired pixels, not a claimed rectangle.
 The no-word-nomination path reads every bounded unknown physical row in an
 already-owned catalogue/column context. Raster contexts retain the complete
 400dpi original pixels and3pt boundary support, then use the same physical-row
-partition and complete400/600dpi text reader. Inspect `ink_source` version3 and
+partition and complete400/600dpi text reader. Inspect `ink_source` version4 and
 its `raster_source`; missing/malformed pixel witnesses cannot fall back to saved
 role flags. The locator is not semantic acceptance or proof of blankness. No
 whole-page title OCR, new recognizer or auxiliary activation is introduced.
@@ -30,17 +30,37 @@ proved title absence. Original replay does not acquire another text reader.
 An unnumbered category title never gains an invented table key. Wrapped/mixed
 categories must not erase the other role or the printed table marker.
 
-For aligned parallel physical catalogues, inspect the complete `parallel_grids`
-family, every original closed first-row witness and all physical title rows.
+For parallel physical catalogues, inspect the complete `page_grids` inventory,
+its rederived `parallel_grids` family, every original closed first-row/body
+witness and all physical title rows. Staggered columns retain independent prior
+frame fences inside one complete family envelope. An earlier narrow frame cannot
+hide ink outside its actual paired rule span; crossing marks remain refused.
 An independent title must stay inside its actual original column and retain its
 printed table key. Global/cross-column ink cannot disappear; only the existing
 unique shared-caption proof can authorize a global title. Missing/weak peer reads,
 same-key contradictions, null/malformed peers or changed originals refuse rather
-than publishing the successful subset. Staggered missing-word and logical parallel
-layouts remain explicit limitations. Do not substitute page halves/nearest titles.
+than publishing the successful subset. Logical parallel headers and raster empty
+title prefixes without a paired blankness proof remain explicit limitations.
+Do not substitute page halves/nearest titles.
 Call-local title reuse is capped by the existing128-source limit, resets per page
 and replays actual source pixels; it is not a persisted acceptance cache. Both
 weak and strong attempts remain evidence, not instructions to retry until success.
+
+The saved version2 `structure_declaration_page` keeps complete page grids and the
+same observed `catalogue_scopes`, including refused/unknown roles. Current reads
+cross-check these against every family and reject a downgrade to version1 even
+after reported digests/issues are rebuilt. Historical review still reads old
+representations without promoting them to current acceptance. Identifier-free
+wrapped category references need their qualified original title and literal page
+echo; actual compound IDs are never skipped by this reference rule.
+
+Repeated validation may reuse content-addressed geometry only within one outer
+synchronous call (existing128-entry bound, copied results, finally cleared).
+Original PDF/pixel/paint replay still runs. A source mutation must be revalidated;
+neither cache hits nor serialization hashes are scientific acceptance. A complete
+native source with no image paint may prove that a title family is empty, but
+ordinary cross-page continuation proof remains mandatory. Raster locators alone
+cannot declare blankness or remove a retained raw title contradiction.
 
 Nearby original closed frames are separate even inside the short-row distance
 heuristic; complete continuous outer rules keep one table together. Original
@@ -49,6 +69,13 @@ Keep all refusal/failure evidence. Only the actual frontend may submit private
 extraction/resume/retry/SAR; diagnostic scripts must not recompute that patent or
 hand-edit its products. Generated/controlled source checks are engineering
 evidence, not native-model accuracy or private-patent scientific acceptance.
+
+Release checks select only changed source modules and direct producer, writer,
+formal/Web, original-replay, historical, schema/cache and version consumers. The
+32-selector scope replaces unchanged grammar/CLI-unit/legacy-carry-only selectors
+with declaration, staggered-family and native cross-page checks; those unchanged
+controls may run separately. The scope and model guard limits are not widened.
+No new native benchmark or private input processing is part of these controls.
 
 ## A single saved-source read failure does not hide the workspace
 
