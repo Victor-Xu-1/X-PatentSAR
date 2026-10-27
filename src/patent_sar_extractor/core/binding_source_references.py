@@ -22,6 +22,7 @@ from .source_role_observations import validate_role_catalog
 from .source_section_roles import section_heading
 from .structure_declaration_proof import declaration_ids, declaration_issues
 from .structure_declaration_scopes import PAGE_ROLE, REFERENCE_ROLE
+from .title_geometry_memo import title_geometry_call
 from .unruled_structure_proof import unruled_source_inventory
 
 MAX_SOURCE_SECTIONS = 25000
@@ -187,6 +188,7 @@ def _regions(sections, scope):
     return regions
 
 
+@title_geometry_call
 def reference_issues(payload, entries, *, required=True):
     sections = payload.get("source_sections", [])
     if (
@@ -295,7 +297,12 @@ def reference_issues(payload, entries, *, required=True):
     issues.extend(column_issues)
     issues.extend(
         declaration_issues(
-            sections, scope, entries, nonfinal_diagrams=nonfinal_diagrams
+            sections,
+            scope,
+            entries,
+            nonfinal_diagrams=nonfinal_diagrams,
+            title_payload=payload,
+            current=required,
         )
     )
     issues.extend(

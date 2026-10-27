@@ -5,7 +5,12 @@ from .caption_role_links import MAX_CONTINUATION_DEPTH
 from .cell_frame_proof import inside_box
 from .source_observations import project_source_observation
 from .text_ocr.source_inventory import MAX_SOURCE_CELLS
-from .title_context_source import TITLE_CONTEXT, title_context_id, valid_title_context
+from .title_context_source import (
+    TITLE_CONTEXT,
+    original_title_raw_owner,
+    title_context_id,
+    valid_title_context,
+)
 from .title_source_proof import (
     MAX_TITLE_SOURCES,
     TITLE_SOURCES,
@@ -87,6 +92,11 @@ def _parents(payload):
                 ):
                     raise TypeError("Malformed original title declaration context")
                 yield from chunk["sources"]
+            catalogues = source.get("catalogue_scopes", [])
+            if not isinstance(catalogues, list) or len(catalogues) > 4096:
+                raise ValueError("Malformed original declaration title scopes")
+            for catalogue in catalogues:
+                yield from _caption_parents(catalogue)
     observations = payload.get("source_role_observations", {})
     if not isinstance(observations, dict):
         raise TypeError("Malformed original title observation ledger")
@@ -122,11 +132,13 @@ def title_source_cells(payload):
             if source_title_geometry(record) is None:
                 raise ValueError("Malformed original title source")
             nomination = record["nomination_source"]
+            raw_owner = original_title_raw_owner(parent, record)
             if (
-                parent.get("origin") != nomination["origin"]
-                or not inside_box(nomination["bbox"], parent.get("bbox"))
+                not isinstance(raw_owner, dict)
+                or parent.get("origin") != nomination["origin"]
+                or not inside_box(nomination["bbox"], raw_owner.get("bbox"))
                 or raw_title_packet(
-                    project_source_observation(parent, nomination["bbox"])
+                    project_source_observation(raw_owner, nomination["bbox"])
                 )
                 != nomination
             ):
@@ -140,4 +152,30 @@ def title_source_cells(payload):
             yield (
                 record["page_no"],
                 {"method": "original_title", "title_source": record},
+            )
+
+
+def validate_title_page_inventory(payload, pages):
+    """All saved title owners use the existing complete declaration page source."""
+    originals = {section["page_no"]: section["source"] for section in pages}
+
+    def axes_key(grids):
+        return sorted((tuple(grid["xs"]), tuple(grid["ys"])) for grid in grids)
+
+    for page_no, cell in title_source_cells(payload):
+        if cell["method"] != "original_title_context":
+            continue
+        context = cell["title_context"]
+        ink = context["ink_source"]
+        if ink is None or "parallel_grids" not in ink["context"]:
+            continue
+        original = originals.get(page_no)
+        if (
+            original is None
+            or original["page_size"] != context["page_size"]
+            or axes_key(original["page_grids"])
+            != axes_key(ink["context"]["page_grids"])
+        ):
+            raise ValueError(
+                "Original title family changed the complete page grid inventory"
             )

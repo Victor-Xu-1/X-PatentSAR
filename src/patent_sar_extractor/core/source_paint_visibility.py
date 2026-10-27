@@ -81,6 +81,8 @@ def native_paint_view(page):
     """Observe the existing bounded paint inventory once for a read-only page."""
     import fitz
 
+    from .source_paint_paths import original_path_owners
+
     traces, paints, drawings = (
         page.get_texttrace(),
         page.get_bboxlog(),
@@ -123,7 +125,7 @@ def native_paint_view(page):
         _owner(page),
         tuple(visible),
         tuple(paints),
-        {path["seqno"]: path for path in drawings},
+        original_path_owners(paints, drawings),
         {order: tuple(characters) for order, characters in glyphs.items()},
     )
 

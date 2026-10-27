@@ -31,7 +31,7 @@ def declaration_ids(sections, role):
     ]
 
 
-def _pages(sections, scope):
+def _pages(sections, scope, *, current=False):
     pages = [s for s in sections if s.get("role") == PAGE_ROLE]
     refs = [s for s in sections if s.get("role") == REFERENCE_ROLE]
     if scope["version"] < 6:
@@ -57,6 +57,10 @@ def _pages(sections, scope):
     for section in pages:
         source = section.get("source")
         validate_declaration_page(source)
+        if current and source["version"] != 2:
+            raise ValueError(
+                "Current original declarations require the complete catalogue scopes"
+            )
         if (
             set(section) != {"role", "status", "page_no", "region_id", "source"}
             or not isinstance(source, dict)
@@ -99,8 +103,21 @@ def _pages(sections, scope):
     return pages
 
 
-def declaration_issues(sections, scope, entries, *, nonfinal_diagrams):
-    pages = _pages(sections, scope)
+def declaration_issues(
+    sections, scope, entries, *, nonfinal_diagrams, title_payload=None, current=False
+):
+    pages = _pages(sections, scope, current=current)
+    from .title_source_inventory import validate_title_page_inventory
+
+    validate_title_page_inventory(
+        title_payload
+        if title_payload is not None
+        else {
+            "bindings": list(entries),
+            "source_sections": sections,
+        },
+        pages,
+    )
     if not pages:
         return []
     roles = declaration_role_index(pages, scope["original_pdf_sha256"])

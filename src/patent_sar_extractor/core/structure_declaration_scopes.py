@@ -24,6 +24,11 @@ from .source_window_chunks import (
     validate_source_window,
     window_source_tokens,
 )
+from .structure_declaration_catalogues import (
+    catalogue_declarations,
+    catalogue_owns_caption,
+    validate_catalogue_scopes,
+)
 from .structure_table_headers import possible_structure_header
 
 PAGE_ROLE = "structure_declaration_page"
@@ -57,7 +62,7 @@ def _title_window(caption, lanes, size, band):
 def validate_declaration_page(source):
     if (
         not isinstance(source, dict)
-        or set(source)
+        or set(source) - ({"catalogue_scopes"} if source.get("version") == 2 else set())
         != {
             "status",
             "version",
@@ -70,7 +75,9 @@ def validate_declaration_page(source):
         }
         or source["status"] != PAGE_STATUS
         or type(source["version"]) is not int
-        or source["version"] != 1
+        or source["version"] not in {1, 2}
+        or source["version"] == 2
+        and "catalogue_scopes" not in source
         or not isinstance(source["original_pdf_sha256"], str)
         or not re.fullmatch(r"[a-f0-9]{64}", source["original_pdf_sha256"])
         or type(source["page_no"]) is not int
@@ -85,6 +92,7 @@ def validate_declaration_page(source):
         raise ValueError("Malformed original declaration grid inventory")
     for grid in source["page_grids"]:
         validate_page_grid(grid, source["page_size"])
+    validate_catalogue_scopes(source)
 
 
 def _identifier_lists(chunks, page, body, lanes):
@@ -133,6 +141,8 @@ def _title_windows(source, lanes):
     captions = table_caption_nominees(lanes[0], size, native_tokens=lanes[1])
     logical_headers = nominate_unruled_headers(lanes[0], size, native_tokens=lanes[1])
     for caption in captions:
+        if catalogue_owns_caption(source, caption):
+            continue
         if box_inside_drawing(caption["bbox"], source["page_diagrams"]):
             continue  # Drawing annotations do not introduce a page table role.
         geometry = caption_context_geometry(caption, captions, source["page_grids"])
@@ -173,12 +183,17 @@ def declaration_scopes(source):
     lanes = [
         window_source_tokens(chunks, page, native=native) for native in (False, True)
     ]
-    page_source_id, output = proof_id(source), []
+    page_source_id = proof_id(source)
+    output = catalogue_declarations(
+        source,
+        page_source_id,
+        identifier_lists=lambda body: _identifier_lists(chunks, page, body, lanes),
+    )
     for caption, band, title in _title_windows(source, lanes):
         title_chunks = project_source_window(chunks, page, title)
         packets = [p for c in title_chunks for p in c["sources"] if p["text"].strip()]
         role, _key = observed_role(packets)
-        unproved_nonfinal = role == "unknown" and any(
+        unproved_nonfinal = role in {"unknown", "unresolved"} and any(
             catalog_title_role(p["text"]) in {"nonfinal", "mixed"} for p in packets
         )
         body = [band[0], title[3], band[1], size[1]]

@@ -1,5 +1,45 @@
 # X-PatentSAR architecture
 
+## Staggered physical catalogues retain one complete source family
+
+`title_context_grids` retains the entire original page-grid inventory and
+rederives the parallel peers from it. `title_family_geometry` gives each physical
+column its own preceding-frame fence; the saved title source covers the complete
+family envelope, not the intersection of successful local crops. Earlier body
+cells and title regions can be partitioned only by actual closed frames with
+paired original rule pixels. Narrow frames cannot hide exterior ink. Crossing,
+competing, missing or over-budget owners refuse rather than choosing a neighbour.
+Native words and complete glyph operations remain conserved. The same source
+contract supports native, outlined and raster staggered catalogue controls;
+logical parallel headers and paired raster-blankness proof remain separate gaps.
+
+`source_paint_paths` adapts original PDF form paint ownership in the existing
+paint view. Consistent engine sequences are kept. If embedded forms disrupt
+sequence identities, only a unique exact single axial-stroke envelope may map;
+duplicate/complex/unmapped paints remain unknown. No nearest-box or sequence
+offset repair exists. Paired source pixels and ordinary ruling validation still
+decide whether the original path is a usable table boundary.
+
+The existing `structure_declarations` producer retains version2 source pages,
+including complete grids and the SAME observed `catalogue_scopes` from the
+caption binder. `structure_declaration_catalogues` derives physical declarations
+from those scopes, not another text reader. The complete page inventory is
+cross-checked against every retained family by `title_source_inventory` through
+writer, saved-reader, formal and Web consumers. Current admission cannot downgrade
+that page to version1 or erase its catalogue scopes and merely recompute digests;
+version1 remains available for historical review. Wrapped identifier-free category
+lines may be literal title references only with their actual qualified source
+and original-page echo, never a reason to skip a molecular identifier.
+
+`title_geometry_memo` shares only pure serialized geometry within one synchronous
+validation call. Every lookup rehashes its complete input; results are defensively
+copied and at most the existing128 source entries remain until the outer finally
+clears the context. Mutation, exceptions and independent requests cannot inherit
+acceptance. Actual PDF/paint/pixel replay is NOT memoized. There is no new persistent
+cache, model, role authority or execution path. A proved empty native family with
+no image paint can report an unknown title and proceed to the ordinary independent
+continuation proof; a400dpi raster locator or contradictory raw title cannot.
+
 ## Catalogue titles conserve their complete original source
 
 `title_source_capture` uses the same `paired_text_observation` and physical-cell
@@ -39,8 +79,9 @@ one literal table member only after every required row has qualified. Independen
 members need original table keys; same-key contradictory titles cannot disagree
 silently. The existing shared-caption validator still owns truly global titles.
 Missing peer readings, weak/conflicting text, changed original pixels, open grids
-and malformed/null peer inventories refuse. Staggered missing-locator and logical
-parallel layouts remain unsupported rather than guessed from proximity.
+and malformed/null peer inventories refuse. Staggered physical families use the
+complete-page contract above; logical parallel layouts remain unsupported rather
+than guessed from proximity.
 
 The existing caption binder and physical-header page loop pass bounded call-local
 title observations through `title_source_reuse`. Only readings for the identical
@@ -65,7 +106,7 @@ rows together. This nominates geometry only. Native empty identifier cells use
 the existing complete paired empty-grid witness to avoid futile OCR, while the
 missing identifier remains an unresolved gap, never a fabricated record.
 
-Binding72/binder83 and Activity50/extractor62 refresh affected derived admission.
+Binding73/binder84 and Activity51/extractor63 refresh affected derived admission.
 Coverage25/source4/role6, raw observations/original assets/manual audit/history,
 SMILES/OCSR/model preparation, API-v1/SQLite and SAR numerical policies remain
 unchanged. Historical source review is not current acceptance.

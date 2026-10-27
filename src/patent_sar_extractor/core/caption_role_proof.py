@@ -14,6 +14,7 @@ from .source_observations import source_observation_status
 from .source_table_roles import observed_role, title_key
 from .title_context_grids import caption_title_context, validate_parallel_title_grids
 from .title_context_source import valid_title_context
+from .title_geometry_memo import title_geometry_call
 
 __all__ = [
     "caption_role_status",
@@ -23,13 +24,14 @@ __all__ = [
 ]
 
 
+@title_geometry_call
 def caption_role_status(scope, page_no, label_cell, *, _depth=0):
     """Return the rederived role or None when its original frame is invalid."""
     if (
         _depth > MAX_CONTINUATION_DEPTH
         or type(page_no) is not int
         or not isinstance(scope, dict)
-        or set(scope) - {"continuation", "parallel_grids"}
+        or set(scope) - {"continuation", "parallel_grids", "page_grids"}
         != {
             "version",
             "page_no",

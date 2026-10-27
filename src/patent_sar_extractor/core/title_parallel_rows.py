@@ -1,6 +1,7 @@
 """Complete physical row partitions bound to original independent table columns."""
 
 from .cell_frame_proof import inside_box
+from .cell_raster import cell_pixel_rect
 from .cell_text_limits import PHYSICAL_ROW_GAP
 from .heading_source_geometry import MAX_HEADING_HEIGHT, MAX_HEADING_ROWS
 from .title_context_grids import validate_parallel_title_grids
@@ -15,10 +16,21 @@ def _box(marks):
     ]
 
 
-def original_title_rows(marks, native, bounds, context):
+def _column_owns(mark, prefix, native_boxes, raster_boxes):
+    if inside_box(mark, prefix):
+        return True
+    if tuple(mark) not in raster_boxes or tuple(mark) in native_boxes:
+        return False
+    # Retained raster marks are whole 400dpi pixels. The original geometric
+    # column owns its floor/ceil pixel rectangle, not an invented point margin.
+    pixels = cell_pixel_rect(prefix, 400)
+    return inside_box(mark, [value * 72 / 400 for value in pixels])
+
+
+def original_title_rows(
+    marks, native, bounds, context, *, raster_marks=(), column_windows=None
+):
     peers = validate_parallel_title_grids(context)
-    if peers is not None and any(grid["ys"][0] != bounds[3] for grid in peers):
-        return [], "parallel_title_window_conflict"
     groups, bottom = [], None
     for box in sorted(marks, key=lambda item: (item[1], item[0], item[3])):
         if bottom is not None and box[1] <= bottom + PHYSICAL_ROW_GAP:
@@ -28,6 +40,7 @@ def original_title_rows(marks, native, bounds, context):
             groups.append([box])
             bottom = box[3]
     native_boxes = {tuple(token["bbox"]) for token in native["tokens"]}
+    raster_boxes = {tuple(box) for box in raster_marks}
     rows = []
     for group in groups:
         partitions = {None: group}
@@ -36,9 +49,9 @@ def original_title_rows(marks, native, bounds, context):
             for mark in group:
                 owners = [
                     index
-                    for index, grid in enumerate(peers)
-                    if inside_box(
-                        mark, [grid["xs"][0], bounds[1], grid["xs"][-1], bounds[3]]
+                    for index, _grid in enumerate(peers)
+                    if _column_owns(
+                        mark, column_windows[index], native_boxes, raster_boxes
                     )
                 ]
                 if len(owners) != 1:
@@ -56,9 +69,9 @@ def original_title_rows(marks, native, bounds, context):
                 ink
                 if peers is None
                 else [
-                    peers[owner]["xs"][0] if owner is not None else bounds[0],
+                    column_windows[owner][0] if owner is not None else bounds[0],
                     ink[1],
-                    peers[owner]["xs"][-1] if owner is not None else bounds[2],
+                    column_windows[owner][2] if owner is not None else bounds[2],
                     ink[3],
                 ]
             )

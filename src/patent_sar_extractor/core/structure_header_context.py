@@ -18,6 +18,7 @@ def observe_header_context(
     grid_axes=None,
     page=None,
     parallel_grids=None,
+    page_grids=None,
     title_cache=None,
 ):
     def capture(bounds):
@@ -38,6 +39,7 @@ def observe_header_context(
                 logical_window=logical_window,
                 grid_axes=grid_axes,
                 parallel_grids=parallel_grids,
+                page_grids=page_grids,
             ),
             title_cache=title_cache,
         )
@@ -117,6 +119,7 @@ def original_header_context_role(
     logical_window=None,
     grid_axes=None,
     parallel_grids=None,
+    page_grids=None,
 ):
     from .title_context_source import valid_title_context
 
@@ -134,5 +137,6 @@ def original_header_context_role(
             logical_window=logical_window,
             grid_axes=grid_axes,
             parallel_grids=parallel_grids,
+            page_grids=page_grids,
         ),
     )

@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 
-from .activity_context_geometry import grid_axes
+from .activity_context_geometry import grid_axes, grid_box
 from .activity_header_evidence import proof_id
 from .binding_progress import observed_items
 from .caption_role_semantics import catalog_title_role, has_continuation_caption
@@ -18,6 +18,7 @@ from .structure_declaration_scopes import (
     nonfinal_declaration_diagrams,
 )
 from .structure_table_headers import possible_structure_header
+from .title_geometry_memo import title_geometry_call
 
 
 def declaration_page_hint(text):
@@ -31,6 +32,7 @@ def declaration_page_hint(text):
     )
 
 
+@title_geometry_call
 def observe_declaration_pages(
     doc,
     structures,
@@ -39,6 +41,7 @@ def observe_declaration_pages(
     tokens_for_page,
     *,
     grids_for_page=None,
+    caption_roles=None,
     progress=None,
 ):
     if grids_for_page is None:
@@ -53,21 +56,26 @@ def observe_declaration_pages(
         if type(index) is not int or not 0 <= index < len(doc):
             continue
         page = doc[index]
-        if not callable(getattr(page, "get_image_info", None)) or (
-            not by_page[index] and not declaration_page_hint(page_texts.get(index, ""))
+        if not callable(getattr(page, "get_image_info", None)):
+            continue
+        grids = [grid_axes(grid) for grid in grids_for_page(page)]
+        if (
+            not by_page[index]
+            and not grids
+            and not declaration_page_hint(page_texts.get(index, ""))
         ):
             continue
         tokens = tokens_for_page(page)
         size = [page.rect.width, page.rect.height]
-        if not isinstance(tokens, SourceTokens) or not table_caption_nominees(
-            tokens, size
+        if not isinstance(tokens, SourceTokens) or (
+            not grids and not table_caption_nominees(tokens, size)
         ):
             continue
         if original_sha is None:
             original_sha = document_sha256(doc)
         source = {
             "status": PAGE_STATUS,
-            "version": 1,
+            "version": 2,
             "original_pdf_sha256": original_sha,
             "page_no": index + 1,
             "page_size": size,
@@ -82,7 +90,13 @@ def observe_declaration_pages(
                 ],
                 key=lambda d: (d["bbox"][1], d["bbox"][0], d["id"]),
             ),
-            "page_grids": [grid_axes(grid) for grid in grids_for_page(page)],
+            "page_grids": grids,
+            "catalogue_scopes": [
+                caption_roles[(index + 1, tuple(grid_box(grid)))]
+                for grid in grids
+                if caption_roles is not None
+                and (index + 1, tuple(grid_box(grid))) in caption_roles
+            ],
         }
         from .title_source_capture import attach_title_sources
 
@@ -92,7 +106,7 @@ def observe_declaration_pages(
         for chunk in source["page_context"]:
             chunk["sources"] = [next(observed) for _ in chunk["sources"]]
         scopes = declaration_scopes(source)
-        if not scopes:
+        if not scopes and not grids:
             continue
         sections.append(
             {

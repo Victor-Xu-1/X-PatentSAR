@@ -23,7 +23,9 @@ from .source_paint_visibility import native_paint_view, visible_native_tokens
 from .title_context_source import (
     TITLE_CONTEXT,
     observe_title_context,
+    original_title_raw_owner,
 )
+from .title_family_geometry import family_title_bounds
 from .title_ink_geometry import title_ink_rows
 from .title_ink_source import observe_title_ink
 from .title_source_proof import (
@@ -154,18 +156,19 @@ def attach_title_sources(page, sources, nominations, *, context=None, title_cach
     if context is not None and len(sources) > 2:
         raise ValueError("Original title context has competing source parents")
     layout, view = source_layout(page), native_paint_view(page)
+    family = context is not None and "parallel_grids" in context
     unique = {proof_id(raw_title_packet(p)): raw_title_packet(p) for p in nominations}
     records = [
         observe_source_title(
             page, p, layout=layout, paint_view=view, title_cache=title_cache
         )
-        for p in unique.values()
+        for p in (() if family else unique.values())
     ]
     ink = None
-    if not nominations and context is not None:
+    if (not nominations or family) and context is not None:
         ink = observe_title_ink(
             page,
-            sources[0]["bbox"],
+            family_title_bounds(context, sources[0]["bbox"]),
             context,
             layout=layout,
             paint_view=view,
@@ -186,13 +189,21 @@ def attach_title_sources(page, sources, nominations, *, context=None, title_cach
             )
     output = []
     for source in sources:
+        source = {
+            **source,
+            TITLE_CONTEXT: observe_title_context(
+                page, source["bbox"], layout, view, ink_source=ink
+            ),
+        }
         selected = []
         for record in records:
             raw = record["nomination_source"]
+            parent = original_title_raw_owner(source, record)
             if (
-                source["origin"] == raw["origin"]
-                and inside_box(raw["bbox"], source["bbox"])
-                and raw_title_packet(project_source_observation(source, raw["bbox"]))
+                isinstance(parent, dict)
+                and source["origin"] == raw["origin"]
+                and inside_box(raw["bbox"], parent["bbox"])
+                and raw_title_packet(project_source_observation(parent, raw["bbox"]))
                 == raw
             ):
                 selected.append(record)
@@ -200,9 +211,6 @@ def attach_title_sources(page, sources, nominations, *, context=None, title_cach
             {
                 **source,
                 TITLE_SOURCES: selected,
-                TITLE_CONTEXT: observe_title_context(
-                    page, source["bbox"], layout, view, ink_source=ink
-                ),
             }
         )
     return output

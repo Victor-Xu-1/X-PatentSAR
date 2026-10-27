@@ -37,16 +37,18 @@ def original_parallel_catalogues(
         for y in ys:
             page.draw_line((xs[0], y), (xs[-1], y))
         if headers:
-            page.insert_text((xs[0] + 15, 117), "No.", fontsize=8)
-            page.insert_text((xs[1] + 15, 117), "Structure", fontsize=8)
+            page.insert_text((xs[0] + 15, 117 + shift), "No.", fontsize=8)
+            page.insert_text((xs[1] + 15, 117 + shift), "Structure", fontsize=8)
         for member in range(1 if headers else 2):
             left = xs[member] + 15
             label = f"{column + 1}{member + 1}A"
             page.insert_text(
-                (left, 165 if headers else 117), "Compound " + label, fontsize=8
+                (left, (165 if headers else 117) + shift),
+                "Compound " + label,
+                fontsize=8,
             )
             drawing_left = xs[1] + 15 if headers else left
-            box = [drawing_left + 5, 145, drawing_left + 65, 177]
+            box = [drawing_left + 5, 145 + shift, drawing_left + 65, 177 + shift]
             page.draw_line((box[0], box[1] + 10), (box[0] + 30, box[1]))
             page.draw_line((box[0] + 30, box[1]), (box[2], box[1] + 10))
             structures.append(

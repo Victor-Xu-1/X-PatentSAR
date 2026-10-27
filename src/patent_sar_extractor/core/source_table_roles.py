@@ -14,6 +14,7 @@ from .title_ink_geometry import title_ink_rows
 from .title_source_proof import (
     MAX_TITLE_SOURCES,
     TITLE_SOURCES,
+    qualified_title_claim_agrees,
     source_title_geometry,
     source_title_text,
     title_packet_text,
@@ -81,6 +82,18 @@ def _discovered_titles(contexts, context):
         for index, row in enumerate(rows[0])
     ]
     if "parallel_grids" in source["context"]:
+        if not observed:
+            # Complete native paint plus original closed rules can establish
+            # no current title. That is UNKNOWN, not a terminal-product vote;
+            # any continuation still needs the normal independent carry proof.
+            # The 400dpi raster locator alone is never a blankness certificate.
+            return (
+                None
+                if any(
+                    p["kind"] == "fill-image" for p in source["native_window"]["paints"]
+                )
+                else ()
+            )
         from .title_parallel_members import parallel_title_text
 
         return parallel_title_text(observed, source["context"], key_of=title_key)
@@ -91,6 +104,22 @@ def _discovered_titles(contexts, context):
 
 
 def _title_texts(packets, contexts, context):
+    if context is not None and "parallel_grids" in context:
+        if not isinstance(packets, (list, tuple)) or len(packets) > MAX_TITLE_SOURCES:
+            return None
+        texts = _discovered_titles(contexts, context)
+        if texts == () and packets:
+            return None  # An observed nonempty claim cannot disappear as blank.
+        return (
+            texts
+            if texts is not None
+            and all(
+                qualified_title_claim_agrees(packet, text)
+                for packet in packets
+                for text in texts
+            )
+            else None
+        )
     if packets:
         texts = tuple(title_packet_text(packet) for packet in packets)
         return texts if all(text is not None for text in texts) else None

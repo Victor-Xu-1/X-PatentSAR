@@ -20,6 +20,19 @@ def raw_title_parent(packet):
     return {key: value for key, value in packet.items() if key not in TITLE_METADATA}
 
 
+def original_title_raw_owner(parent, record):
+    """The validated complete source owns an ink row beyond a local projection."""
+    ink = record.get("ink_source")
+    if ink is None:
+        return raw_title_parent(parent)
+    context = parent.get(TITLE_CONTEXT)
+    if not isinstance(context, dict) or ink.get("inventory") != context.get(
+        "ink_source"
+    ):
+        return None
+    return context.get("native_source")
+
+
 def title_context_bounds(context):
     if (
         not isinstance(context, dict)
@@ -92,6 +105,7 @@ def valid_title_context(parent, *, page_no=None, width=None):
 
 
 def observe_title_context(page, bounds, layout, paint_view, *, ink_source=None):
+    bounds = ink_source["bbox"] if ink_source is not None else bounds
     return {
         "version": 1,
         "page_no": page.number + 1,

@@ -5,16 +5,29 @@ from .cell_frame_proof import inside_box
 from .heading_title_geometry import original_row_marks
 from .native_window_coverage import (
     MAX_WINDOW_PAINTS,
-    native_window_text_complete,
     valid_native_window,
 )
 from .source_cell_pixels import closed_cell_masks
 from .source_observations import source_observation_status
 from .title_context_grids import context_ruling_cells, title_ruling_budget
+from .title_family_geometry import (
+    family_body_cells,
+    family_column_spans,
+    family_column_windows,
+    family_prior_regions,
+    native_title_context_complete,
+    title_marks_outside_bodies,
+)
+from .title_geometry_memo import memoized_title_geometry
 from .title_parallel_rows import original_title_rows
 
 
 def title_ink_rows(source):
+    """Re-derive complete rows; optional reuse concerns content geometry only."""
+    return memoized_title_geometry(source, _title_ink_rows)
+
+
+def _title_ink_rows(source):
     """Return all physical rows and explicit refusal; never a successful prefix.
 
     A row requiring text reading includes its same-row native words. Complete
@@ -36,7 +49,7 @@ def title_ink_rows(source):
             "raster_source",
         }
         or type(source["version"]) is not int
-        or source["version"] != 3
+        or source["version"] != 4
     ):
         return None
     native, window, bounds, size = (
@@ -87,14 +100,12 @@ def title_ink_rows(source):
         return [], window["refusal"]
     if "parallel_grids" in source["context"] and len(proved) != len(cells):
         return [], "unproved_parallel_title_grid"
-    if (
-        native["boundary_tokens"]
-        or (native["tokens"] and not native_window_text_complete(window, native))
-        or (
-            not native["tokens"]
-            and any(p["kind"] == "fill-text" for p in window["paints"])
-        )
-    ):
+    bodies = family_body_cells(source["context"], bounds)
+    prior = family_prior_regions(source["context"], bounds, rulings, size)
+    excluded = [
+        cell for cell in bodies if not any(inside_box(cell, region) for region in prior)
+    ] + prior
+    if not native_title_context_complete(native, window, excluded):
         return [], "incomplete_native_title_context"
     geometry = source["context"]["geometry"]
     if (
@@ -115,6 +126,8 @@ def title_ink_rows(source):
             size,
             rulings,
             components="parallel_grids" in source["context"],
+            body_cells=bodies,
+            prior_regions=prior,
         )
         if observed is None:
             return None
@@ -130,6 +143,18 @@ def title_ink_rows(source):
     )
     if len(marks) > MAX_WINDOW_PAINTS:
         return [], "source_mark_budget"
+    marks, refusal = title_marks_outside_bodies(marks, excluded)
+    if refusal is not None:
+        return [], refusal
     if any(not inside_box(mark, bounds) for mark in marks):
         return [], "crossing_title_context_ink"
-    return original_title_rows(marks, native, bounds, source["context"])
+    return original_title_rows(
+        marks,
+        native,
+        bounds,
+        source["context"],
+        raster_marks=raster_marks or (),
+        column_windows=family_column_windows(
+            source["context"], family_column_spans(source["context"], rulings, size)
+        ),
+    )

@@ -21,6 +21,7 @@ from .caption_role_proof import caption_role_status
 from .source_table_markers import TABLE_MARKER
 from .table_cells import read_cell
 from .table_geometry import detect_ruled_table_regions, page_tokens
+from .title_geometry_memo import title_geometry_call
 
 
 @dataclass
@@ -47,6 +48,7 @@ def caption_frame_index(bindings):
     return frames
 
 
+@title_geometry_call
 def bind_caption_grids(
     doc,
     by_page,
@@ -203,8 +205,9 @@ def bind_caption_grids(
                     role, role_status = inherited, inherited_status
             # The original grid frame is verified once here. Constructed child
             # cells retain the same role; formal consumers replay every owner.
-            if role_status == "nonfinal":
+            if role is not None:
                 result.roles[(page_no, tuple(grid_box(region)))] = role
+            if role_status == "nonfinal":
                 if carry_index is not None:
                     consumed.add(carry_index)
                     for item in carry.pending:
@@ -268,8 +271,6 @@ def bind_caption_grids(
                 consumed.add(carry_index)
             # Reuse the same observed unknown title too; only complete prefixed
             # cell proof may establish its frame kind downstream.
-            if role_status in {"compound", "unknown"}:
-                result.roles[(page_no, tuple(grid_box(region)))] = role
             result.pages.add(page_no)
             catalog_boxes.setdefault(page_no, []).append((xs[0], ys[0], xs[-1], ys[-1]))
             result.protected_structure_ids.update(

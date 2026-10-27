@@ -3,11 +3,13 @@
 import copy
 import json
 import unittest
+from unittest.mock import patch
 
+import fitz
 from test_source_body_context import token
 
 from patent_sar_extractor.core.source_evidence_identity import proof_id
-from patent_sar_extractor.core.source_geometry import SourceLayout, SourceTokens
+from patent_sar_extractor.core.source_geometry import SourceTokens, source_layout
 from patent_sar_extractor.core.source_window_chunks import observe_source_window
 from patent_sar_extractor.core.structure_declaration_roles import (
     declaration_label_reference,
@@ -17,8 +19,10 @@ from patent_sar_extractor.core.structure_declaration_scopes import (
     PAGE_ROLE,
     PAGE_STATUS,
     declaration_scopes,
+    declaration_title_nominations,
     nonfinal_declaration_diagrams,
 )
+from patent_sar_extractor.core.title_source_capture import attach_title_sources
 
 
 def original_page(*, weak_boundary=True, weak_title=False, native_boundary=None):
@@ -34,27 +38,52 @@ def original_page(*, weak_boundary=True, weak_title=False, native_boundary=None)
             "Compound B80: Preparation", 430, confidence=0.40 if weak_boundary else 0.99
         ),
     ]
-    native = (
-        () if native_boundary is None else (token(native_boundary, 430, native=True),)
-    )
-    source_tokens = SourceTokens(
-        words,
-        SourceLayout(native, (0, 0, 520, 720)),
-        scan_bounds=(0, 0, 520, 720),
-    )
-    return {
+    source = {
         "status": PAGE_STATUS,
         "version": 1,
         "original_pdf_sha256": "a" * 64,
         "page_no": 1,
         "page_size": [520, 720],
         "page_grids": [],  # This original token-only control has no printed rules.
-        "page_context": observe_source_window(source_tokens, [0, 0, 520, 720]),
         "page_diagrams": [
             {"id": "BEFORE", "bbox": [215, 95, 355, 165]},
             {"id": "AFTER", "bbox": [215, 470, 355, 550]},
         ],
     }
+    # Modern title consumers require an actual full original and paired frames.
+    # These generated controls use a deterministic SDK reader, never a model.
+    with fitz.open() as lettering, fitz.open() as original:
+        text_page = lettering.new_page(width=520, height=720)
+        for word in words:
+            text_page.insert_text(
+                (word["bbox"][0], word["bbox"][1] + 10), word["text"], fontsize=8
+            )
+        image = text_page.get_pixmap(matrix=fitz.Matrix(2, 2), alpha=False)
+        page = original.new_page(width=520, height=720)
+        page.insert_image(page.rect, stream=image.tobytes("png"))
+        if native_boundary is not None:
+            page.insert_text((50, 440), native_boundary, fontsize=8)
+        layout = source_layout(page)
+        source_tokens = SourceTokens(words, layout, scan_bounds=layout.raster_bounds)
+        source["page_context"] = observe_source_window(source_tokens, [0, 0, 520, 720])
+        nominations = declaration_title_nominations(source)
+        parents = [p for chunk in source["page_context"] for p in chunk["sources"]]
+
+        def read_title(image, *, use_det, use_cls):
+            return (
+                ([], None)
+                if use_det
+                else ([[words[0]["text"], 0.4 if weak_title else 0.99]], None)
+            )
+
+        with patch(
+            "patent_sar_extractor.core.page_ocr_cache.get_ocr_engine",
+            return_value=("rapidocr", read_title),
+        ):
+            observed = iter(attach_title_sources(page, parents, nominations))
+        for chunk in source["page_context"]:
+            chunk["sources"] = [next(observed) for _ in chunk["sources"]]
+    return source
 
 
 def section(source):
@@ -113,7 +142,7 @@ class DeclarationRoleReplayTests(unittest.TestCase):
 
     def test_weak_nonfinal_title_is_retained_without_excluding_any_structure(self):
         scopes = declaration_scopes(original_page(weak_title=True))
-        self.assertEqual(scopes[0]["role"], "unknown")
+        self.assertEqual(scopes[0]["role"], "unresolved")
         self.assertTrue(scopes[0]["unproved_nonfinal_role"])
         self.assertEqual(nonfinal_declaration_diagrams(scopes[0]), [])
 
