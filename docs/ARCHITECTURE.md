@@ -1,5 +1,41 @@
 # X-PatentSAR architecture
 
+## Original catalogue frame association
+
+Declaration capture retains the complete original grid inventory, including
+duplicate observations, so existing geometric evidence remains replayable. It
+associates an exactly repeated frame with its caption scope once. Duplicate
+outer frames with different internal grid axes remain an explicit error; no
+source geometry, role or identifier is selected by guesswork.
+The binder epoch and binding artifact schema are advanced for the changed
+catalogue-role semantics. Historical bindings are not retagged; existing
+source and manual-audit history remain available for review. The activity
+checkpoint depends on the binding artifact, so its reuse follows the new
+binding identity rather than replacing raw observations.
+
+## Reference and comparator catalogue roles
+
+A qualified catalogue heading that explicitly describes reference, control,
+comparator or comparative compounds/examples is not sufficient evidence that
+those entries are this patent's final products. Its source role is retained as
+a conflict for review, including mixed product/reference headings; it is not
+silently excluded as an intermediate or promoted as an accepted product.
+Unnumbered category headings still nominate source pages. Changes in this role
+must invalidate affected derived proofs and preserve historical source and
+manual revisions; earlier role decisions are not silently rewritten.
+
+## A completed Lead tail does not certify a rejected core
+
+The existing job stage is a producer observation, not proof that candidate
+selection is valid. `reviewedCoreStage` derives a review-only presentation for
+an explicitly core-rejected completed Lead tail, using the same rejection gate
+as the other core stages. Task details and workflow groups show that the tail
+executed while core acceptance failed; tooltips direct candidate eligibility to
+the actual result. The review icon replaces the green completion icon without
+changing the recorded status, progress, selection, scientific inputs or policy.
+Missing/technical-error history and accepted/independent runs retain their own
+recorded states; no candidate count is invented for historical data.
+
 ## Staggered physical catalogues retain one complete source family
 
 `title_context_grids` retains the entire original page-grid inventory and

@@ -12,6 +12,27 @@ from .source_table_roles import title_texts
 from .title_context_grids import caption_title_context
 
 
+def catalogue_scopes_for_grids(page_no, grids, caption_roles):
+    """Associate each identical physical frame once; retain its raw inventory."""
+    if caption_roles is None:
+        return []
+    seen, scopes = {}, []
+    for grid in grids:
+        box = tuple(grid_box(grid))
+        key = (page_no, box)
+        if key not in caption_roles:
+            continue
+        if box in seen:
+            if seen[box] != grid:
+                raise ValueError(
+                    "Duplicate original catalogue frame has conflicting original grid axes"
+                )
+            continue
+        seen[box] = grid
+        scopes.append(caption_roles[key])
+    return scopes
+
+
 def validate_catalogue_scopes(source):
     scopes = source.get("catalogue_scopes", [])
     if not isinstance(scopes, list) or len(scopes) > 4096:
@@ -22,15 +43,24 @@ def validate_catalogue_scopes(source):
         if not isinstance(scope, dict):
             raise ValueError("Malformed original declaration catalogue owner")  # noqa: TRY004 -- shared source-schema boundary
         box = scope.get("table_bbox")
-        if (
-            not isinstance(box, list)
-            or not valid_box(box)
-            or tuple(box) in seen
-            or grids.get(tuple(box)) != scope.get("grid_axes")
-            or caption_role_status(scope, source["page_no"], box) is None
-            or scope["window"][2] != source["page_size"][0]
-        ):
-            raise ValueError("Original catalogue differs from its complete page source")
+        if not isinstance(box, list) or not valid_box(box):
+            reason = "invalid frame"
+        elif tuple(box) in seen:
+            reason = "duplicate frame"
+        elif grids.get(tuple(box)) != scope.get("grid_axes"):
+            reason = "grid axes mismatch"
+        elif caption_role_status(scope, source["page_no"], box) is None:
+            reason = "unreplayable caption role"
+        elif scope["window"][2] != source["page_size"][0]:
+            reason = "window width mismatch"
+        else:
+            reason = None
+        if reason is not None:
+            safe_box = box if reason != "invalid frame" else None
+            raise ValueError(
+                "Original catalogue differs from its complete page source: "
+                f"{reason}; page {source['page_no']}; frame {safe_box}"
+            )
         seen.add(tuple(box))
     return scopes
 

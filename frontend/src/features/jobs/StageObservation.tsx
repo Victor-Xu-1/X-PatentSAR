@@ -29,7 +29,13 @@ export function StageObservation({
   const analysisNote =
     name === 'admet'
       ? t(' · {context}；MW、LogP、TPSA、HBD、HBA 计算，LogS 为 ADMET 预测', {
-          context: t(job.admet_only ? '补齐已证实来源的结构与指标' : '核心校验后执行'),
+          context: t(
+            reviewedCoreStage(job, stage) && name === 'admet'
+              ? '核心验收未通过，候选资格以结果为准'
+              : job.admet_only
+                ? '补齐已证实来源的结构与指标'
+                : '核心校验后执行',
+          ),
         })
       : '';
   return (

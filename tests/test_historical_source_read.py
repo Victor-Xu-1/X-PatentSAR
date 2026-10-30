@@ -18,6 +18,90 @@ from patent_sar_extractor.web.recognition_sources import recognition_sources
 
 
 class HistoricalSourceReadTests(PredictionFixture, unittest.TestCase):
+    def test_new_binding_epoch_preserves_old_sources_and_manual_revision(self):
+        from patent_sar_extractor.web.acceptance import ARTIFACTS
+        from patent_sar_extractor.web.sar.project_inputs import project_inputs
+
+        path, _payload, _ = uniform_tests.UniformRecognitionTests.prepare(self)
+        original_bytes = path.read_bytes()
+        document = self.service.get_correction(self.project.id, "Compound 8")
+        self.service.put_correction(
+            self.project.id,
+            "Compound 8",
+            CorrectionRequest(
+                expected_revision=document.revision,
+                expected_source_fingerprint=document.source_fingerprint,
+                fields=EditableFields(
+                    **{**document.values.model_dump(), "display_id": "Human review"}
+                ),
+            ),
+        )
+        with self.service.store.connect() as connection:
+            audit = [
+                tuple(row)
+                for row in connection.execute("SELECT * FROM correction_audit")
+            ]
+        name, schema, version = ARTIFACTS["bindings"]
+        with patch.dict(ARTIFACTS, {"bindings": (name, schema, version + 1)}):
+            self.service.refresh(self.project.id)
+            project = self.service.project(self.project.id)
+            rows = self.service.results(self.project.id).items
+            selected = next(row for row in rows if row.id == "Compound 8")
+            self.assertTrue(project.is_historical)
+            self.assertNotEqual(project.acceptance.state, "accepted")
+            self.assertEqual(selected.confidence.level, "review")
+            self.assertIn("historical_identity", selected.flags)
+            self.assertIsNone(selected.smiles)
+            self.assertEqual(selected.recognition.status, "unavailable")
+            compounds = self.service.result_queries.effective_compounds(self.project.id)
+            by_id = {
+                row["id"]: row for row in self.service.result_rows(self.project.id)
+            }
+            raw_project = self.service.store.project(self.project.id)
+            self.assertEqual(completion_inputs(raw_project, by_id, compounds), [])
+            binding, _ = recognition_sources(raw_project, "Compound 8")
+            self.assertIsNone(binding)
+            molecules, _, _, _, _, source_acceptance, _ = project_inputs(
+                self.service, self.project.id
+            )
+            self.assertNotEqual(source_acceptance.state, "accepted")
+            self.assertTrue(molecules)
+            self.assertTrue(all(molecule.smiles is None for molecule in molecules))
+            self.assertTrue(
+                all(
+                    "unverified_source_identifier" in molecule.issues
+                    for molecule in molecules
+                )
+            )
+            saved_correction = self.service.get_correction(
+                self.project.id, "Compound 8"
+            )
+            self.assertEqual(saved_correction.values.display_id, "Human review")
+            self.assertEqual(saved_correction.revision, 1)
+            with self.service.store.connect() as connection:
+                after = [
+                    tuple(row)
+                    for row in connection.execute("SELECT * FROM correction_audit")
+                ]
+            self.assertEqual(audit, after)
+            self.assertEqual(path.read_bytes(), original_bytes)
+
+    def test_source_epoch_change_invalidates_sar_snapshot_without_source_writes(self):
+        from patent_sar_extractor.web.sar.project_inputs import project_revision
+
+        path, _payload, _ = uniform_tests.UniformRecognitionTests.prepare(self)
+        before_bytes = path.read_bytes()
+        original = project_revision(self.service, self.project.id)
+        with patch.object(
+            contracts,
+            "STRUCTURE_BINDER_VERSION",
+            contracts.STRUCTURE_BINDER_VERSION + "-next",
+        ):
+            updated = project_revision(self.service, self.project.id)
+        self.assertNotEqual(original, updated)
+        self.assertEqual(project_revision(self.service, self.project.id), original)
+        self.assertEqual(path.read_bytes(), before_bytes)
+
     @staticmethod
     def downgrade(path, payload):
         payload["schema"]["version"] = contracts.BINDINGS_SCHEMA_VERSION - 1

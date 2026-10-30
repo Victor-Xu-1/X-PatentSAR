@@ -63,8 +63,9 @@ export function recognitionReviewCount(job: Job | null): number | null {
 
 export function reviewedCoreStage(job: Job | null, stage: Stage | undefined): boolean {
   return Boolean(
-    stage?.status === 'failed' &&
-    ['smiles', 'final', 'qa'].includes(stage.name) &&
+    stage &&
+    ((stage.status === 'failed' && ['smiles', 'final', 'qa'].includes(stage.name)) ||
+      (stage.name === 'admet' && stage.status === 'ok' && stage.progress?.phase === 'lead')) &&
     completedCoreRejection(job),
   );
 }
@@ -167,6 +168,7 @@ export function stageStatusText(
     if (stage.name === 'smiles') return t('需复核');
     if (stage.name === 'final') return t('未通过验收');
     if (stage.name === 'qa') return t('未通过');
+    if (stage.name === 'admet') return t('已执行，核心未验收');
   }
   return t(stageStatusLabels[stage.status]);
 }
