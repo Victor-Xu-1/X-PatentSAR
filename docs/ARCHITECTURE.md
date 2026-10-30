@@ -1,5 +1,29 @@
 # X-PatentSAR architecture
 
+## Unbounded role-cell frames retain their touched edge
+
+`cell_partial_frame` is subordinate to the existing role-cell observer. Only
+after its ordinary original view has a nonempty but unbounded physical-row
+inventory may it request source-window4. The same renderer must prove a full
+closed frame, conserve every non-rule pixel, and find exactly one horizontal
+edge that can remain while the other three literal rule strips are separated.
+The retained edge and ALL its attached ink stay byte-identical in model input;
+temporary rule-band removal is connectivity analysis only, never paint masking.
+Side contact, two touched edges, outward unknown ink, missing/over-thick rules,
+ambiguous geometry and existing pixel/row limits refuse. Ordinary headers,
+scalar values, captions, pixels and already-bounded role cells keep their old
+rendering path. Source-window1/2/3 remain exact historical replay recipes.
+
+Version4 records the original full-source shape/hash, exact read bounds/strip
+thicknesses, preserved edge, original pixel budget and exact role-text height;
+readback rechecks the unbounded trigger, matching text scope, choice and hashes
+without loading OCR. This provides bounded observations, NOT a claim
+that border-touching text is recognized correctly. Actual generated hard-contact
+controls remain unqualified under the existing primary and auxiliary OCR gates.
+No text/score/role/identifier/activity is inferred from geometry. Binding82/
+binder93 and Activity56/extractor68 refresh derived source proof only; raw PDF,
+OCR, detector crops, chemical observations and manual audit are preserved.
+
 ## Scoped assay-header fragment comparison
 
 Complete physical assay-header observation, column sources, boundary witnesses,

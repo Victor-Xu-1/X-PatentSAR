@@ -152,7 +152,13 @@ def _observe_role_cells(
                             page, list(cell), dpi, edges, fragment, cell_index
                         )
                     if raster is None:
-                        raster = render_cell_raster(page, cell, dpi, purpose="text")
+                        raster = render_cell_raster(
+                            page,
+                            cell,
+                            dpi,
+                            purpose="text",
+                            role_text_height=maximum_row_height,
+                        )
                 except CellRenderLimit:
                     return None
                 image = raster.image

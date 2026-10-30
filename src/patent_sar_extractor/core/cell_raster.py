@@ -44,7 +44,13 @@ def cell_pixel_rect(bounds, dpi):
 
 
 def render_cell_raster(
-    page, bounds, dpi, *, maximum_pixels=8_000_000, purpose="pixels"
+    page,
+    bounds,
+    dpi,
+    *,
+    maximum_pixels=8_000_000,
+    purpose="pixels",
+    role_text_height=None,
 ):
     """Render the full caller-owned cell once, without fixed inward cropping.
 
@@ -56,6 +62,14 @@ def render_cell_raster(
         raise ValueError("Invalid original-cell pixel budget")
     if type(purpose) is not str or purpose not in {"pixels", "text"}:
         raise ValueError("Unknown original cell reading purpose")
+    if role_text_height is not None and (
+        type(role_text_height) is not int
+        or not 0 < role_text_height <= 128
+        or purpose != "text"
+        or type(dpi) is not int
+        or dpi not in {400, 600}
+    ):
+        raise ValueError("Invalid original cell frame recipe")
     extent = cell_pixel_rect(bounds, dpi)
     if extent.is_empty or not page.rect.contains(fitz.Rect(bounds)):
         raise ValueError("Original cell leaves its source page")
@@ -85,7 +99,11 @@ def render_cell_raster(
             from .cell_frame_support import supported_cell_window
 
             support = render_cell_raster(
-                page, bounds, 600, maximum_pixels=maximum_pixels, purpose="text"
+                page,
+                bounds,
+                600,
+                maximum_pixels=maximum_pixels,
+                purpose="text",
             )
             supported = supported_cell_window(proposed, bounds, support)
             if supported is not None:
@@ -96,6 +114,32 @@ def render_cell_raster(
                 }
         else:
             support_limit = maximum_pixels
+    preserved_edge = None
+    if (
+        role_text_height is not None
+        and purpose == "text"
+        and window.frame_strips is None
+        and proposed.frame_strips is not None
+    ):
+        from .cell_header_lines import physical_line_frame
+        from .cell_partial_frame import preserved_cell_window
+        from .cell_text_chunk_proof import MAX_TEXT_CHUNKS
+
+        rows = physical_line_frame(
+            window.view(source),
+            0,
+            dpi,
+            maximum_rows=32 * MAX_TEXT_CHUNKS,
+            maximum_row_height=role_text_height,
+        )
+        partial = (
+            preserved_cell_window(source, dpi, proposed)
+            if rows is not None and not rows["row_bounds"] and rows["ink_pixels"]
+            else None
+        )
+        if partial is not None:
+            window, preserved_edge = partial
+            support_limit = None
     image = window.view(source)
     source_digest = _pixel_digest(source)
     reading_digest = (
@@ -111,12 +155,21 @@ def render_cell_raster(
             "pixel_sha256": reading_digest,
         },
         {
-            "version": 1,
+            "version": 4 if preserved_edge is not None else 1,
             "purpose": purpose,
             "source_shape": list(source.shape),
             "source_pixel_sha256": source_digest,
             "read_bounds": list(window.bounds),
             "frame_strips": list(window.frame_strips) if window.frame_strips else None,
+            **(
+                {
+                    "preserved_edge": preserved_edge,
+                    "role_text_height": role_text_height,
+                    "maximum_pixels": maximum_pixels,
+                }
+                if preserved_edge is not None
+                else {}
+            ),
             **({"support": support_packet} if support_packet is not None else {}),
             **({"support_limit": support_limit} if support_limit is not None else {}),
         },
@@ -125,6 +178,10 @@ def render_cell_raster(
 
 def valid_source_window(window, bounds, dpi, reading_shape):
     """Validate geometry only; a saved digest cannot establish original truth."""
+    if isinstance(window, dict) and window.get("version") == 4:
+        from .cell_partial_frame import valid_preserved_source_window
+
+        return valid_preserved_source_window(window, bounds, dpi, reading_shape)
     if isinstance(window, dict) and window.get("version") == 3:
         from .shared_cell_raster import valid_shared_source_window
 
@@ -265,12 +322,21 @@ def original_reading_image(page, bounds, dpi, reading):
             page, bounds, dpi, owner["grid_edges"], owner["fragment"], owner["column"]
         )
     else:
+        height = None
+        if window["version"] == 4:
+            scope = reading.get("text_scope")
+            height = scope.get("maximum_row_height") if isinstance(scope, dict) else 12
+            if type(height) is not int or height != window["role_text_height"]:
+                raise ValueError("Original role window differs from its text scope")
         observed = render_cell_raster(
             page,
             bounds,
             dpi,
             purpose=window["purpose"],
-            maximum_pixels=window.get("support_limit", 8_000_000),
+            maximum_pixels=window.get(
+                "maximum_pixels", window.get("support_limit", 8_000_000)
+            ),
+            role_text_height=height,
         )
     if observed is None or observed.source_window != window:
         raise ValueError("Original full source differs from its retained cell window")
