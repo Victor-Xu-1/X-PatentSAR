@@ -86,7 +86,7 @@ def valid_header_column(column, index, header, band, dpi):
         return (
             physical_header_valid(column)
             and column.get("detector_conflict") is False
-            and not detector_header_conflict(detected, header)
+            and not detector_header_conflict(detected, header, assay_context=True)
         )
     if "single_row_readings" in column and not valid_text_components(column, dpi):
         return False

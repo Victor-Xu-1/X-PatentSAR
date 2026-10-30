@@ -109,6 +109,7 @@ def validate_header_evidence(payload: dict) -> list[str]:
                         or detector_header_conflict(
                             column.get("detection_parts", []),
                             column.get("raw_text", ""),
+                            assay_context=True,
                         )
                         or column.get("detector_conflict") is not False
                         or column.get("crosses_boundary") is not False

@@ -43,7 +43,7 @@ def valid_header_boundary(column):
     # A closed cell establishes where the source is, not what its text means.
     # Even a crossing locator keeps every qualified centre-owned literal claim.
     return all(
-        not detector_header_conflict(line, column["raw_text"])
+        not detector_header_conflict(line, column["raw_text"], assay_context=True)
         for line in cell_lines(packet["tokens"], bounds)
     )
 

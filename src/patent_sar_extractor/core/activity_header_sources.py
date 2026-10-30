@@ -99,7 +99,9 @@ def _column_conflict(packet, fresh):
     runs = source_claim_runs(packet)
     return runs is None or any(
         detector_header_conflict(
-            [{"text": text, "confidence": 1.0} for text in run], fresh
+            [{"text": text, "confidence": 1.0} for text in run],
+            fresh,
+            assay_context=True,
         )
         for run in runs
     )

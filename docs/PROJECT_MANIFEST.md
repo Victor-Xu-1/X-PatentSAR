@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Assay-header fragment identity: one explicit scope is shared by formal header
+  columns, original sources, closed boundaries, saved proof and evidence replay.
+  `assay_header_comparison` uses the existing closed technology spelling policy
+  only under a complete endpoint header with no named non-assay declaration in
+  either operand. Generic detector/text/compound recovery remains literal by
+  default. No raw text/score, source window, unit, endpoint, digit, unknown word
+  or known scientific identity is rewritten. Activity55/extractor67 invalidate
+  affected derived proof; Binding81/binder92, raw/manual/chemical/API/SQL/model
+  contracts are unchanged. This fixes consistency, not recognition accuracy.
+
 - Shared original title/ruling pixels: current title-ink6 uses one call-local,
   paired400/600dpi bounded parent through the existing renderer. Source-window3
   is a pixel-only exact subview with full parent geometry/digest and original
@@ -9,7 +19,7 @@
   threshold relaxation, extra OCR/model/cache/queue/store or dependency change.
   The unchanged8M-pixel limit and conservative over-budget/outside-edge recipe
   remain enforced. Title-ink4/5 stay read-only historical recipes. Binding81/
-  binder92 and Activity54/extractor66 refresh derived proof, never raw PDF/OCR/
+  binder92 and Activity55/extractor67 refresh derived proof, never raw PDF/OCR/
   detector crops/chemical observations/manual audit. Generated controls are not
   proof of universal patent coverage or scientific accuracy.
 
@@ -36,7 +46,7 @@
   Shared text capture/replay and the existing on-demand runtime are reused;
   generic complete-primary replacement stays prohibited. The common auxiliary
   source inventory includes title requests and enforces identity/session limits.
-  Binding81/binder92 and Activity54/extractor66 refresh derived semantics only;
+  Binding81/binder92 and Activity55/extractor67 refresh derived semantics only;
   raw/manual/history, chemical models, SQL/API, queues/stores and dependencies
   remain unchanged. This bounded coverage is not universal OCR/chemistry accuracy.
 
@@ -716,7 +726,7 @@
   same source replay, not molecule work. Existing row/chunk/pixel/request budgets
   and primary/native/detector conflicts remain; only six known recovery-envelope
   links are admitted in physical-cell diagnostics, not arbitrary deeper JSON.
-  Current derived contracts are Binding81/binder92 and Activity54/extractor66.
+  Current derived contracts are Binding81/binder92 and Activity55/extractor67.
   PDF/raw OCR/OCSR2, preparation12/assets/human audit, API/SQL, numerical SAR,
   model files, dependency recipes and activation policy remain unchanged.
   Historical evidence is preserved without scientific promotion. No second
