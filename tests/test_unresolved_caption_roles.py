@@ -5,6 +5,7 @@ import unittest
 from dataclasses import replace
 from unittest.mock import patch
 
+import fitz
 import test_heading_label_roles as controls
 from test_caption_source_roles import catalog as original_catalog
 
@@ -169,9 +170,23 @@ class UnresolvedCaptionRoleTests(unittest.TestCase):
             self.missing_structure(catalog_title="Table 47. Structures")
         sections = observer.call_args.kwargs["source_sections"]
         self.assertFalse(any(s["role"] == PENDING_ROLE for s in sections))
+        retained = [s for s in sections if s.get("identifier") == "17"]
+        self.assertEqual(len(retained), 1)
+        self.assertEqual(retained[0]["role"], "unproved_heading")
+        self.assertEqual(retained[0]["line_text"], "Compound 17")
+        self.assertEqual(
+            retained[0]["heading_observation"]["nomination"]["text"], "Compound 17"
+        )
+        with fitz.open(self.control.root / "original.pdf") as original:
+            self.assertEqual(
+                retained[0]["heading_observation"]["original_pdf_sha256"],
+                document_sha256(original),
+            )
+        # The unknown catalogue label is retained as an obligation, not a new
+        # proved synthesis heading; an independent actual preparation still is.
         self.assertTrue(
             any(
-                s.get("identifier") == "17" and s["role"] == "compound_heading"
+                s.get("identifier") == "19" and s["role"] == "compound_heading"
                 for s in sections
             )
         )

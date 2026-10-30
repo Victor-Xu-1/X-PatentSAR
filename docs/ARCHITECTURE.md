@@ -1,5 +1,35 @@
 # X-PatentSAR architecture
 
+## Bounded rejected pixels and independently owned characterization grids
+
+`source_role_observations` still owns the single rejected-evidence catalog.
+Unresolved binding proposals can contain a complete original pixel packet whose
+compressed hexadecimal mask is longer than ordinary source text. The small
+`role_diagnostic_pixels` adapter delegates to the existing `retained_pixels`
+SDK for complete bbox/readings, ordered400/600DPI (or historical400-only), exact
+shape/window, bounded compression and zero-padding checks. Only that packet's
+own `mask_hex` scalar may differ from the10000-character text bound. Neighboring
+text, arbitrary dictionaries, variant1 and the1MiB/4096/64MiB/200k/depth limits
+retain their prior rules. No mask is decoded without the current8M-pixel bound.
+The packet remains literal, hash-identical, unresolved and unable to supply a
+molecule, role or acceptance; original-source equality still requires replay.
+Scalar failures identify a bounded field path/type/size, never the source value.
+
+`structure_declaration_proof` reuses its existing characterization-region index
+through `declaration_reference_ownership`. A unique complete role scope may own
+an otherwise unproved catalogue-title demand only for its identical original
+page/grid with no diagrams or explicit nonfinal conflict. The same role SDK
+validates every cell and work window; actual worker/Web source replay remains
+mandatory. Partial, foreign, duplicate, changed or measurement-bearing scopes
+cannot discharge the demand. Unknown actual catalogue titles and all unrelated
+boundary/nonfinal/diagram/identifier obligations remain strict. The original
+unresolved title source is not rewritten or relabelled as a final catalogue.
+
+Binding78/binder89 changes derived ownership identity only. Original/raw and
+manual data, pixel source formats, scientific measurement/OCSR/stereo/SAR
+contracts, API/SQL and environments/dependencies are unchanged. These controls
+prove the bounded engineering path, not universal patent or chemical accuracy.
+
 ## Observed page work on the shared progress channel
 
 The formal classification handler owns `ClassificationProgress`; optional core
