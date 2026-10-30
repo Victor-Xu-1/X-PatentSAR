@@ -21,14 +21,27 @@ from .source_section_roles import section_heading
 
 
 def observe_heading(
-    page, line, original_pdf_sha256, *, layout=None, grids=None, paint_view=None
+    page,
+    line,
+    original_pdf_sha256,
+    *,
+    layout=None,
+    grids=None,
+    paint_view=None,
+    column_sources=(),
 ):
     bounds = heading_bounds(line["bbox"], [page.rect.width, page.rect.height])
     if bounds.is_empty or bounds.height > MAX_HEADING_HEIGHT:
         raise ValueError("Original heading exceeds its physical source bounds")
     layout = layout if layout is not None else source_layout(page)
     scope = observe_title_scope(
-        page, line["bbox"], layout, grids=grids, paint_view=paint_view
+        page,
+        line["bbox"],
+        layout,
+        grids=grids,
+        paint_view=paint_view,
+        column_sources=column_sources,
+        original_pdf_sha256=original_pdf_sha256,
     )
     scoped = (
         title_scope_bounds(scope, line["bbox"], [page.rect.width, page.rect.height])

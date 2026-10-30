@@ -1,5 +1,23 @@
 # Project governance manifest
 
+- Shared title ownership authority: `structure_catalogue_headers` adapts an
+  existing original physical header to the SAME catalogue-role schema, without
+  overriding any previously observed weak owner. `title_logical_scope` projects
+  only the independently derived logical header/caption band while retaining
+  full original context/ink/pixels. `structure_declaration_columns` reuses the
+  SAME full logical source sections and original body/role validators in the
+  existing declaration ledger (page3 only where logical owners exist). Current
+  consumers cross-check complete owners and reject rehashed omission/downgrade;
+  historical review stays non-admitting. `heading_title_columns` adapts the
+  existing independently active column authority to complete native row ink;
+  full row/source replay and identical title/declaration column inventories are
+  mandatory. Raw native words and attached title proofs are separately replayed,
+  not confused or discarded. Crossing/unknown/competing/closing ownership still
+  refuses. Binding77/binder88 refresh derived admission only; all raw/manual/
+  history, activity/SMILES, SQL/API/SAR, models/dependencies/activation are
+  unchanged. No new queue/store/parser/recognizer/writer or scientific-policy
+  authority. Earlier title limitation/epoch entries below are release history.
+
 - Presentation-upgrade authority: `web/projection_upgrade` is subordinate to the
   existing `Store.snapshot` write transaction and run-root/PDF guards. Only a
   complete identical current snapshot and raw row inventory retains the latest

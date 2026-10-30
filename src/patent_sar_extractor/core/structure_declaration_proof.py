@@ -8,6 +8,7 @@ from .binding_source_regions import reference_cell
 from .printed_identifiers import identifier_key
 from .source_binding_proof import annotate_source_binding
 from .source_window_chunks import validate_source_overlap
+from .structure_declaration_columns import original_logical_columns
 from .structure_declaration_roles import (
     declaration_label_reference,
     declaration_role_index,
@@ -57,9 +58,16 @@ def _pages(sections, scope, *, current=False):
     for section in pages:
         source = section.get("source")
         identity, _scopes = declaration_scopes_with_identity(source)
-        if current and source["version"] != 2:
+        expected_columns = original_logical_columns(parents_by_page[section["page_no"]])
+        if current and source["version"] != (3 if expected_columns else 2):
             raise ValueError(
                 "Current original declarations require the complete catalogue scopes"
+            )
+        if (current or source["version"] == 3) and source.get(
+            "logical_columns", []
+        ) != expected_columns:
+            raise ValueError(
+                "Original logical-column declaration inventory was omitted or changed"
             )
         if (
             set(section) != {"role", "status", "page_no", "region_id", "source"}

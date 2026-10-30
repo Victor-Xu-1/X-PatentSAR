@@ -18,6 +18,7 @@ from .binding_source_regions import (
 from .caption_label_roles import caption_label_index, caption_label_reference
 from .caption_locator_source import observe_caption_locator
 from .caption_pending_roles import pending_caption_index, pending_caption_reference
+from .heading_column_sources import COLUMN_SOURCE_ROLES
 from .heading_declaration_index import HeadingDeclarationIndex
 from .heading_evidence import (
     heading_structure_evidence,
@@ -193,6 +194,12 @@ def observed_heading_blocks(
                         layout=layout,
                         grids=grids_for_page(page) if grids_for_page else None,
                         paint_view=paint_view,
+                        column_sources=[
+                            s
+                            for s in source_sections or ()
+                            if s.get("role") in COLUMN_SOURCE_ROLES
+                            and s.get("page_no") == page_index + 1
+                        ],
                     )
                 declared = proved_heading_declaration(proof)
                 effective = declared or observation

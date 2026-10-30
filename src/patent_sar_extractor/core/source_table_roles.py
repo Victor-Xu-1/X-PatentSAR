@@ -104,7 +104,9 @@ def _discovered_titles(contexts, context):
 
 
 def _title_texts(packets, contexts, context):
-    if context is not None and "parallel_grids" in context:
+    if context is not None and (
+        "parallel_grids" in context or context.get("logical_window") is not None
+    ):
         if not isinstance(packets, (list, tuple)) or len(packets) > MAX_TITLE_SOURCES:
             return None
         texts = _discovered_titles(contexts, context)

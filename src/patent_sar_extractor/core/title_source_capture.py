@@ -157,15 +157,16 @@ def attach_title_sources(page, sources, nominations, *, context=None, title_cach
         raise ValueError("Original title context has competing source parents")
     layout, view = source_layout(page), native_paint_view(page)
     family = context is not None and "parallel_grids" in context
+    logical = context is not None and context.get("logical_window") is not None
     unique = {proof_id(raw_title_packet(p)): raw_title_packet(p) for p in nominations}
     records = [
         observe_source_title(
             page, p, layout=layout, paint_view=view, title_cache=title_cache
         )
-        for p in (() if family else unique.values())
+        for p in (() if family or logical else unique.values())
     ]
     ink = None
-    if (not nominations or family) and context is not None:
+    if (not nominations or family or logical) and context is not None:
         ink = observe_title_ink(
             page,
             family_title_bounds(context, sources[0]["bbox"]),

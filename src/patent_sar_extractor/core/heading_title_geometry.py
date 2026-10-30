@@ -9,6 +9,7 @@ from .heading_source_geometry import (
     NATIVE_TITLE_GAP,
     heading_bounds,
 )
+from .heading_title_columns import title_column_windows, title_marks_outside_columns
 from .native_window_coverage import MAX_WINDOW_PAINTS, valid_native_window
 from .native_window_rules import boundary_rule_path
 from .source_geometry import overlaps
@@ -80,13 +81,17 @@ def original_row_marks(row, *, cell=None, ruling_cells=(), raster_marks=None):
     return marks
 
 
-def _row_component(row, nomination, *, cell=None):
+def _row_component(row, nomination, *, cell=None, columns=()):
     window = row["window"]
     if window["refusal"] is not None:
         return None, window["refusal"]
     marks = original_row_marks(row, cell=cell)
     if len(marks) > MAX_WINDOW_PAINTS:
         return None, "source_mark_budget"
+    if columns:
+        marks, refusal = title_marks_outside_columns(marks, columns, window["bbox"])
+        if refusal is not None:
+            return None, refusal
     groups = []
     right = None
     for box in sorted(marks, key=lambda value: (value[0], value[2])):
@@ -116,9 +121,9 @@ def _row_component(row, nomination, *, cell=None):
     return selected[0], None
 
 
-def _row_scope(row, nomination, size):
+def _row_scope(row, nomination, size, *, columns=()):
     fallback = list(heading_bounds(nomination, size))
-    selected, refusal = _row_component(row, nomination)
+    selected, refusal = _row_component(row, nomination, columns=columns)
     if refusal is not None:
         return fallback, refusal
     seek = title_seek_bounds(nomination, size)
@@ -155,6 +160,11 @@ def title_scope_bounds(packet, nomination, size):
     if (
         not isinstance(packet, dict)
         or set(packet)
+        - (
+            {"column_sources", "original_pdf_sha256", "page_no"}
+            if packet.get("version") == 2
+            else set()
+        )
         != {
             "version",
             "method",
@@ -165,7 +175,7 @@ def title_scope_bounds(packet, nomination, size):
             "cell_source",
         }
         or type(packet["version"]) is not int
-        or packet["version"] != 1
+        or packet["version"] not in {1, 2}
         or packet["nomination_bbox"] != list(nomination)
         or packet["page_size"] != size
         or not isinstance(packet["page_size"], list)
@@ -185,6 +195,8 @@ def title_scope_bounds(packet, nomination, size):
     ):
         return None
     if packet["method"] == "closed_cell":
+        if packet["version"] != 1:
+            return None
         cell = packet["cell_source"]
         if not valid_cell_geometry(cell, nomination, size, MAX_HEADING_HEIGHT):
             return None
@@ -202,4 +214,17 @@ def title_scope_bounds(packet, nomination, size):
         )
     ):
         return None
-    return _row_scope(row, nomination, size)
+    columns = []
+    if packet["version"] == 2:
+        try:
+            columns = title_column_windows(
+                packet["column_sources"],
+                packet["page_no"],
+                size,
+                packet["original_pdf_sha256"],
+                nomination,
+                seek,
+            )
+        except (ValueError, TypeError, KeyError, IndexError, AttributeError):
+            return None
+    return _row_scope(row, nomination, size, columns=columns)

@@ -117,6 +117,16 @@ def heading_observation_status(proof):
         return "invalid", None
     cell_masks = None
     if "title_scope" in proof:
+        title_scope = proof["title_scope"]
+        if (
+            isinstance(title_scope, dict)
+            and title_scope.get("version") == 2
+            and (
+                title_scope.get("original_pdf_sha256") != proof["original_pdf_sha256"]
+                or title_scope.get("page_no") != proof["page_no"]
+            )
+        ):
+            return "invalid", None
         scoped = title_scope_bounds(
             proof["title_scope"], proof["nomination"]["bbox"], proof["page_size"]
         )

@@ -1,5 +1,36 @@
 # X-PatentSAR architecture
 
+## Shared original-column titles and declarations
+
+Numbered physical headers adapt their already-observed title into the existing
+catalogue-role schema. An earlier weak/unknown caption owner is not overwritten.
+Logical unruled headers retain their full original context/paint/pixels; only
+their independently rederived header/caption partition owns a title band.
+Whole crossing marks remain unresolved. No logical boundary is a printed rule.
+
+Declaration pages with original logical headers use version3 and retain those
+same complete column-source sections in `logical_columns`. Their header/body,
+document/page identity, complete diagram/grid inventory and overlapping raw
+page facts are checked by the existing authorities. Current writer/formal/Web
+consumers cross-check every column owner; a rehashed removal or downgrade cannot
+waive a declaration. Pages without such owners keep version2. Historical reads
+retain their old representations without current admission or source rewrites.
+
+For a native heading alongside an independently active foreign column,
+`heading_title_columns` adapts the existing column-role/body validator. Title
+scope version2 retains complete source sections and the entire original row.
+Only a foreign column covering the complete observed row may own its row ink;
+horizontal crossing, competing ownership and closing/inactive sources refuse.
+The declaration and title must retain identical column inventories. Original
+readback verifies raw native observations separately from attached title proof,
+then replays that proof and physical sources without another text recognition.
+
+Binding77/binder88 refresh derived ownership only. Raw PDFs/OCR/crops, manual
+audit/history, activity/SMILES, SQL/API, scientific SAR policies, model defaults,
+environments and dependencies are unchanged. No alternate queue, parser, writer,
+store or acceptance path is introduced. Generated controls are not universal
+format recall, chemical accuracy or real-patent scientific acceptance.
+
 ## Presentation upgrades and manual source identity
 
 An implicit read-model presentation rebuild does not rebase manual corrections.

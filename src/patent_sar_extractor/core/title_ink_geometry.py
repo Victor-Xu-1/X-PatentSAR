@@ -19,6 +19,7 @@ from .title_family_geometry import (
     title_marks_outside_bodies,
 )
 from .title_geometry_memo import memoized_title_geometry
+from .title_logical_scope import logical_title_exclusions
 from .title_parallel_rows import original_title_rows
 
 
@@ -105,7 +106,11 @@ def _title_ink_rows(source):
     excluded = [
         cell for cell in bodies if not any(inside_box(cell, region) for region in prior)
     ] + prior
-    if not native_title_context_complete(native, window, excluded):
+    try:
+        logical_outside = logical_title_exclusions(source["context"], bounds)
+    except (ValueError, TypeError, KeyError, IndexError):
+        return None
+    if not native_title_context_complete(native, window, [*excluded, *logical_outside]):
         return [], "incomplete_native_title_context"
     geometry = source["context"]["geometry"]
     if (
@@ -125,7 +130,7 @@ def _title_ink_rows(source):
             bounds,
             size,
             rulings,
-            components="parallel_grids" in source["context"],
+            components="parallel_grids" in source["context"] or bool(logical_outside),
             body_cells=bodies,
             prior_regions=prior,
         )
@@ -146,6 +151,10 @@ def _title_ink_rows(source):
     marks, refusal = title_marks_outside_bodies(marks, excluded)
     if refusal is not None:
         return [], refusal
+    if logical_outside:
+        marks, refusal = title_marks_outside_bodies(marks, logical_outside)
+        if refusal is not None:
+            return [], "crossing_logical_title_ink"
     if any(not inside_box(mark, bounds) for mark in marks):
         return [], "crossing_title_context_ink"
     return original_title_rows(

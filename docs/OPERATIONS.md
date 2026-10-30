@@ -1,5 +1,33 @@
 # Operations and troubleshooting
 
+## Shared original-column title diagnosis
+
+Current derived binding admission is Binding77/binder88. A numbered physical
+table reuses its original title in the declaration catalogue instead of reading
+the same title again. An existing unresolved owner remains unresolved. Logical
+unruled columns retain complete original pixels/native/paint and their verified
+header partition; they do not assert printed grid rules or guessed page halves.
+Inspect version3 declaration pages' `logical_columns`: each is the same complete
+source section retained by the row binder. Header/body, document/page, original
+diagram/grid inventory and raw overlapping observations must agree. Omission,
+changed ownership or a current downgrade cannot become clean partial success.
+Historical pages without this field remain historical review, not current QA.
+
+For a heading beside another column's drawing/rules, title scope version2 keeps
+the full row and original column sources. The normal column validator must prove
+that foreign column active over the whole row. Crossing horizontal ink, unknown
+roles, competing owners and closing/inactive columns are not a crop permission.
+Title and declaration inventories must match. Original replay compares actual
+native text to raw observations and separately verifies attached title evidence;
+it does not reacquire OCR or treat metadata as native words. Keep original files
+and failure evidence; do not edit old proofs or add task-specific page/ID rules.
+
+The older logical-title limitation below is superseded only for source-backed
+independent partitions. Global/ambiguous titles and raster blankness without
+independent proof stay unresolved. These software checks do not certify all
+patent formats or chemical correctness. No model/environment/activation changes
+or scientific value/unit/threshold policies accompany this repair.
+
 ## Manual review after presentation rebuilds
 
 An automatic display-cache upgrade preserves a correction's source basis only

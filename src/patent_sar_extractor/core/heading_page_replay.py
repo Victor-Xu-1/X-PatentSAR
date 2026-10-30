@@ -45,7 +45,11 @@ class HeadingPageReplay:
         actual = source_cell_observation(
             SourceTokens(layout.native, layout), tuple(packet["bbox"]), native=True
         )
-        if actual != packet:
+        from .title_context_source import raw_title_parent
+
+        # Attached title/context proofs are replayed independently below; they
+        # are not native words and cannot alter the raw observation comparison.
+        if actual != raw_title_parent(packet):
             raise ValueError("Later-column native source differs from the original")
 
     def _reading(self, number, bounds, reading):
@@ -109,6 +113,20 @@ class HeadingPageReplay:
             for cell in source["labels"]:
                 for reading in cell["observations"]:
                     self._reading(number, cell["nomination"]["window"], reading)
+        from .role_original_replay import original_role_source_errors
+        from .title_source_inventory import title_source_cells
+
+        errors = original_role_source_errors(
+            self.document, title_source_cells({"source_sections": [witness["section"]]})
+        )
+        if errors:
+            raise ValueError("Original column title source differs")
+
+    def column_source(self, section):
+        """Replay an existing full original column for heading-title ownership."""
+        self._source(
+            section["page_no"], {"section": section, "caption_frames": [], "cells": []}
+        )
 
     def _grid(self, number, expected):
         if number not in self.grids:
