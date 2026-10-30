@@ -2,7 +2,7 @@
 
 from collections import defaultdict
 
-from .activity_context_geometry import grid_axes, grid_box
+from .activity_context_geometry import grid_axes
 from .activity_header_evidence import proof_id
 from .binding_progress import observed_items
 from .caption_role_semantics import catalog_title_role, has_continuation_caption
@@ -10,6 +10,7 @@ from .source_document import document_sha256
 from .source_geometry import SourceTokens
 from .source_table_captions import table_caption_nominees
 from .source_window_chunks import observe_source_window
+from .structure_declaration_catalogues import catalogue_scopes_for_grids
 from .structure_declaration_scopes import (
     PAGE_ROLE,
     PAGE_STATUS,
@@ -26,7 +27,7 @@ def declaration_page_hint(text):
         possible_structure_header(text)
         or has_continuation_caption(text)
         or any(
-            catalog_title_role(line) in {"compound", "nonfinal", "mixed"}
+            catalog_title_role(line) in {"compound", "nonfinal", "mixed", "conflict"}
             for line in str(text).splitlines()
         )
     )
@@ -91,12 +92,9 @@ def observe_declaration_pages(
                 key=lambda d: (d["bbox"][1], d["bbox"][0], d["id"]),
             ),
             "page_grids": grids,
-            "catalogue_scopes": [
-                caption_roles[(index + 1, tuple(grid_box(grid)))]
-                for grid in grids
-                if caption_roles is not None
-                and (index + 1, tuple(grid_box(grid))) in caption_roles
-            ],
+            "catalogue_scopes": catalogue_scopes_for_grids(
+                index + 1, grids, caption_roles
+            ),
         }
         from .title_source_capture import attach_title_sources
 

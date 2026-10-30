@@ -25,6 +25,7 @@ export function StageList({
       {names.map((name, index) => {
         const stage = stages.find((item) => item.name === name);
         const label = t(stageLabel(name, stage));
+        const review = reviewedCoreStage(job, stage);
         const status =
           job && job.history_available !== true
             ? 'unknown'
@@ -32,12 +33,14 @@ export function StageList({
               (name === 'admet' && !waitingAdmet(job, stage) ? 'unknown' : 'pending'));
         return (
           <li
-            className={`stage ${status}${reviewedCoreStage(job, stage) ? ' needs-review' : ''}`}
+            className={`stage ${review ? 'failed needs-review' : status}`}
             key={name}
             title={t('{label}：{state}', { label, state: t(stageStatusText(job, stage, name)) })}
           >
             <span className="stage-circle" aria-hidden="true">
-              {status === 'ok' ? (
+              {review ? (
+                <CircleAlert size={14} />
+              ) : status === 'ok' ? (
                 <Check size={14} />
               ) : status === 'running' && !stoppedJob(job) ? (
                 <LoaderCircle size={14} className="spin" />

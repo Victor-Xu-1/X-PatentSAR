@@ -19,6 +19,16 @@ _COMPOUNDS = re.compile(
     rf"|{CATALOG_COMPOUND_CJK}",
     re.IGNORECASE,
 )
+_REFERENCE_CATEGORY = re.compile(
+    r"\b(?:reference|control|comparator|comparative)\s+"
+    r"(?:compounds?|examples?|(?:final|target|end)\s+products?)\b"
+    r"|(?:参考|參考|对照|對照|比較|比较)\s*(?:化合物|实施例|實施例|実施例|例)",
+    re.IGNORECASE,
+)
+_CONTROL_CATEGORY = re.compile(
+    r"\b(?:(?:positive|negative|vehicle|untreated)\s+)?controls?\b",
+    re.IGNORECASE,
+)
 _INTERMEDIATE_MODIFIER = re.compile(rf"intermediate|{INTERMEDIATE_CJK}", re.IGNORECASE)
 _NEGATION = re.compile(
     r"\b(?:not|no|without|except|excluding)\s+"
@@ -28,7 +38,9 @@ _NEGATION = re.compile(
     re.IGNORECASE,
 )
 _CATEGORY_NOUN = (
-    rf"(?:(?:{_NONFINAL.pattern})(?:\s+compounds?)?|(?:{_COMPOUNDS.pattern}))"
+    rf"(?:{_CONTROL_CATEGORY.pattern}|(?:(?:reference|control|comparator|comparative)\s+"
+    rf"|(?:参考|參考|对照|對照|比較|比较)\s*)?"
+    rf"(?:(?:{_NONFINAL.pattern})(?:\s+compounds?)?|(?:{_COMPOUNDS.pattern})))"
 )
 _CATEGORY_TITLE = re.compile(
     rf"\s*(?:(?:selected|representative)\s+)?"
@@ -43,7 +55,11 @@ def catalogue_title_boundary(text):
     return bool(
         isinstance(text, str)
         and len(text) <= 2048
-        and (table_body_boundary(text) or _CATEGORY_TITLE.fullmatch(role_words(text)))
+        and (
+            table_body_boundary(text)
+            or _CATEGORY_TITLE.fullmatch(role_words(text))
+            or _REFERENCE_CATEGORY.fullmatch(role_words(text).strip(" .:："))
+        )
     )
 
 
@@ -78,11 +94,23 @@ def catalog_title_role(text):
     start = TABLE_CAPTION_START.match(text)
     if start is None:
         if not _CATEGORY_TITLE.fullmatch(role_words(text)):
-            return "unknown"
+            return (
+                "conflict"
+                if _REFERENCE_CATEGORY.fullmatch(role_words(text).strip(" .:："))
+                else "unknown"
+            )
         title = role_words(text)
     else:
         marker = caption_table_marker(text)
         title = role_words(text[marker.end() if marker else start.end() :])
+    # A named comparator can be a patent product or an external control; the
+    # heading alone does not prove either. Retain it for review, not exclusion.
+    if _REFERENCE_CATEGORY.search(title):
+        return "conflict"
+    if _CATEGORY_TITLE.fullmatch(title.strip(" .:：")) and _CONTROL_CATEGORY.search(
+        title
+    ):
+        return "conflict"
     nonfinal = tuple(_NONFINAL.finditer(title))
     compounds = tuple(_COMPOUNDS.finditer(title))
     # A negative category is not positive evidence for either admission or

@@ -169,6 +169,11 @@ def bind_caption_grids(
                 page, region, grids, tokens, title_cache=title_observations
             )
             role_status = caption_role_status(role, page_no, grid_box(region))
+            if role is not None and role_status is None:
+                raise ValueError(
+                    f"Original caption role cannot be replayed on page {page_no} "
+                    f"for frame {grid_box(region)}"
+                )
             # A qualified original title may come from independent native text
             # or the existing bounded title reader, not the layout lane. Keep
             # raw marker hints as boundaries, but never let their absence erase

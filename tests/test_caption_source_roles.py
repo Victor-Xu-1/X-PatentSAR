@@ -80,6 +80,220 @@ def catalog(
 
 
 class CaptionSourceRoleTests(unittest.TestCase):
+    def test_reference_catalogue_reaches_formal_review_with_original_evidence(self):
+        from patent_sar_extractor.core.activity_context_geometry import grid_box
+        from patent_sar_extractor.core.binding_source_references import reference_scope
+        from patent_sar_extractor.core.structure_declaration_proof import (
+            declaration_issues,
+        )
+        from patent_sar_extractor.core.structure_declarations import (
+            observe_declaration_pages,
+        )
+
+        doc, structures, _boxes = catalog("Table 47. Reference compounds")
+        with (
+            doc,
+            patch(
+                "patent_sar_extractor.core.page_ocr_cache.get_ocr_engine",
+                return_value=None,
+            ),
+            patch(
+                "patent_sar_extractor.core.text_ocr.source_capture.get_auxiliary_text_runtime",
+                return_value=None,
+            ),
+        ):
+            page = doc[0]
+            grids = detect_ruled_table_regions(page, dpi=240, minimum_columns=1)
+            tokens = page_tokens(page, dpi=200, allow_tesseract=False)
+            role = observe_caption_role(page, grids[0], grids, tokens)
+            sections, withheld = observe_declaration_pages(
+                doc,
+                structures[1],
+                [0],
+                {0: page.get_text()},
+                lambda _page: tokens,
+                grids_for_page=lambda _page: grids,
+                caption_roles={(1, tuple(grid_box(grids[0]))): role},
+            )
+            self.assertEqual(withheld, {"original-0", "original-1"})
+            issues = declaration_issues(
+                sections,
+                reference_scope(sections),
+                [],
+                nonfinal_diagrams=set(),
+                current=True,
+            )
+            self.assertIn(
+                "conflicting_original_table_declaration",
+                {issue["reason"] for issue in issues},
+            )
+
+    def test_declaration_capture_keeps_duplicate_raw_frames_without_duplicate_scopes(
+        self,
+    ):
+        from patent_sar_extractor.core.activity_context_geometry import (
+            grid_axes,
+            grid_box,
+        )
+        from patent_sar_extractor.core.structure_declarations import (
+            observe_declaration_pages,
+        )
+
+        doc, structures, _boxes = catalog()
+        with (
+            doc,
+            patch(
+                "patent_sar_extractor.core.page_ocr_cache.get_ocr_engine",
+                return_value=None,
+            ),
+            patch(
+                "patent_sar_extractor.core.text_ocr.source_capture.get_auxiliary_text_runtime",
+                return_value=None,
+            ),
+        ):
+            page = doc[0]
+            grids = detect_ruled_table_regions(page, dpi=240, minimum_columns=1)
+            self.assertEqual(len(grids), 1)
+            tokens = page_tokens(page, dpi=200, allow_tesseract=False)
+            scope = observe_caption_role(page, grids[0], grids, tokens)
+            self.assertEqual(scope["role"], "compound")
+            repeated = [grids[0], copy.deepcopy(grids[0])]
+            sections, withheld = observe_declaration_pages(
+                doc,
+                structures[1],
+                [0],
+                {0: page.get_text()},
+                lambda _page: tokens,
+                grids_for_page=lambda _page: repeated,
+                caption_roles={(1, tuple(grid_box(grids[0]))): scope},
+            )
+            self.assertFalse(withheld)
+            self.assertEqual(len(sections), 1)
+            source = sections[0]["source"]
+            self.assertEqual(
+                source["page_grids"], [grid_axes(grid) for grid in repeated]
+            )
+            self.assertEqual(source["catalogue_scopes"], [scope])
+
+    def test_legacy_reference_role_requires_review_without_mutation(self):
+        doc, _structures, _boxes = catalog("Table 47. Reference compounds")
+        with (
+            doc,
+            patch(
+                "patent_sar_extractor.core.page_ocr_cache.get_ocr_engine",
+                return_value=None,
+            ),
+            patch(
+                "patent_sar_extractor.core.text_ocr.source_capture.get_auxiliary_text_runtime",
+                return_value=None,
+            ),
+        ):
+            page = doc[0]
+            grids = detect_ruled_table_regions(page, dpi=240, minimum_columns=1)
+            tokens = page_tokens(page, dpi=200, allow_tesseract=False)
+            current = observe_caption_role(page, grids[0], grids, tokens)
+            self.assertEqual(current["role"], "conflict")
+            legacy = copy.deepcopy(current)
+            legacy["role"] = "compound"
+            snapshot = copy.deepcopy(legacy)
+            self.assertIsNone(caption_role_status(legacy, 1, legacy["table_bbox"]))
+            self.assertEqual(legacy, snapshot)
+
+    def test_reference_and_control_catalogues_do_not_auto_publish_products(self):
+        for title in (
+            "Table 47. Reference compounds",
+            "Table 47. Control compounds",
+            "Table 47. Comparator compounds",
+            "Table 47. Comparative examples",
+            "Table 47. Compounds and reference compounds",
+            "Table 47. Positive controls",
+            "Table 47. Compounds and negative controls",
+        ):
+            for prefixed in (False, True):
+                with self.subTest(title=title, prefixed=prefixed):
+                    doc, structures, boxes = catalog(title, prefixed=prefixed)
+                    with (
+                        doc,
+                        patch(
+                            "patent_sar_extractor.core.page_ocr_cache.get_ocr_engine",
+                            return_value=None,
+                        ),
+                        patch(
+                            "patent_sar_extractor.core.text_ocr.source_capture.get_auxiliary_text_runtime",
+                            return_value=None,
+                        ),
+                    ):
+                        result = bind_caption_grids(doc, structures, boxes, [1])
+                    self.assertEqual(len(result.bindings), 0)
+                    self.assertTrue(result.issues)
+                    self.assertEqual(result.exclusions, [])
+
+    def test_duplicate_original_frame_cannot_create_extra_caption_bindings(self):
+        doc, structures, boxes = catalog()
+        with (
+            doc,
+            patch(
+                "patent_sar_extractor.core.page_ocr_cache.get_ocr_engine",
+                return_value=None,
+            ),
+            patch(
+                "patent_sar_extractor.core.text_ocr.source_capture.get_auxiliary_text_runtime",
+                return_value=None,
+            ),
+        ):
+            page = doc[0]
+            grids = detect_ruled_table_regions(page, dpi=240, minimum_columns=1)
+            self.assertEqual(len(grids), 1)
+            expected = bind_caption_grids(
+                doc, structures, boxes, [1], grids_for_page=lambda page: grids
+            )
+            self.assertEqual(
+                [item["label"] for item in expected.bindings], ["I-004A", "I-009B"]
+            )
+            duplicate = [grids[0], copy.deepcopy(grids[0])]
+            try:
+                result = bind_caption_grids(
+                    doc, structures, boxes, [1], grids_for_page=lambda page: duplicate
+                )
+            except ValueError as error:
+                self.assertIn(
+                    "Ambiguous original parallel title grid ownership", str(error)
+                )
+            else:
+                self.assertEqual(result.bindings, expected.bindings)
+                self.assertFalse(result.issues)
+
+    def test_unreplayable_catalogue_role_is_rejected_at_source_capture(self):
+        doc = fitz.open()
+        doc.new_page()
+        grid = {"xs": [50, 100], "ys": [100, 150]}
+        with (
+            doc,
+            patch(
+                "patent_sar_extractor.core.caption_grid_binding.observe_caption_role",
+                return_value={"role": "unknown", "table_key": ""},
+            ),
+            patch(
+                "patent_sar_extractor.core.caption_grid_binding.caption_role_status",
+                return_value=None,
+            ),
+            patch(
+                "patent_sar_extractor.core.caption_grid_binding.caption_rows",
+                return_value=([], []),
+            ),
+            self.assertRaisesRegex(
+                ValueError, "Original caption role cannot be replayed"
+            ),
+        ):
+            bind_caption_grids(
+                doc,
+                {},
+                {},
+                [1],
+                grids_for_page=lambda _: [grid],
+                tokens_for_page=lambda _: [],
+            )
+
     def binding(self, pair):
         return {
             "cpd": f"Compound {pair['label']}",

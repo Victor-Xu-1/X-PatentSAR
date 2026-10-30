@@ -3,6 +3,8 @@ import { describe, expect, it } from 'vitest';
 import type { Job } from '../src/api/types';
 import { StageStrip } from '../src/features/jobs/StageStrip';
 import { ExtractionNotice } from '../src/features/results/ExtractionNotice';
+import { setLocale } from '../src/i18n';
+import { stageStatusText } from '../src/model/extraction';
 import { job, project } from './fixtures';
 
 function reviewJob(total = 37, failures = 3): Job {
@@ -40,6 +42,66 @@ function reviewJob(total = 37, failures = 3): Job {
 }
 
 describe('processed work is not a failure count', () => {
+  it('does not call the Lead tail completed as a selection when core acceptance failed', () => {
+    const current = reviewJob();
+    current.admet_stage = {
+      name: 'admet',
+      status: 'ok',
+      count: 37,
+      duration_seconds: 1,
+      reused_checkpoint: false,
+      progress: {
+        phase: 'lead',
+        completed: 37,
+        total: 37,
+        cache_hits: 0,
+        failures: 0,
+        device: 'cpu',
+        peak_rss_mb: null,
+      },
+    };
+    render(<StageStrip job={current} />);
+    const lead = screen.getByText('Lead 筛选').closest('li')!;
+    expect(lead).toHaveTextContent('已执行，核心未验收');
+    expect(lead).not.toHaveTextContent('完成 · 37 / 37');
+    expect(lead).toHaveClass('needs-review');
+    expect(lead.querySelector('summary')).toHaveAttribute(
+      'title',
+      expect.stringContaining('核心验收未通过'),
+    );
+    expect(current.admet_stage.status).toBe('ok');
+  });
+
+  it('changes only a verified rejected core lead outcome, and localizes the explanation', () => {
+    const current = reviewJob();
+    const lead = {
+      ...current.admet_stage!,
+      progress: {
+        phase: 'lead' as const,
+        completed: 37,
+        total: 37,
+        cache_hits: 0,
+        failures: 0,
+        device: 'cpu' as const,
+        peak_rss_mb: null,
+      },
+    };
+    try {
+      setLocale('en');
+      expect(stageStatusText(current, lead)).toBe('Executed; core not accepted');
+      expect(stageStatusText({ ...current, status: 'complete', error: null }, lead)).toBe(
+        'Complete',
+      );
+      expect(
+        stageStatusText({ ...current, error: { code: 'transport_error', message: 'x' } }, lead),
+      ).toBe('Complete');
+      expect(stageStatusText(current, { ...lead, progress: null })).toBe('Complete');
+      expect(stageStatusText(current, { ...lead, status: 'failed' })).toBe('Failed');
+    } finally {
+      setLocale('zh-CN');
+    }
+  });
+
   it.each([
     [37, 3],
     [499, 2],

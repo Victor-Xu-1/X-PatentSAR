@@ -1,5 +1,31 @@
 # Operations and troubleshooting
 
+## Original catalogue frame conflicts
+
+An identical repeated grid observation is retained in the original inventory
+and associated with its catalogue only once. Conflicting internal axes for
+the same outer frame stop that association; retain the original evidence for
+diagnosis instead of deleting grids or bypassing source validation.
+
+## Reference and control compound tables
+
+Reference, control, comparator and comparative catalogue headings require
+source review rather than automatic terminal-product publication. This status
+does not assert that every such record is external or an intermediate. Keep the
+original records and manual audit, and revalidate affected derived bindings when
+the role semantics change; do not convert missing provenance into a guessed ID.
+
+## Lead tail completed but the extraction core was rejected
+
+The recorded Lead/ADMET phase can report an executed tail even when the formal
+core did not pass. The task stage and group must show that core acceptance is
+still outstanding, not a green claim of accepted candidates. Consult the actual
+Lead result for eligibility; do not infer a selected or zero-candidate count
+from the progress counter. The UI does not edit old stage histories, raw source,
+candidate reports or scientific thresholds. Incomplete or unrelated technical
+failures keep their original status. Validate the affected job/status/group,
+Chinese/English and accepted/unknown/failed paths rather than all product tests.
+
 ## Original catalogue title and close-frame diagnosis
 
 Current derived admission is Binding73/binder84 and Activity51/extractor63.

@@ -81,6 +81,9 @@ export const jobs: Readonly<Record<string, string>> = {
     ' · {context}; MW, LogP, TPSA, HBD and HBA are calculated; LogS is an ADMET prediction',
   补齐已证实来源的结构与指标: 'Complete structures and properties from verified sources',
   核心校验后执行: 'Runs after core validation',
+  '已执行，核心未验收': 'Executed; core not accepted',
+  '核心验收未通过，候选资格以结果为准':
+    'Core acceptance failed; consult results for candidate eligibility',
   '来源区域 {regions} · 待修复 {unresolved}': 'Source regions {regions} · Unresolved {unresolved}',
   '所需内存 {required} MB · 可用 {available} MB':
     'Memory required {required} MB · Available {available} MB',
