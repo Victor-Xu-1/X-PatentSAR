@@ -5,6 +5,8 @@
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
     "docs/OPERATIONS.md",
+    "frontend/package-lock.json",
+    "frontend/package.json",
     "frontend/src/features/jobs/StageList.tsx",
     "frontend/src/features/jobs/StageObservation.tsx",
     "frontend/src/i18n/catalogs/jobs.ts",
@@ -38,7 +40,10 @@
     "tests.test_historical_source_read.HistoricalSourceReadTests.test_old_schema_with_parseable_proof_cannot_schedule_or_revive_current_chemistry",
     "tests.test_source_table_caption_semantics",
     "tests.test_caption_title_spacing.CaptionTitleSpacingTests.test_case_delimited_original_roles_preserve_categories_and_negation",
-    "tests.test_source_role_terms.SourceRoleTermTests.test_known_intermediate_compound_titles_cannot_become_final_catalogues"
+    "tests.test_source_role_terms.SourceRoleTermTests.test_known_intermediate_compound_titles_cannot_become_final_catalogues",
+    "tests.test_release_policy.ReleaseNumberTests",
+    "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
+    "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
   "frontend_tests": [
     "frontend/tests/stage-review-presentation.test.tsx"
