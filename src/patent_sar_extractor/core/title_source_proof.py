@@ -137,6 +137,17 @@ def source_title_geometry(proof):
 
 
 def source_title_text(proof):
+    observed = source_title_observation(proof)
+    return observed[0] if observed is not None and not observed[1] else None
+
+
+def source_title_observation(proof):
+    """Qualified text, or a fully observed local native/optical role conflict.
+
+    A conflict never qualifies its own title. The explicit negative carrier
+    permits an independent physical peer to keep its own complete evidence;
+    weak/missing/incomplete readings still provide no carrier at all.
+    """
     geometry = source_title_geometry(proof)
     if (
         geometry is None
@@ -181,7 +192,7 @@ def source_title_text(proof):
         return None
     if not observations:
         return (
-            native["text"]
+            (native["text"], False)
             if native_window_complete(window, native)
             and not (raster is not None and overlaps(raster, bounds))
             else None
@@ -203,13 +214,28 @@ def source_title_text(proof):
         ) or not valid_cell_frame(frame, reading, bounds, dpi):
             return None
     texts = [reading["raw_text"] for reading in observations]
-    if title_literal(texts[0]) != title_literal(texts[1]) or not native_title_agrees(
-        proof, texts[0]
-    ):
+    if title_literal(texts[0]) != title_literal(
+        texts[1]
+    ) or not qualified_title_claim_agrees(proof["nomination_source"], texts[0]):
         return None
+    if native_title_agrees(proof, texts[0]):
+        return texts[0], False
+    from .caption_role_semantics import catalog_title_role
+    from .source_table_roles import title_key
+
+    # Only an explicit same-key opposite role is a complete local conflict.
+    # Changed keys, unknown/mixed claims, visibility alone and weak values may
+    # not certify a peer. Native originals and both pixel-bound reads stay saved.
+    key = title_key(native["text"])
     return (
-        texts[0]
-        if qualified_title_claim_agrees(proof["nomination_source"], texts[0])
+        (texts[0], True)
+        if (
+            source_observation_status(native, bounds, native["text"]) == "qualified"
+            and key
+            and key == title_key(texts[0])
+            and {catalog_title_role(native["text"]), catalog_title_role(texts[0])}
+            == {"compound", "nonfinal"}
+        )
         else None
     )
 

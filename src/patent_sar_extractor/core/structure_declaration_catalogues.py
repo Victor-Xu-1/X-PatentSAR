@@ -9,18 +9,34 @@ from .source_evidence_identity import proof_id
 from .source_geometry import overlaps
 from .source_observations import project_source_observation
 from .source_table_roles import title_texts
+from .structure_catalogue_headers import header_catalogue_scope
+from .structure_declaration_continuations import continued_catalogue_role
 from .title_context_grids import caption_title_context
 
 
-def catalogue_scopes_for_grids(page_no, grids, caption_roles):
+def catalogue_scopes_for_grids(
+    page_no, grids, caption_roles, *, column_sections=(), original_pdf_sha256=None
+):
     """Associate each identical physical frame once; retain its raw inventory."""
-    if caption_roles is None:
-        return []
+    headers = {}
+    for section in column_sections:
+        if section.get("role") != "structure_column_anchor":
+            continue
+        if section.get("page_no") != page_no:
+            raise ValueError("Original numbered title belongs to another page")
+        scope = header_catalogue_scope(section, original_pdf_sha256)
+        if scope is None:
+            continue
+        box = tuple(scope["table_bbox"])
+        if box in headers and headers[box] != scope:
+            raise ValueError("Conflicting original numbered-header title owners")
+        headers[box] = scope
     seen, scopes = {}, []
     for grid in grids:
         box = tuple(grid_box(grid))
         key = (page_no, box)
-        if key not in caption_roles:
+        observed = caption_roles is not None and key in caption_roles
+        if not observed and box not in headers:
             continue
         if box in seen:
             if seen[box] != grid:
@@ -29,7 +45,9 @@ def catalogue_scopes_for_grids(page_no, grids, caption_roles):
                 )
             continue
         seen[box] = grid
-        scopes.append(caption_roles[key])
+        # An earlier observed catalogue remains the authority even if unresolved.
+        # A later header may fill an absent owner, never vote over an old one.
+        scopes.append(caption_roles[key] if observed else headers[box])
     return scopes
 
 
@@ -81,6 +99,9 @@ def catalogue_declarations(source, page_source_id, *, identifier_lists):
     output = []
     for scope in source.get("catalogue_scopes", []):
         role = caption_role_status(scope, source["page_no"], scope["table_bbox"])
+        inherited = continued_catalogue_role(source, scope)
+        if inherited is not None:
+            role = inherited[0]
         body = list(scope["table_bbox"])
         diagrams = intersecting_source_diagrams(source["page_diagrams"], body)
         texts = title_texts(
@@ -121,6 +142,7 @@ def catalogue_declarations(source, page_source_id, *, identifier_lists):
                 "unproved_nonfinal_role": role in {"unknown", "unresolved"}
                 and catalog_title_role(raw) in {"nonfinal", "mixed"},
                 "unproved_title": role == "unresolved",
+                **({"continuation_source_region": inherited[1]} if inherited else {}),
             }
         )
     return output

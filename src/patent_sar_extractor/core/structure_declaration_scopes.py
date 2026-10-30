@@ -30,6 +30,12 @@ from .structure_declaration_catalogues import (
     catalogue_owns_caption,
     validate_catalogue_scopes,
 )
+from .structure_declaration_columns import (
+    logical_column_declarations,
+    logical_column_owns_caption,
+    validate_logical_columns,
+)
+from .structure_declaration_continuations import validate_continued_columns
 from .structure_table_headers import possible_structure_header
 
 PAGE_ROLE = "structure_declaration_page"
@@ -63,7 +69,16 @@ def _title_window(caption, lanes, size, band):
 def validate_declaration_page(source):
     if (
         not isinstance(source, dict)
-        or set(source) - ({"catalogue_scopes"} if source.get("version") == 2 else set())
+        or set(source)
+        - (
+            {"catalogue_scopes", "logical_columns", "continued_columns"}
+            if source.get("version") == 4
+            else {"catalogue_scopes", "logical_columns"}
+            if source.get("version") == 3
+            else {"catalogue_scopes"}
+            if source.get("version") == 2
+            else set()
+        )
         != {
             "status",
             "version",
@@ -76,9 +91,13 @@ def validate_declaration_page(source):
         }
         or source["status"] != PAGE_STATUS
         or type(source["version"]) is not int
-        or source["version"] not in {1, 2}
-        or source["version"] == 2
+        or source["version"] not in {1, 2, 3, 4}
+        or source["version"] in {2, 3, 4}
         and "catalogue_scopes" not in source
+        or source["version"] in {3, 4}
+        and "logical_columns" not in source
+        or source["version"] == 4
+        and "continued_columns" not in source
         or not isinstance(source["original_pdf_sha256"], str)
         or not re.fullmatch(r"[a-f0-9]{64}", source["original_pdf_sha256"])
         or type(source["page_no"]) is not int
@@ -94,6 +113,8 @@ def validate_declaration_page(source):
     for grid in source["page_grids"]:
         validate_page_grid(grid, source["page_size"])
     validate_catalogue_scopes(source)
+    validate_logical_columns(source)
+    validate_continued_columns(source)
 
 
 def declaration_page_id(source):
@@ -151,7 +172,9 @@ def _title_windows(source, lanes):
     captions = table_caption_nominees(lanes[0], size, native_tokens=lanes[1])
     logical_headers = nominate_unruled_headers(lanes[0], size, native_tokens=lanes[1])
     for caption in captions:
-        if catalogue_owns_caption(source, caption):
+        if catalogue_owns_caption(source, caption) or logical_column_owns_caption(
+            source, caption
+        ):
             continue
         if box_inside_drawing(caption["bbox"], source["page_diagrams"]):
             continue  # Drawing annotations do not introduce a page table role.
@@ -197,6 +220,13 @@ def declaration_scopes_with_identity(source):
         source,
         page_source_id,
         identifier_lists=lambda body: _identifier_lists(chunks, page, body, lanes),
+    )
+    output.extend(
+        logical_column_declarations(
+            source,
+            page_source_id,
+            identifier_lists=lambda body: _identifier_lists(chunks, page, body, lanes),
+        )
     )
     for caption, band, title in _title_windows(source, lanes):
         title_chunks = project_source_window(chunks, page, title)

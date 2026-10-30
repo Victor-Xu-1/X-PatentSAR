@@ -13,14 +13,22 @@ from .title_ink_geometry import title_ink_rows
 from .title_raster_source import observe_title_raster
 
 
-def observe_title_ink(page, bounds, context, *, layout=None, paint_view=None):
+def observe_title_ink(
+    page, bounds, context, *, layout=None, paint_view=None, version=5
+):
+    if type(version) is not int or version not in {4, 5}:
+        raise ValueError("Unknown original title-ink version")
     layout = source_layout(page) if layout is None else layout
     size = [page.rect.width, page.rect.height]
-    cells = context_ruling_cells(context, bounds)
-    within_budget = title_ruling_budget(cells, size)
+    cells = context_ruling_cells(context, bounds, boundary_contacts=version == 5)
+    within_budget = title_ruling_budget(
+        cells, size, bounds=bounds if version == 5 else None
+    )
+    from .boundary_cell_pixels import observe_boundary_cell
+
     window = observe_native_window(page, bounds, paint_view=paint_view)
     return {
-        "version": 4,
+        "version": version,
         "page_no": page.number + 1,
         "page_size": size,
         "bbox": list(bounds),
@@ -37,7 +45,13 @@ def observe_title_ink(page, bounds, context, *, layout=None, paint_view=None):
         "ruling_sources": [
             {
                 "cell": cell,
-                "pixels": observe_closed_cell(page, cell) if within_budget else None,
+                "pixels": (
+                    observe_boundary_cell(page, cell)
+                    if version == 5 and cell[3] <= bounds[1]
+                    else observe_closed_cell(page, cell)
+                )
+                if within_budget
+                else None,
             }
             for cell in cells
         ],
@@ -53,7 +67,12 @@ def replay_title_ink(page, source, *, layout=None, paint_view=None):
         raise ValueError("Invalid original title-ink inventory")
     view = native_paint_view(page) if paint_view is None else paint_view
     actual = observe_title_ink(
-        page, source["bbox"], source["context"], layout=layout, paint_view=view
+        page,
+        source["bbox"],
+        source["context"],
+        layout=layout,
+        paint_view=view,
+        version=source["version"],
     )
     if actual != source:
         raise ValueError("Original title-ink inventory differs")

@@ -8,7 +8,7 @@ from .title_context_grids import validate_parallel_title_grids
 
 
 def parallel_title_text(observed, context, *, key_of):
-    """No member qualifies until every physical row has qualified upstream."""
+    """Every row needs complete evidence; a known local conflict stays refused."""
     peers = validate_parallel_title_grids(context)
     if peers is None:
         return None
@@ -31,7 +31,12 @@ def parallel_title_text(observed, context, *, key_of):
             if key in claims and claims[key] != literal:
                 return None
             claims[key] = literal
-        return (chosen[peers.index(context["grid_axes"])],)
+        owner = peers.index(context["grid_axes"])
+        if any(
+            r.get("native_conflict") and r["owner"] in {None, owner} for r in observed
+        ):
+            return None
+        return (chosen[owner],)
 
     # Preserve the existing unique shared-caption authority, only when the
     # complete selected source is itself a single global original title.
@@ -40,7 +45,9 @@ def parallel_title_text(observed, context, *, key_of):
     text = " ".join(row["text"] for row in rows)
     if (
         not rows
+        or any(row.get("native_conflict") for row in observed)
         or any(row["owner"] is not None for row in rows)
+        and len({row["owner"] for row in observed}) != 1
         or len(list(TABLE_MARKER.finditer(text))) != 1
         or not key_of(text)
         or catalog_title_role(text) not in {"compound", "nonfinal"}

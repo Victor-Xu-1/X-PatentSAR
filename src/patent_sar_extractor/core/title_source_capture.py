@@ -32,6 +32,7 @@ from .title_source_proof import (
     MAX_TITLE_SOURCES,
     TITLE_SOURCES,
     raw_title_packet,
+    source_title_observation,
     source_title_text,
     title_nomination_bounds,
 )
@@ -86,11 +87,16 @@ def observe_source_title(
         and (scoped is None or scoped[1] is not None)
     ):
         return proof
-    if native["text"].strip() and (
-        source_observation_status(native, bounds, native["text"]) != "qualified"
-        or not visible_native_tokens(page, native, paint_view=paint_view)
-    ):
-        return proof
+    if native["text"].strip():
+        if source_observation_status(native, bounds, native["text"]) != "qualified":
+            return proof
+        if not visible_native_tokens(page, native, paint_view=paint_view) and not (
+            ink_source is not None
+            and "parallel_grids" in ink_source["inventory"]["context"]
+            and rows[0][ink_source["row_index"]].get("owner") is not None
+            and ink_source["inventory"]["raster_source"] is not None
+        ):
+            return proof
     if (
         scope is None
         and ink_source is None
@@ -120,7 +126,7 @@ def observe_source_title(
         maximum_rows=MAX_HEADING_ROWS,
         maximum_row_height=MAX_HEADING_HEIGHT,
     )
-    if source_title_text(proof) is None:
+    if source_title_observation(proof) is None:
         from .text_ocr.source_capture import refine_source_text
 
         proof["observations"] = refine_source_text(
@@ -157,15 +163,16 @@ def attach_title_sources(page, sources, nominations, *, context=None, title_cach
         raise ValueError("Original title context has competing source parents")
     layout, view = source_layout(page), native_paint_view(page)
     family = context is not None and "parallel_grids" in context
+    logical = context is not None and context.get("logical_window") is not None
     unique = {proof_id(raw_title_packet(p)): raw_title_packet(p) for p in nominations}
     records = [
         observe_source_title(
             page, p, layout=layout, paint_view=view, title_cache=title_cache
         )
-        for p in (() if family else unique.values())
+        for p in (() if family or logical else unique.values())
     ]
     ink = None
-    if (not nominations or family) and context is not None:
+    if (not nominations or family or logical) and context is not None:
         ink = observe_title_ink(
             page,
             family_title_bounds(context, sources[0]["bbox"]),

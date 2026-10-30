@@ -10,6 +10,8 @@ from .source_geometry import SourceTokens
 from .source_table_captions import table_caption_nominees
 from .source_window_chunks import observe_source_window
 from .structure_declaration_catalogues import catalogue_scopes_for_grids
+from .structure_declaration_columns import original_logical_columns
+from .structure_declaration_continuations import physical_declaration_columns
 from .structure_declaration_scopes import (
     PAGE_ROLE,
     PAGE_STATUS,
@@ -42,13 +44,31 @@ def observe_declaration_pages(
     *,
     grids_for_page=None,
     caption_roles=None,
+    column_sections=(),
     progress=None,
 ):
     if grids_for_page is None:
         from .table_geometry import detect_ruled_table_regions
 
         grids_for_page = detect_ruled_table_regions
-    by_page, sections, withheld = defaultdict(list), [], set()
+    by_page, columns_by_page, sections, withheld = (
+        defaultdict(list),
+        defaultdict(list),
+        [],
+        set(),
+    )
+    for section in column_sections:
+        if not isinstance(section, dict):
+            raise TypeError("Malformed original numbered-column inventory")
+        if section.get("role") not in {
+            "structure_column_anchor",
+            "unruled_structure_region",
+        }:
+            continue
+        number = section.get("page_no")
+        if type(number) is not int or not 1 <= number <= len(doc):
+            raise ValueError("Original numbered-column page leaves its document")
+        columns_by_page[number].append(section)
     for structure in structures:
         by_page[structure["page_no"] - 1].append(structure)
     original_sha = None
@@ -73,9 +93,11 @@ def observe_declaration_pages(
             continue
         if original_sha is None:
             original_sha = document_sha256(doc)
+        logical_columns = original_logical_columns(columns_by_page[index + 1])
+        continued_columns = physical_declaration_columns(columns_by_page[index + 1])
         source = {
             "status": PAGE_STATUS,
-            "version": 2,
+            "version": 4 if continued_columns else 3 if logical_columns else 2,
             "original_pdf_sha256": original_sha,
             "page_no": index + 1,
             "page_size": size,
@@ -92,8 +114,18 @@ def observe_declaration_pages(
             ),
             "page_grids": grids,
             "catalogue_scopes": catalogue_scopes_for_grids(
-                index + 1, grids, caption_roles
+                index + 1,
+                grids,
+                caption_roles,
+                column_sections=columns_by_page[index + 1],
+                original_pdf_sha256=original_sha,
             ),
+            **(
+                {"logical_columns": logical_columns}
+                if logical_columns or continued_columns
+                else {}
+            ),
+            **({"continued_columns": continued_columns} if continued_columns else {}),
         }
         from .title_source_capture import attach_title_sources
 

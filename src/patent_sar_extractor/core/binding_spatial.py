@@ -224,6 +224,7 @@ def collect_spatial_bindings(
         tokens_for_page,
         grids_for_page=grids_for_page,
         caption_roles=caption_grids.roles,
+        column_sections=numbered.source_sections,
         progress=progress,
     )
     candidates = [_candidate(binding, "numbered_cell") for binding in table_bindings]

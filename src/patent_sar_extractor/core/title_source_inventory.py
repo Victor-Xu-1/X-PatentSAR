@@ -97,6 +97,21 @@ def _parents(payload):
                 raise ValueError("Malformed original declaration title scopes")
             for catalogue in catalogues:
                 yield from _caption_parents(catalogue)
+            columns = source.get("logical_columns", [])
+            if not isinstance(columns, list) or len(columns) > 4096:
+                raise ValueError("Malformed original declaration logical title scopes")
+            for column in columns:
+                header = column["source"]["header_scope"]
+                yield from header.get("anchor_scope", header)["context_sources"]
+            continued = source.get("continued_columns", [])
+            if not isinstance(continued, list) or len(continued) > 4096:
+                raise ValueError(
+                    "Malformed original declaration continued title scopes"
+                )
+            for column in continued:
+                header = column["source"]["header_scope"].get("anchor_scope")
+                if header is not None:
+                    yield from header["context_sources"]
     observations = payload.get("source_role_observations", {})
     if not isinstance(observations, dict):
         raise TypeError("Malformed original title observation ledger")

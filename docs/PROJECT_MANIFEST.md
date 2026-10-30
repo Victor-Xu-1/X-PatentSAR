@@ -1,5 +1,36 @@
 # Project governance manifest
 
+- Shared title ownership authority: `structure_catalogue_headers` adapts an
+  existing original physical header to the SAME catalogue-role schema, without
+  overriding any previously observed weak owner. `title_logical_scope` projects
+  only the independently derived logical header/caption band while retaining
+  full original context/ink/pixels. `structure_declaration_columns` reuses the
+  SAME full logical source sections and original body/role validators in the
+  existing declaration ledger (page3 only where logical owners exist). Headerless
+  physical links use page4 `continued_columns` under the SAME source ancestry/body
+  validator; no new title is required only for a qualified registered link with
+  no observed current title ink. Raw caption refusal stays unchanged. The existing
+  title-ink inventory5 retains paired original four-edge strips only for wholly
+  outside cells ending exactly at the title boundary. The same closed-cell SDK
+  owns their rule-only projection; no text/body/blank-cell admission is possible
+  without ordinary full original pixels. Raw strip replay, conservative common
+  black overlap, attached-ink refusal and8M limits remain mandatory. Inventory4
+  retains its old replay, never silent conversion to current admission. The
+  bounded `title_geometry_call` surrounds one synchronous binder invocation;
+  exact content is rehashed, pure geometry only is reused, and all actual source
+  replay/role/acceptance still executes. No new cache authority or raised limit.
+  Current
+  consumers cross-check complete owners and reject rehashed omission/downgrade;
+  historical review stays non-admitting. `heading_title_columns` adapts the
+  existing independently active column authority to complete native row ink;
+  full row/source replay and identical title/declaration column inventories are
+  mandatory. Raw native words and attached title proofs are separately replayed,
+  not confused or discarded. Crossing/unknown/competing/closing ownership still
+  refuses. Binding77/binder88 refresh derived admission only; all raw/manual/
+  history, activity/SMILES, SQL/API/SAR, models/dependencies/activation are
+  unchanged. No new queue/store/parser/recognizer/writer or scientific-policy
+  authority. Earlier title limitation/epoch entries below are release history.
+
 - Presentation-upgrade authority: `web/projection_upgrade` is subordinate to the
   existing `Store.snapshot` write transaction and run-root/PDF guards. Only a
   complete identical current snapshot and raw row inventory retains the latest

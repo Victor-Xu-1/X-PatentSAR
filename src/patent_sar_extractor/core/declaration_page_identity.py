@@ -7,7 +7,14 @@ from .source_evidence_identity import MAX_SOURCE_REGION_BYTES
 
 MAX_PAGE_BYTES = MAX_ARTIFACT_BYTES
 MAX_COMPONENT_BYTES = MAX_SOURCE_REGION_BYTES
-PAGE_COMPONENTS = ("page_context", "page_diagrams", "page_grids", "catalogue_scopes")
+PAGE_COMPONENTS = (
+    "page_context",
+    "page_diagrams",
+    "page_grids",
+    "catalogue_scopes",
+    "logical_columns",
+    "continued_columns",
+)
 
 
 def page_source_digest(source):

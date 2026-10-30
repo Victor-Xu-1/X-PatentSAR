@@ -363,7 +363,19 @@ class PlotLegendHeadingTests(unittest.TestCase):
                 document, [0], {}, source_sections=sections, source_regions={0: []}
             )
         self.assertEqual(len(blocks), 1)
+        self.assertEqual(sections[0]["role"], "unproved_heading")
+        self.assertEqual(sections[0]["status"], "unresolved")
+        self.assertEqual(blocks[0]["cpd"], "Compound 77A")
+
+    def test_no_axes_and_no_unexplained_marker_keeps_a_complete_native_heading(self):
+        with self.document(axes=False, marker=False) as document:
+            sections = []
+            blocks = observed_heading_blocks(
+                document, [0], {}, source_sections=sections, source_regions={0: []}
+            )
+        self.assertEqual(len(blocks), 1)
         self.assertEqual(sections[0]["role"], "compound_heading")
+        self.assertEqual(sections[0]["status"], "confirmed")
 
     def observed(self):
         with self.document() as document:

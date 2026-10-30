@@ -1,5 +1,65 @@
 # X-PatentSAR architecture
 
+## Shared original-column titles and declarations
+
+Numbered physical headers adapt their already-observed title into the existing
+catalogue-role schema. An earlier weak/unknown caption owner is not overwritten.
+Logical unruled headers retain their full original context/paint/pixels; only
+their independently rederived header/caption partition owns a title band.
+Whole crossing marks remain unresolved. No logical boundary is a printed rule.
+Every physical peer row still needs complete original evidence. A same-key,
+opposite native/optical role with both complete strong optical frames may be
+retained as an explicit LOCAL CONFLICT, never a qualified title. Only a distinct
+independently owned peer can retain its own role; missing/weak reads, changed
+keys, global ink and same-key competing catalogues still refuse the family.
+The negative carrier does not trigger auxiliary retries. A unique complete
+shared caption uses the existing shared-caption authority, not a page-half rule.
+
+Declaration pages with original logical headers or captioned continuation links
+use version3 and retain the same complete source sections in `logical_columns`.
+Pages with headerless physical continuations use version4 and also retain their
+`continued_columns`. Their header/body, document/page identity, complete diagram/
+grid inventory and overlapping raw page facts are checked by existing authorities.
+Continuations retain their anchor/caption/registered-parent proof, not an inferred
+role. Only a complete qualified headerless physical link can remove the redundant
+new-title requirement for an observed ink-free prefix; raw unknown/refused caption
+facts remain unchanged. Any current title ink, weak read or ancestry mismatch
+vetoes that join. Current writer/formal/Web consumers cross-check every column
+owner; a rehashed omission/downgrade cannot waive a declaration. Pages without
+such owners keep version2. Historical reads remain non-admitting and immutable.
+
+Title-ink inventory5 additionally accounts for a preceding closed table whose
+bottom edge exactly touches the current title window. Only those wholly outside
+cells may retain paired400/600dpi four-edge strips, using the same closed-cell
+rule SDK. Every strip and its actual-original replay are retained. Overlapping
+strip observations contribute only their common black pixels, never invented
+edges. The internal edge canvas is not original cell-interior evidence: these
+carriers cannot qualify text, body contents or blankness, nor replace current
+cells' full pixel proof. Current title pixels and attached/crossing ink remain
+subject to the existing refusal checks. All existing8M pixel limits remain;
+inventory4 replays under its unchanged old inventory rather than being retagged.
+
+For a native heading alongside an independently active foreign column,
+`heading_title_columns` adapts the existing column-role/body validator. Title
+scope version2 retains complete source sections and the entire original row.
+Only a foreign column covering the complete observed row may own its row ink;
+horizontal crossing, competing ownership and closing/inactive sources refuse.
+The declaration and title must retain identical column inventories. Original
+readback verifies raw native observations separately from attached title proof,
+then replays that proof and physical sources without another text recognition.
+
+The binding coordinator opens the existing bounded `title_geometry_call` for
+its one synchronous operation. Exact serialized source is rehashed on lookup;
+only pure geometry is shared, at the existing128-entry limit, with copied results
+and finally cleanup. No actual-original replay, model, role or acceptance result
+is cached. Independent calls and mutated source still revalidate normally.
+
+Binding77/binder88 refresh derived ownership only. Raw PDFs/OCR/crops, manual
+audit/history, activity/SMILES, SQL/API, scientific SAR policies, model defaults,
+environments and dependencies are unchanged. No alternate queue, parser, writer,
+store or acceptance path is introduced. Generated controls are not universal
+format recall, chemical accuracy or real-patent scientific acceptance.
+
 ## Presentation upgrades and manual source identity
 
 An implicit read-model presentation rebuild does not rebase manual corrections.

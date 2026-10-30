@@ -2,6 +2,7 @@
 
 from .heading_cell_source import observe_cell_source
 from .heading_source_geometry import MAX_HEADING_HEIGHT, heading_bounds
+from .heading_title_columns import title_column_windows
 from .heading_title_geometry import title_scope_bounds, title_seek_bounds
 from .native_window_coverage import observe_native_window
 from .source_cell_pixels import observe_closed_cell
@@ -42,7 +43,16 @@ def closed_title_scope(
     }
 
 
-def observe_title_scope(page, nomination, layout, *, grids=None, paint_view=None):
+def observe_title_scope(
+    page,
+    nomination,
+    layout,
+    *,
+    grids=None,
+    paint_view=None,
+    column_sources=(),
+    original_pdf_sha256=None,
+):
     """Only actual native ownership activates row expansion; OCR locators are not votes."""
     size = [page.rect.width, page.rect.height]
     seed = _native(layout, list(heading_bounds(nomination, size)))
@@ -57,7 +67,7 @@ def observe_title_scope(page, nomination, layout, *, grids=None, paint_view=None
         cell = observe_cell_source(page, nomination, grids, MAX_HEADING_HEIGHT)
         if cell is not None:
             return closed_title_scope(page, nomination, layout, cell, row=row)
-    return {
+    scope = {
         "version": 1,
         "method": "native_row",
         "nomination_bbox": list(nomination),
@@ -66,6 +76,29 @@ def observe_title_scope(page, nomination, layout, *, grids=None, paint_view=None
         "row_source": row,
         "cell_source": None,
     }
+    ordinary = title_scope_bounds(scope, nomination, size)
+    if not column_sources or ordinary is None or ordinary[1] is None:
+        return scope  # An already-complete ordinary row needs no column replay.
+    columns = list(column_sources)
+    owned = title_column_windows(
+        columns,
+        page.number + 1,
+        size,
+        original_pdf_sha256,
+        nomination,
+        title_seek_bounds(nomination, size),
+    )
+    return (
+        {
+            **scope,
+            "version": 2,
+            "column_sources": columns,
+            "original_pdf_sha256": original_pdf_sha256,
+            "page_no": page.number + 1,
+        }
+        if owned
+        else scope
+    )
 
 
 def replay_title_scope(page, proof, layout, *, paint_view=None):
@@ -83,4 +116,13 @@ def replay_title_scope(page, proof, layout, *, paint_view=None):
         cell = scope["cell_source"]
         if observe_closed_cell(page, cell["cell"]) != cell["pixels"]:
             return False
+    if scope["version"] == 2:
+        from .heading_page_replay import HeadingPageReplay
+        from .source_document import document_sha256
+
+        if scope["original_pdf_sha256"] != document_sha256(page.parent):
+            return False
+        replay = HeadingPageReplay(page.parent)
+        for section in scope["column_sources"]:
+            replay.column_source(section)
     return scope["row_source"] == _row(page, nomination, layout, paint_view)

@@ -112,8 +112,8 @@ def validate_parallel_title_grids(context):
     return peers
 
 
-def context_ruling_cells(context, bounds):
-    """Only actual original first rows can supply boundary-rule exemptions."""
+def context_ruling_cells(context, bounds, *, boundary_contacts=False):
+    """Actual first/body rows, plus explicitly versioned outside edge contacts."""
     if not isinstance(context, dict) or set(context) - {
         "parallel_grids",
         "page_grids",
@@ -158,10 +158,17 @@ def context_ruling_cells(context, bounds):
     ]
     from .title_family_geometry import family_body_cells
 
+    contacts = [
+        [left, grid["ys"][-2], right, grid["ys"][-1]]
+        for grid in context.get("page_grids", [])
+        if boundary_contacts and grid["ys"][-1] == bounds[1]
+        for left, right in pairwise(grid["xs"])
+    ]
     cells = [
         list(cell)
         for cell in dict.fromkeys(
-            tuple(cell) for cell in [*first_rows, *family_body_cells(context, bounds)]
+            tuple(cell)
+            for cell in [*first_rows, *family_body_cells(context, bounds), *contacts]
         )
     ]
     if len(cells) > MAX_TITLE_CELLS:
@@ -169,10 +176,14 @@ def context_ruling_cells(context, bounds):
     return cells
 
 
-def title_ruling_budget(cells, size):
+def title_ruling_budget(cells, size, *, bounds=None):
+    from .boundary_cell_pixels import boundary_pixel_cost
+
     return (
         sum(
-            rectangle.width * rectangle.height
+            boundary_pixel_cost(cell, size)
+            if bounds is not None and cell[3] <= bounds[1]
+            else rectangle.width * rectangle.height
             for cell in cells
             for rectangle in (cell_pixel_rect(source_window(cell, size), 600),)
         )

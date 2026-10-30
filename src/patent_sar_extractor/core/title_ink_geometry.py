@@ -19,6 +19,7 @@ from .title_family_geometry import (
     title_marks_outside_bodies,
 )
 from .title_geometry_memo import memoized_title_geometry
+from .title_logical_scope import logical_title_exclusions
 from .title_parallel_rows import original_title_rows
 
 
@@ -49,7 +50,7 @@ def _title_ink_rows(source):
             "raster_source",
         }
         or type(source["version"]) is not int
-        or source["version"] != 4
+        or source["version"] not in {4, 5}
     ):
         return None
     native, window, bounds, size = (
@@ -66,13 +67,17 @@ def _title_ink_rows(source):
     ):
         return None
     try:
-        cells = context_ruling_cells(source["context"], bounds)
+        cells = context_ruling_cells(
+            source["context"], bounds, boundary_contacts=source["version"] == 5
+        )
     except (ValueError, TypeError, KeyError, AttributeError, IndexError):
         return None
     rulings = source["ruling_sources"]
     if not isinstance(rulings, list) or len(rulings) != len(cells):
         return None
-    if not title_ruling_budget(cells, size):
+    if not title_ruling_budget(
+        cells, size, bounds=bounds if source["version"] == 5 else None
+    ):
         return (
             ([], "title_ruling_budget")
             if all(
@@ -93,7 +98,16 @@ def _title_ink_rows(source):
         ):
             return None
         if ruling["pixels"] is not None:
-            if closed_cell_masks(ruling["pixels"], cell, size) is None:
+            boundary = (
+                isinstance(ruling["pixels"], dict)
+                and ruling["pixels"].get("kind") == "original_cell_boundary"
+            )
+            if boundary and not (source["version"] == 5 and cell[3] == bounds[1]):
+                return None
+            if (
+                closed_cell_masks(ruling["pixels"], cell, size, boundary_only=boundary)
+                is None
+            ):
                 return None
             proved.append(cell)
     if window["refusal"] is not None:
@@ -105,7 +119,22 @@ def _title_ink_rows(source):
     excluded = [
         cell for cell in bodies if not any(inside_box(cell, region) for region in prior)
     ] + prior
-    if not native_title_context_complete(native, window, excluded):
+    try:
+        logical_outside = logical_title_exclusions(source["context"], bounds)
+    except (ValueError, TypeError, KeyError, IndexError):
+        return None
+    physical_columns = (
+        family_column_windows(
+            source["context"], family_column_spans(source["context"], rulings, size)
+        )
+        or []
+    )
+    # Each owned physical row keeps its independent complete text/native gate.
+    # This inventories all row geometry; it grants no role and drops no marks.
+    # Unowned/global native ink must still satisfy the whole-context check.
+    if not native_title_context_complete(
+        native, window, [*excluded, *logical_outside, *physical_columns]
+    ):
         return [], "incomplete_native_title_context"
     geometry = source["context"]["geometry"]
     if (
@@ -125,7 +154,7 @@ def _title_ink_rows(source):
             bounds,
             size,
             rulings,
-            components="parallel_grids" in source["context"],
+            components="parallel_grids" in source["context"] or bool(logical_outside),
             body_cells=bodies,
             prior_regions=prior,
         )
@@ -146,6 +175,10 @@ def _title_ink_rows(source):
     marks, refusal = title_marks_outside_bodies(marks, excluded)
     if refusal is not None:
         return [], refusal
+    if logical_outside:
+        marks, refusal = title_marks_outside_bodies(marks, logical_outside)
+        if refusal is not None:
+            return [], "crossing_logical_title_ink"
     if any(not inside_box(mark, bounds) for mark in marks):
         return [], "crossing_title_context_ink"
     return original_title_rows(
