@@ -93,7 +93,7 @@ class WorkspaceService:
         ):
             # Projection data is rebuildable. Old cached acceptance must not
             # become current authority after a rules/software upgrade.
-            self.refresh(project_id)
+            self.refresh(project_id, presentation_upgrade=True)
             row = self.store.project(project_id)
         elif row["run_root"] and (
             type(snapshot.get(EPOCH_MARKER)) is not int
@@ -398,7 +398,13 @@ class WorkspaceService:
             uploaded.path.unlink(missing_ok=True)  # The new duplicate copy only.
         return self.project(project_id)
 
-    def refresh(self, project_id: str, *, view: ArtifactView | None = None) -> None:
+    def refresh(
+        self,
+        project_id: str,
+        *,
+        view: ArtifactView | None = None,
+        presentation_upgrade: bool = False,
+    ) -> None:
         project = self.store.project(project_id)
         if not project["run_root"]:
             return
@@ -419,6 +425,7 @@ class WorkspaceService:
             compounds,
             expected_run_root=project["run_root"],
             expected_sha256=project["sha256"],
+            presentation_upgrade=presentation_upgrade,
         )
 
     def job(self, job_id: str) -> Job:

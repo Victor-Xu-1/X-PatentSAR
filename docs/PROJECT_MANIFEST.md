@@ -1,5 +1,28 @@
 # Project governance manifest
 
+- Presentation-upgrade authority: `web/projection_upgrade` is subordinate to the
+  existing `Store.snapshot` write transaction and run-root/PDF guards. Only a
+  complete identical current snapshot and raw row inventory retains the latest
+  committed correction basis on an implicit presentation upgrade. Explicit
+  refresh, changed scientific/runtime/source facts and new attempts retain
+  existing invalidation. No audit rewrite, automatic rebase, database migration,
+  public API setting, model call or alternate publication path is introduced.
+
+- Complete original-inventory identity authority: `composite_source_identity`
+  streams exact canonical JSON with the existing finite32MiB artifact ceiling.
+  Schema-specific page and characterization-region adapters validate complete
+  source coverage and define the only split paths. Each physical cell, row,
+  context chunk, diagram, grid or catalogue scope keeps the original1MiB bound.
+  Small source digests remain identical; no truncation, new store or parallel
+  parser is introduced. Writer and source-reference replay use the same adapter.
+  Open-row native observations retain exact text/paint/grid identity; uncertain
+  observations can replay without acquiring a qualified role. Scanned open-row
+  views exclude only independently proved disconnected boundary-rule pixels;
+  full original pixels/grid are replayed, attached/unknown ink stays unresolved.
+  Binding76/binder87 refresh derived admission only. Activity/model/SQL/API/SAR
+  policy, raw/manual/history and dependencies remain unchanged. Logical parallel
+  title failures remain a separate unresolved repair, not waived by this change.
+
 - Original title scope authority: `heading_title_scope` observes/replays the
   actual source and `heading_title_geometry` derives its complete physical scope
   for the existing heading reader/status/original admission. Raw nominations,

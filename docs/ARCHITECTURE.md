@@ -1,5 +1,47 @@
 # X-PatentSAR architecture
 
+## Presentation upgrades and manual source identity
+
+An implicit read-model presentation rebuild does not rebase manual corrections.
+Inside the same SQLite publication transaction, `projection_upgrade` compares
+the complete current snapshot (except the two presentation-version markers)
+and every raw row's ID, ordinal, JSON payload, image path and geometry space.
+JSON comparison ignores object-key order only, preserves scalar types and
+numeric forms, and streams the stored rows instead of copying the dataset.
+Only an exact unchanged non-historical source may retain the latest committed
+projection identity. All source/runtime/acceptance changes, historical sources,
+explicit refreshes and new attempts keep the existing invalidation behavior.
+Run-root/PDF ownership guards execute before comparison; neither correction
+rows nor immutable audit records are rewritten. This does not approve chemistry.
+
+## Complete original-inventory identities
+
+A page inventory is a collection of original context chunks, diagram frames,
+grid axes and caption scopes, not a single header region. A characterization
+grid likewise owns separately bounded physical cells, rows and context chunks.
+Each retained component keeps the existing one-MiB evidence limit, while each
+complete inventory uses the artifact transport's finite 32-MiB budget. The
+shared `composite_source_identity` streams canonical JSON without truncation,
+preserving former digests for small sources. `declaration_page_identity` and
+`reference_region_identity` provide explicit schema-specific partition paths;
+they do not change arbitrary small-region hashing. Complete schemas, coverage,
+roles and row fragments are checked before identity calculation; readers
+recompute the same identity before use. This
+neither approves a structure nor waives any unproved source. Binder and binding
+artifact epochs advance while raw sources and manual revisions remain intact.
+
+## Open source-row boundaries
+
+An open continuation row retains its original grid edges and source cells. A
+native cell may claim literal contents only when all text paint and non-text
+ink are accounted for by the original cell and its proved grid boundary; the
+actual original page and grid are rechecked before publication. Incomplete
+native observations remain replayable but unqualified. For scanned text, the
+existing paired OCR may read a three-edge open cell only after the exact
+disconnected rule pixels have been isolated; the original full cell and page
+grid are retained and independently replayed. Attached or unproved ink leaves
+the full image intact and the claim unresolved, not silently erased.
+
 ## Responsive checkpoint preparation
 
 The extraction queue reserves one durable attempt before returning its queued

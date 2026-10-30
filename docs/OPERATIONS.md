@@ -1,5 +1,32 @@
 # Operations and troubleshooting
 
+## Manual review after presentation rebuilds
+
+An automatic display-cache upgrade preserves a correction's source basis only
+when the complete current source projection is identical inside publication's
+transaction. Changed records, ordering, source images/geometry, runtime identity,
+acceptance or historical status cannot reuse that basis. Explicit refresh and a
+new attempt still invalidate previous overlays as before. Audit history is not
+rewritten; a genuine stale edit remains available for explicit user review.
+
+## Original inventory evidence budgets
+
+Complete page and characterization-grid identities stream every original
+component within the 32-MiB artifact transport budget. Individual cells and
+source chunks retain their existing one-MiB limit. If either bound is exceeded,
+the failure distinguishes the inventory and a component without logging source
+text; declaration failures also identify the page. Do not
+truncate observations or treat an unprocessed page as an empty result; preserve
+the source and inspect the bounded evidence before choosing a recovery.
+
+## Open table rows
+
+Open-row evidence is associated with its original physical page and grid;
+unqualified text or unproved border contact stays in the review inventory.
+The crop used for a scanned text read never replaces the original pixels. A
+changed grid or source image fails the actual-original replay, and missing
+evidence cannot turn an open row into a completed cross-page observation.
+
 ## Resume preparation and interrupted requests
 
 A resumed attempt returns as queued while the single extraction consumer

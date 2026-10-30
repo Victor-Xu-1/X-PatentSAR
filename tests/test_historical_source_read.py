@@ -263,6 +263,14 @@ class HistoricalSourceReadTests(PredictionFixture, unittest.TestCase):
         snapshot = json.loads(project["snapshot"])
         snapshot["raw_projection_layout"] = "compound-catalog-reprints-v2"
         snapshot.pop("historical_source_review_version", None)
+        originals = {
+            path: path.read_bytes() for path in self.run.rglob("*") if path.is_file()
+        }
+        with self.service.store.connect() as connection:
+            audit = [
+                tuple(row)
+                for row in connection.execute("SELECT * FROM correction_audit")
+            ]
         with self.service.store.connect(write=True) as connection:
             connection.execute(
                 "UPDATE projects SET snapshot=? WHERE id=?",
@@ -272,6 +280,15 @@ class HistoricalSourceReadTests(PredictionFixture, unittest.TestCase):
         self.assertFalse(current.stale)
         self.assertEqual(current.values.display_id, "Retained current review")
         self.assertEqual(current.revision, 1)
+        self.assertEqual({path: path.read_bytes() for path in originals}, originals)
+        with self.service.store.connect() as connection:
+            self.assertEqual(
+                [
+                    tuple(row)
+                    for row in connection.execute("SELECT * FROM correction_audit")
+                ],
+                audit,
+            )
 
     def test_old_cached_history_is_rebuilt_without_retaining_current_chemistry(self):
         self.old_sources()

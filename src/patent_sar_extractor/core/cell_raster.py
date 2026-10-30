@@ -125,6 +125,10 @@ def render_cell_raster(
 
 def valid_source_window(window, bounds, dpi, reading_shape):
     """Validate geometry only; a saved digest cannot establish original truth."""
+    if isinstance(window, dict) and window.get("version") == 2:
+        from .open_cell_raster import valid_open_source_window
+
+        return valid_open_source_window(window, bounds, dpi, reading_shape)
     if (
         not isinstance(window, dict)
         or set(window) - {"support", "support_limit"}
@@ -243,14 +247,22 @@ def original_reading_image(page, bounds, dpi, reading):
     shape = frame.get("shape") if isinstance(frame, dict) else None
     if not valid_source_window(window, bounds, dpi, shape):
         raise ValueError("Invalid retained original cell window")
-    observed = render_cell_raster(
-        page,
-        bounds,
-        dpi,
-        purpose=window["purpose"],
-        maximum_pixels=window.get("support_limit", 8_000_000),
-    )
-    if observed.source_window != window:
+    if window["version"] == 2:
+        from .open_cell_raster import render_open_cell_raster
+
+        owner = window["open_grid"]
+        observed = render_open_cell_raster(
+            page, bounds, dpi, owner["grid_edges"], owner["fragment"], owner["column"]
+        )
+    else:
+        observed = render_cell_raster(
+            page,
+            bounds,
+            dpi,
+            purpose=window["purpose"],
+            maximum_pixels=window.get("support_limit", 8_000_000),
+        )
+    if observed is None or observed.source_window != window:
         raise ValueError("Original full source differs from its retained cell window")
     return observed.image
 

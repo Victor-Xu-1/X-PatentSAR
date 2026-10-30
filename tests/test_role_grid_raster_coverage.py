@@ -8,12 +8,13 @@ import fitz
 
 from patent_sar_extractor.core import activity_grid_role_observation as observer
 from patent_sar_extractor.core.activity_grid_role_proof import valid_role_scope
+from patent_sar_extractor.core.cell_raster import render_cell_raster
 from patent_sar_extractor.core.source_geometry import (
     SourceTokens,
     native_cell_text,
     source_layout,
 )
-from patent_sar_extractor.core.table_cells import CellRenderLimit, cell_image
+from patent_sar_extractor.core.table_cells import CellRenderLimit
 from tests import test_role_grid_coverage as native_controls
 
 
@@ -52,13 +53,13 @@ class RasterRoleGridCoverageTests(unittest.TestCase):
         current = {"text": "", "tail": False}
         frames = []
 
-        def render(source, bounds, dpi):
+        def render(source, bounds, dpi, *, purpose):
             current["text"] = native_cell_text(original, bounds)
             current["tail"] = bounds[1] == grid["ys"][-2]
             if render_tail and current["tail"]:
                 raise CellRenderLimit("Controlled last-window render refusal")
             frames.append((tuple(bounds), dpi))
-            return cell_image(source, bounds, dpi)
+            return render_cell_raster(source, bounds, dpi, purpose=purpose)
 
         def reader(image, *, use_det, use_cls):
             # This supplies text only. Real source pixels, ink crops, line
@@ -83,7 +84,7 @@ class RasterRoleGridCoverageTests(unittest.TestCase):
         failures = []
         with (
             patch.object(observer, "get_ocr_engine", return_value=("rapidocr", reader)),
-            patch.object(observer, "cell_image", render),
+            patch.object(observer, "render_cell_raster", render),
         ):
             proof = observer.observe_characterization(
                 page,

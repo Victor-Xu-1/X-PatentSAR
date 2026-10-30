@@ -2,7 +2,14 @@
 
 from .activity_grid_roles import MAX_ROLE_ROW_HEIGHT, MAX_ROLE_TEXT_ROWS
 from .cell_frame_proof import inside_box, original_cell_frame_matches
-from .native_cell_replay import original_native_cell_matches
+from .native_cell_replay import (
+    original_native_cell_matches,
+    original_open_native_cell_matches,
+    original_unqualified_native_observation_matches,
+)
+from .source_cell_claims import cell_source_status
+from .source_evidence_identity import proof_id
+from .source_fragment_native import original_open_grid_matches
 from .source_geometry import source_layout
 from .source_paint_visibility import native_paint_view
 from .text_ocr.cell_proof import has_auxiliary_text
@@ -17,7 +24,7 @@ def original_role_source_errors(document, sources):
     Native sources reread actual original native words and independent raster
     ownership once per page. No OCR/model, saved path or role inference occurs.
     """
-    layouts, paints = {}, {}
+    layouts, paints, open_grids = {}, {}, {}
     try:
         for page_no, cell in sources:
             if not isinstance(cell, dict):
@@ -57,6 +64,24 @@ def original_role_source_errors(document, sources):
                     paint_view=paints[page_no],
                 )
                 continue
+            if cell.get("method") == "original_open_native_cell":
+                edges = cell.get("grid_edges")
+                grid_key = (
+                    page_no,
+                    proof_id({"status": "original_open_grid", "edges": edges}),
+                )
+                if grid_key not in open_grids:
+                    open_grids[grid_key] = original_open_grid_matches(page, edges)
+                if page_no not in layouts:
+                    layouts[page_no] = source_layout(page)
+                    paints[page_no] = native_paint_view(page)
+                if not open_grids[grid_key] or not original_open_native_cell_matches(
+                    page, cell, layout=layouts[page_no], paint_view=paints[page_no]
+                ):
+                    return [
+                        "Native open-row text differs from its original grid source."
+                    ]
+                continue
             bounds = cell.get("bbox")
             if not inside_box(bounds, [0, 0, page.rect.width, page.rect.height]):
                 return ["Original role-text cell leaves its original page."]
@@ -65,7 +90,12 @@ def original_role_source_errors(document, sources):
                 if page_no not in layouts:
                     layouts[page_no] = source_layout(page)
                     paints[page_no] = native_paint_view(page)
-                if not original_native_cell_matches(
+                replay = (
+                    original_unqualified_native_observation_matches
+                    if cell_source_status(cell) == "unqualified"
+                    else original_native_cell_matches
+                )
+                if not replay(
                     page, cell, layout=layouts[page_no], paint_view=paints[page_no]
                 ):
                     return ["Native role text differs from its actual original source."]

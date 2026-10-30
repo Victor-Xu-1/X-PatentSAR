@@ -174,6 +174,7 @@ class Store:
         *,
         expected_run_root: str,
         expected_sha256: str | None,
+        presentation_upgrade: bool = False,
     ) -> bool:
         # Serialize bounded projections before acquiring SQLite's only writer.
         # Slow CPU/IO must not strand process ownership or cancellation updates.
@@ -191,7 +192,8 @@ class Store:
         encoded_snapshot = encode(snapshot)
         with self.connect(write=True) as connection:
             current = connection.execute(
-                "SELECT run_root,sha256 FROM projects WHERE id=?", (project_id,)
+                "SELECT run_root,sha256,snapshot FROM projects WHERE id=?",
+                (project_id,),
             ).fetchone()
             if (
                 current is None
@@ -201,6 +203,16 @@ class Store:
                 or current["sha256"] != expected_sha256
             ):
                 return False  # Source ownership changed; discard before any writes.
+            if presentation_upgrade:
+                from .projection_upgrade import unchanged_upgrade_identity
+
+                retained = unchanged_upgrade_identity(
+                    connection, project_id, current["snapshot"], snapshot, values
+                )
+                if retained is not None:
+                    encoded_snapshot = encode(
+                        {**snapshot, "correction_projection_id": retained}
+                    )
             connection.execute(
                 "DELETE FROM compounds WHERE project_id=?", (project_id,)
             )

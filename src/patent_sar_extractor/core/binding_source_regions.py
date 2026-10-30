@@ -6,8 +6,6 @@ from itertools import pairwise
 from .activity_context_geometry import context_region, grid_box
 from .activity_grid_context import _prefix
 from .activity_grid_role_observation import observe_characterization
-from .activity_grid_role_proof import valid_role_scope
-from .activity_header_evidence import proof_id
 from .binding_progress import observed_items
 from .printed_identifiers import (
     LABEL_KIND,
@@ -15,10 +13,11 @@ from .printed_identifiers import (
     identifier_key,
     identifier_width,
 )
+from .reference_region_identity import reference_region_id
 from .source_fragment_context import observe_fragment_context
 from .source_geometry import _box
 from .source_grid_edges import original_grid_edges
-from .source_role_fragments import fragment_texts, observe_fragments, validate_fragments
+from .source_role_fragments import fragment_texts, observe_fragments
 from .source_role_observations import scope_observations
 from .source_section_roles import nonfinal_original_label, section_heading
 from .table_geometry import detect_ruled_table_regions, page_tokens
@@ -72,10 +71,7 @@ def reference_regions(
         record["fragment_context"] = observe_fragment_context(
             tokens, record["grid_edges"], record["row_fragments"]
         )
-        if not valid_role_scope(record):
-            raise ValueError("Unproved original characterization region")
-        validate_fragments(record)
-        regions.append({**record, "region_id": proof_id(record)})
+        regions.append({**record, "region_id": reference_region_id(record)})
     return regions
 
 

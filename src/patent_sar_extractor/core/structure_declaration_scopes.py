@@ -4,6 +4,7 @@ import re
 
 from .activity_context_geometry import context_band
 from .caption_role_semantics import catalog_title_role
+from .declaration_page_identity import page_source_digest
 from .logical_column_partitions import caption_logical_band, nominate_unruled_headers
 from .printed_identifiers import identifier_key
 from .ruled_continuation_context import validate_page_grid
@@ -14,7 +15,7 @@ from .source_body_context import (
     validate_page_diagrams,
 )
 from .source_cell_tokens import cell_lines, cell_text
-from .source_evidence_identity import proof_id
+from .source_evidence_identity import SourceEvidenceLimit, proof_id
 from .source_section_roles import section_heading
 from .source_table_captions import caption_context_geometry, table_caption_nominees
 from .source_table_markers import table_body_boundary
@@ -93,6 +94,15 @@ def validate_declaration_page(source):
     for grid in source["page_grids"]:
         validate_page_grid(grid, source["page_size"])
     validate_catalogue_scopes(source)
+
+
+def declaration_page_id(source):
+    """Validate the entire original page before deriving its bounded identity."""
+    validate_declaration_page(source)
+    try:
+        return page_source_digest(source)
+    except SourceEvidenceLimit as error:
+        raise SourceEvidenceLimit(f"{error}; page {source['page_no']}") from error
 
 
 def _identifier_lists(chunks, page, body, lanes):
@@ -175,15 +185,14 @@ def declaration_title_nominations(source):
     ]
 
 
-def declaration_scopes(source):
-    """No artificial columns/rows: titles, complete contexts and actual diagrams."""
-    validate_declaration_page(source)
+def declaration_scopes_with_identity(source):
+    """One validated page identity and its complete original declaration scopes."""
+    page_source_id = declaration_page_id(source)
     size, chunks = source["page_size"], source["page_context"]
     page = [0, 0, *size]
     lanes = [
         window_source_tokens(chunks, page, native=native) for native in (False, True)
     ]
-    page_source_id = proof_id(source)
     output = catalogue_declarations(
         source,
         page_source_id,
@@ -247,7 +256,12 @@ def declaration_scopes(source):
                 "unproved_title": role == "unresolved",
             }
         )
-    return output
+    return page_source_id, output
+
+
+def declaration_scopes(source):
+    """No artificial columns/rows: titles, complete contexts and actual diagrams."""
+    return declaration_scopes_with_identity(source)[1]
 
 
 def nonfinal_declaration_diagrams(scope):
