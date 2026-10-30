@@ -6,6 +6,8 @@
     "docs/ARCHITECTURE.md",
     "docs/OPERATIONS.md",
     "docs/PROJECT_MANIFEST.md",
+    "frontend/package-lock.json",
+    "frontend/package.json",
     "src/patent_sar_extractor/contracts.py",
     "src/patent_sar_extractor/core/activity_grid_role_observation.py",
     "src/patent_sar_extractor/core/binding_source_references.py",
