@@ -79,8 +79,20 @@ export function StageObservation({
         )}
         {!progress ? (
           <p>{t('进度未提供')}</p>
-        ) : name === 'bind' && progress.source_phase ? (
-          <p>{t('原文检查进度，不代表编号或结构已通过验收。')}</p>
+        ) : (name === 'bind' || name === 'classify') && progress.source_phase ? (
+          <>
+            <p>
+              {name === 'classify'
+                ? t('页面处理进度，不代表全文、编号或结构已通过验收。')
+                : t('原文检查进度，不代表编号或结构已通过验收。')}
+            </p>
+            {name === 'classify' && progress.source_phase === 'page_ocr' && (
+              <p>{t('复用 {pages} 页原始观察', { pages: progress.cache_hits })}</p>
+            )}
+            {name === 'classify' && progress.source_phase === 'empty_text_retry' && (
+              <p>{t('空文本观察不等于原文页面空白。')}</p>
+            )}
+          </>
         ) : (
           <>
             <p>

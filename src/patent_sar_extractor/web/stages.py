@@ -11,6 +11,8 @@ from typing import Any
 from pydantic import ValidationError
 
 from patent_sar_extractor import contracts as core
+from patent_sar_extractor.core.binding_progress import BINDING_SOURCE_PHASES
+from patent_sar_extractor.core.page_progress import PAGE_SOURCE_PHASES
 
 from .errors import WebError
 from .files import SafeFiles
@@ -19,6 +21,7 @@ from .models import STAGES, ActivityRepair, Stage, StageProgress
 logger = logging.getLogger(__name__)
 MAX_PROGRESS_BYTES = 8192
 PROGRESS_PATHS = {
+    "classify": "page_classification/progress.json",
     "smiles": "smiles/progress.json",
     "structures": "structures/progress.json",
     "bind": "structure_bindings/progress.json",
@@ -133,7 +136,10 @@ def read_progress(files: SafeFiles, stage: str = "smiles") -> StageProgress | No
         ) not in {int, float}:
             return None
         progress = StageProgress.model_validate(payload)
-        if (stage == "bind") != (progress.source_phase is not None):
+        source_phases = {"bind": BINDING_SOURCE_PHASES, "classify": PAGE_SOURCE_PHASES}
+        if stage in source_phases and progress.source_phase not in source_phases[stage]:
+            return None
+        if stage not in source_phases and progress.source_phase is not None:
             return None
         return progress
     except (WebError, ValueError, RecursionError, UnicodeError, ValidationError):

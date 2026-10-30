@@ -4,7 +4,7 @@ import { decodeJob } from '../src/api/decoders';
 import type { BindingSourcePhase, Job } from '../src/api/types';
 import { StageStrip } from '../src/features/jobs/StageStrip';
 import { setLocale } from '../src/i18n';
-import { bindingProgressText } from '../src/model/bindingProgress';
+import { sourceProgressText } from '../src/model/sourceProgress';
 import { stageProgressText } from '../src/model/extraction';
 import { jobStageProgressText } from '../src/model/jobPresentation';
 import { job } from './fixtures';
@@ -45,11 +45,11 @@ describe('recorded binding source work without acceptance or extra requests', ()
     const stage = task.stages.find((stage) => stage.name === 'bind')!;
     const before = structuredClone(task);
     setLocale('en');
-    expect(bindingProgressText(stage)).toBe('Checking captions · 2 / 7 pages');
-    expect(stageProgressText(stage)).toBe(bindingProgressText(stage));
-    expect(jobStageProgressText(stage)).toBe(bindingProgressText(stage));
+    expect(sourceProgressText(stage)).toBe('Checking captions · 2 / 7 pages');
+    expect(stageProgressText(stage)).toBe(sourceProgressText(stage));
+    expect(jobStageProgressText(stage)).toBe(sourceProgressText(stage));
     setLocale('zh-CN');
-    expect(bindingProgressText(stage)).toBe('核对图注 · 2 / 7 页');
+    expect(sourceProgressText(stage)).toBe('核对图注 · 2 / 7 页');
     expect(task).toEqual(before);
   });
 
@@ -57,7 +57,7 @@ describe('recorded binding source work without acceptance or extra requests', ()
     setLocale('en');
     const task = current('heading_bindings', 7);
     const stage = task.stages.find((stage) => stage.name === 'bind')!;
-    expect(bindingProgressText(stage)).toBe('Checking identifier ownership · 7 / 7 items');
+    expect(sourceProgressText(stage)).toBe('Checking identifier ownership · 7 / 7 items');
     const { container } = render(<StageStrip job={task} compact />);
     expect(container.querySelector('.stage-current')).toHaveClass('is-running');
     expect(container.querySelector('.stage-current')?.tagName).toBe('SPAN');
@@ -75,14 +75,14 @@ describe('recorded binding source work without acceptance or extra requests', ()
     expect(stage.count).toBeNull();
   });
 
-  it('preserves old telemetry without extending its existing phase enum', () => {
+  it('preserves old binding phases and missing telemetry', () => {
     const task = current();
     const stage = task.stages.find((stage) => stage.name === 'bind')!;
-    expect(bindingProgressText({ ...stage, progress: null })).toBeNull();
+    expect(sourceProgressText({ ...stage, progress: null })).toBeNull();
     expect(
-      bindingProgressText({ ...stage, progress: { ...stage.progress!, source_phase: null } }),
+      sourceProgressText({ ...stage, progress: { ...stage.progress!, source_phase: null } }),
     ).toBeNull();
-    expect(bindingProgressText({ ...stage, name: 'smiles' })).toBeNull();
+    expect(sourceProgressText({ ...stage, name: 'smiles' })).toBeNull();
     expect(() => decodeJob(job)).not.toThrow();
   });
 

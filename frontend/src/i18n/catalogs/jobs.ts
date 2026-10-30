@@ -9,6 +9,14 @@ export const jobs: Readonly<Record<string, string>> = {
   核对表征引用: 'Checking characterization references',
   核对原文标题: 'Checking source headings',
   核对编号归属: 'Checking identifier ownership',
+  读取原始页面: 'Reading original pages',
+  复读空文本观察: 'Re-reading empty text observations',
+  '空文本观察不等于原文页面空白。':
+    'An empty text observation does not establish a blank source page.',
+  分析页面用途: 'Classifying pages',
+  '页面处理进度，不代表全文、编号或结构已通过验收。':
+    'Page-work progress does not certify complete extraction, identifiers or structures.',
+  '复用 {pages} 页原始观察': 'Reused {pages} original page observations',
   '{phase} · {completed} / {total} 页': '{phase} · {completed} / {total} pages',
   '{phase} · {completed} / {total} 项': '{phase} · {completed} / {total} items',
   '原文检查进度，不代表编号或结构已通过验收。':

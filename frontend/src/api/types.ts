@@ -201,9 +201,12 @@ export const bindingSourcePhases = [
   'heading_bindings',
 ] as const;
 export type BindingSourcePhase = (typeof bindingSourcePhases)[number];
+export const pageSourcePhases = ['page_ocr', 'empty_text_retry', 'page_classification'] as const;
+export type PageSourcePhase = (typeof pageSourcePhases)[number];
+export type SourceWorkPhase = BindingSourcePhase | PageSourcePhase;
 export interface StageProgress {
   phase?: 'recognition' | 'properties' | 'lead' | null;
-  source_phase?: BindingSourcePhase | null;
+  source_phase?: SourceWorkPhase | null;
   completed: number;
   total: number;
   cache_hits: number;

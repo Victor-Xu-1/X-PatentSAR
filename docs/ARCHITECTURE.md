@@ -1,5 +1,29 @@
 # X-PatentSAR architecture
 
+## Observed page work on the shared progress channel
+
+The formal classification handler owns `ClassificationProgress`; optional core
+page observers report requested page reads, validated nonempty cache reuse,
+empty-text retries and page classification. Retry totals refer to their actual
+subset, not an invented full-document counter. Empty text does not establish a
+blank original page. The existing bounded atomic stage-progress1 channel adds
+`page_classification/progress.json`, not a log parser, new queue or scientific
+artifact. Counters are strict, monotonic within each phase, throttled at0.5s,
+and phase transitions require preceding work to finish. A new producer resets
+transported telemetry; a whole reused classification checkpoint supplies no
+fresh page-work observation. The normal summary still owns status/acceptance.
+
+Web readers validate phase ownership by stage under the existing8KiB bound.
+The same frontend `sourceProgress` caption serves extraction, history and stage
+details for both binding and classification. English/Chinese change only owned
+captions, never source IDs, values or counters. Complete work remains processing
+until the actual stage/job finishes; unknown reads do not authorize task writes.
+No ETA, accuracy or accepted-molecule count is inferred. The callback is optional:
+ordered native source artifacts remain byte-identical, parallel observations
+retain identical values under their existing as-completed JSON-key ordering.
+Scientific contracts/epochs, cache/source formats, SQL, model/environment/default
+activation and all source/QA gates are unchanged. Old telemetry remains optional.
+
 ## Shared original-column titles and declarations
 
 Numbered physical headers adapt their already-observed title into the existing

@@ -39,6 +39,7 @@ from .page_ocr_execution import (
     validate_cache,
 )
 from .page_ocr_protocol import paddlex_page
+from .page_progress import PageObserver, empty_retry_observer, observe_page_work
 from .source_geometry import native_lines, source_layout
 
 _OCR_ENGINE = None
@@ -572,6 +573,8 @@ def update_page_ocr_cache(
     flush_every: int = 10,
     force: bool = False,
     retry_empty: bool = True,
+    *,
+    progress: PageObserver | None = None,
 ) -> dict:
     """One bounded source reader/writer; partial success is never full coverage."""
     cache = load_page_ocr_cache(cache_path)
@@ -604,6 +607,8 @@ def update_page_ocr_cache(
         for index in indices
         if not cache["page_texts"].get(str(index), "").strip()
     ]
+    cache_hits = len(indices) - len(missing)
+    observe_page_work(progress, "page_ocr", cache_hits, len(indices), cache_hits)
     if not missing:
         if cache.get("metadata") != original_metadata:
             save_page_ocr_cache(cache_path, cache)
@@ -628,6 +633,9 @@ def update_page_ocr_cache(
             if lines:
                 cache["ocr_line_map"][str(index)] = lines
             completed += 1
+            observe_page_work(
+                progress, "page_ocr", cache_hits + completed, len(indices), cache_hits
+            )
             if completed % flush_every == 0 or completed == len(missing):
                 save_page_ocr_cache(cache_path, cache)
                 logger.info(
@@ -654,6 +662,7 @@ def update_page_ocr_cache(
                 min_native_chars=min_native_chars,
                 flush_every=flush_every,
                 retry_empty=False,
+                progress=empty_retry_observer(progress),
             )
     return cache
 

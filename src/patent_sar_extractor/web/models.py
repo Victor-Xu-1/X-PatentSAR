@@ -13,6 +13,7 @@ from pydantic import (
 )
 
 from patent_sar_extractor.core.binding_progress import BindingSourcePhase
+from patent_sar_extractor.core.page_progress import PageSourcePhase
 
 from .activity_focus_models import ActivityFocus, ActivitySourceKey
 from .activity_rank_models import ActivityStrengthScale, RankValue
@@ -231,7 +232,7 @@ class Acceptance(DTO):
 
 class StageProgress(DTO):
     phase: Literal["recognition", "properties", "lead"] | None = None
-    source_phase: BindingSourcePhase | None = None
+    source_phase: BindingSourcePhase | PageSourcePhase | None = None
     completed: int = Field(ge=0, le=1_000_000, strict=True)
     total: int = Field(ge=0, le=1_000_000, strict=True)
     cache_hits: int = Field(ge=0, le=1_000_000, strict=True)

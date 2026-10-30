@@ -16,6 +16,7 @@ from patent_sar_extractor.contracts import (
 )
 from patent_sar_extractor.core.page_ocr_cache import update_page_ocr_cache
 from patent_sar_extractor.core.page_ocr_execution import validate_cache
+from patent_sar_extractor.core.page_progress import PageObserver, observe_page_work
 from patent_sar_extractor.core.review_excerpt import infer_candidate_page_window
 
 logger = logging.getLogger(__name__)
@@ -92,7 +93,13 @@ def _is_flattened_structure_table_continuation(text: str) -> bool:
     return id_mass_hits >= 3 and mass_hits >= 3 and chem_name_hits >= 2
 
 
-def classify_pdf(pdf_path: str, output_dir: str, force_ocr_cache: bool = False) -> dict:
+def classify_pdf(
+    pdf_path: str,
+    output_dir: str,
+    force_ocr_cache: bool = False,
+    *,
+    progress: PageObserver | None = None,
+) -> dict:
     """Classify pages with deterministic OCR and keyword rules.
 
     The production classifier never delegates page ownership to an LLM.  The
@@ -112,6 +119,7 @@ def classify_pdf(pdf_path: str, output_dir: str, force_ocr_cache: bool = False) 
         workers=4,
         min_native_chars=30,
         force=force_ocr_cache,
+        progress=progress,
     )
     validate_cache(cache, total, required=list(range(total)))
     pages_text_map = {
@@ -128,6 +136,7 @@ def classify_pdf(pdf_path: str, output_dir: str, force_ocr_cache: bool = False) 
     other_pages = []
     cpd_counts = {p[1]: 0 for p in CPD_PREFIX_PATTERNS}
 
+    observe_page_work(progress, "page_classification", 0, total)
     for i, text in enumerate(pages_text):
         is_activity = bool(ACTIVITY_RE.search(text))
         is_synthesis = bool(SYNTHESIS_RE.search(text))
@@ -162,6 +171,7 @@ def classify_pdf(pdf_path: str, output_dir: str, force_ocr_cache: bool = False) 
             m = re.findall(pat, text, re.IGNORECASE)
             if m:
                 cpd_counts[prefix] = cpd_counts.get(prefix, 0) + len(m)
+        observe_page_work(progress, "page_classification", i + 1, total)
 
     # Extend structure-table runs across continuation pages until a clear
     # section break (bioassay / claims) appears. This helps scanned Chinese

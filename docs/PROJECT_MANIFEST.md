@@ -1,5 +1,18 @@
 # Project governance manifest
 
+- Page-work observation authority: optional `core/page_progress` notifications
+  from the existing page cache/classifier feed the formal classification handler's
+  `application/classification_progress` writer on the SAME stage-progress1 file
+  contract. Web stage ownership/strict counters and the existing8KiB bound apply.
+  A new producer resets telemetry; source cache hits and a reused whole checkpoint
+  are distinct. Empty-text retries do not establish source blankness or chemistry.
+  `frontend/model/sourceProgress` is the sole source-work caption for classification
+  and binding; the obsolete binding-only caption helper was removed after caller
+  migration and related checks. No second pipeline, queue, parser, recognizer,
+  scientific writer/store, dependency or authority. Product labels advance through
+  the sole generator; scientific epochs, raw/manual/history and SQL/API paths
+  remain unchanged for this telemetry-only addition.
+
 - Shared title ownership authority: `structure_catalogue_headers` adapts an
   existing original physical header to the SAME catalogue-role schema, without
   overriding any previously observed weak owner. `title_logical_scope` projects
