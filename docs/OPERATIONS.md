@@ -1,5 +1,51 @@
 # Operations and troubleshooting
 
+## Confident but disagreeing catalogue-title text
+
+Two individually high OCR scores do not establish agreement. An unresolved title
+may use the existing optional on-demand auxiliary OCR only under the narrow
+`title_lexical_policy`: the locator and one complete original primary agree on a
+whole category title; only one unknown category word differs in the other view.
+Both independent complete auxiliary views must then match that already-observed
+literal title. Table numbers, other words, known roles, native claims, chemical
+identifiers, activity values/units and assay prose are not correction candidates.
+
+Inspect retained original primaries, `auxiliary_title` and
+`auxiliary_title_attempts`; missing, disagreeing, unavailable or changed sources
+remain unresolved. No model is acquired by GET, artifact review or original-pixel
+replay. The standard environment setting stays authoritative: disabled means no
+auxiliary call, and enabling never installs a missing runtime automatically.
+Requests share the existing source inventory/session limits and identity checks.
+
+Binding79/binder90 and Activity52/extractor64 require fresh derived associations;
+old attempts remain reviewable history, not automatically relabelled current.
+Unchanged raw observations/structure assets/manual audit remain preserved. Normal
+frontend resume decides safe checkpoint reuse. Never edit old artifacts or lower
+the scientific gates to turn an incomplete catalogue into an accepted dataset.
+
+## Activity evidence exceeds the Web artifact bound
+
+Current activity output uses the existing lossless shared-JSON codec through
+`activity_artifacts.write_activity_payload`; the application metadata adapter,
+checkpoint transport, Web reader and SAR condition parser use that same codec.
+Repeated source evidence is referenced, not truncated or removed. Exact-file
+hashes remain authoritative. The 32 MiB encoded-file limit, expanded graph limits,
+path/symlink guards, record bounds and scientific acceptance are unchanged.
+
+An oversized historical activity file remains preserved. Normal frontend resume
+does not parse/copy it as a reusable stage; the normal producer regenerates that
+stage using verified upstream observations. Do not edit/repack old scientific
+artifacts or increase the reader ceiling. Uniquely oversized current output and
+missing, altered, cyclic or malformed shared references still fail closed.
+
+When a parsed coordinate table's title appears as a second empty text table,
+inspect both original caption packets and the complete text-page partition.
+`activity_caption_claims` only projects table-marker separator typography and
+unifies overlapping original caption locators before reading. It never fills a
+missing caption word, changes a table ID/condition, picks one rival owner or
+widens an already-read source. Declared-text5 readers still rederive the exact
+owner, check actual source pixels and refuse omitted independent text results.
+
 ## Checkpoint preparation and immutable history publication
 
 Write-once attempt files are published only when complete, using the shared

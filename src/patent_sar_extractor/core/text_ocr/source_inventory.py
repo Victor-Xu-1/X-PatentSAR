@@ -30,20 +30,60 @@ def physical_text_sources(sources):
                 or cell["title_source"]["page_no"] != page_no
             ):
                 raise ValueError("Malformed original title text owner")
+            if cell["title_source"].get("auxiliary_title") is not None:
+                yield page_no, cell
             for reading in cell["title_source"]["observations"]:
                 yield page_no, reading
         else:
             yield page_no, cell
 
 
+def has_auxiliary_source(cell):
+    return has_auxiliary_text(cell) or bool(
+        isinstance(cell, dict)
+        and cell.get("method") == "original_title"
+        and isinstance(cell.get("title_source"), dict)
+        and cell["title_source"].get("auxiliary_title") is not None
+    )
+
+
+def _source_packet(cell):
+    if isinstance(cell, dict) and cell.get("method") == "original_title":
+        from ..title_lexical_recovery import recovered_title_observation
+
+        if (
+            set(cell) != {"method", "title_source"}
+            or recovered_title_observation(cell["title_source"]) is None
+        ):
+            raise ValueError("Unproved auxiliary original title")
+        return cell["title_source"]["auxiliary_title"]
+    if not valid_auxiliary_cell(cell, cell.get("render_dpi")):
+        raise ValueError("Unproved auxiliary original text cell")
+    return cell["auxiliary_text"]
+
+
+def replay_auxiliary_source(cell, page):
+    if isinstance(cell, dict) and cell.get("method") == "original_title":
+        from ..title_lexical_recovery import replay_title_lexical_recovery
+
+        try:
+            _source_packet(cell)
+            replay_title_lexical_recovery(page, cell["title_source"])
+            return True
+        except (TypeError, ValueError, KeyError, IndexError, RuntimeError):
+            return False
+    from .cell_proof import replay_auxiliary_cell
+
+    return replay_auxiliary_cell(cell, page)
+
+
 def auxiliary_source_cells(sources):
     """Conserve complete packets and reject one request acquiring two outputs."""
     seen, rows = set(), {}
     for page_no, cell in physical_text_sources(sources):
-        if not has_auxiliary_text(cell):
+        if not has_auxiliary_source(cell):
             continue
-        if not valid_auxiliary_cell(cell, cell.get("render_dpi")):
-            raise ValueError("Unproved auxiliary original text cell")
+        packet = _source_packet(cell)
         if type(page_no) is not int or not 1 <= page_no <= 20000:
             raise ValueError("Missing auxiliary original page ownership")
         key = (
@@ -51,25 +91,24 @@ def auxiliary_source_cells(sources):
             proof_id(
                 {
                     "status": "auxiliary_text_observations",
-                    "packet": cell["auxiliary_text"],
+                    "packet": packet,
                 }
             ),
         )
         if key in seen:
             continue
         seen.add(key)
-        for view in cell["auxiliary_text"]["views"]:
+        for view in packet["views"]:
             observations = (
                 [row["observation"] for row in view["rows"]]
-                if cell["auxiliary_text"]["version"] == 1
+                if packet["version"] == 1
                 else (
                     [
                         observed
                         for row in view["requests"]
                         for observed in row["observations"]
                     ]
-                    if cell["auxiliary_text"]["version"]
-                    in (3, AUXILIARY_TEXT_RECOVERY_VERSION)
+                    if packet["version"] in (3, AUXILIARY_TEXT_RECOVERY_VERSION)
                     else view["requests"]
                 )
             )

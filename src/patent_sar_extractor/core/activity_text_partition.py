@@ -8,11 +8,10 @@ not another copy of those measurements or a continuation through that grid.
 import re
 from itertools import pairwise
 
-from .activity_header_sources import context_source_parts, source_context_region
+from .activity_caption_claims import original_caption_tokens
 from .activity_text_roles import characterization_line
 from .cell_frame_proof import inside_box
-from .source_cell_tokens import cell_lines, cell_tokens
-from .source_observations import source_claim_runs
+from .source_cell_tokens import cell_lines
 
 
 def line_owner(line, regions, *, role_cells=None):
@@ -37,33 +36,8 @@ def line_owner(line, regions, *, role_cells=None):
         ):
             overlaps.add(region["region_id"])
             continue
-        layout = region.get("layout") or region.get("transposed_layout") or {}
-        snapshot = layout.get("original_source") or layout.get("context_sources")
-        caption = (layout.get("context") or {}).get("raw_caption", "")
-        if not snapshot or not caption or caption.split() != line["text"].split():
-            continue
-        axes = region["grid_axes"]
-        xs, ys = axes["xs"], axes["ys"]
-        start = layout.get("data_start", layout.get("header_row", -1) + 1)
-        if start <= 0:
-            continue
-        band = [xs[0], ys[0], xs[-1], ys[start]]
-        scoped = source_context_region(snapshot, band)
-        if scoped is None:
-            continue
-        packet = snapshot["prefix"]
-        parts = context_source_parts(packet, scoped)
-        if parts is None:
-            continue
-        tokens = cell_tokens([token for part in parts for token in part], line["bbox"])
-        if (
-            tokens
-            and " ".join(token["text"] for token in tokens).split()
-            == line["text"].split()
-            and all(inside_box(token["bbox"], line["bbox"]) for token in tokens)
-            and source_claim_runs(packet, tokens=tokens)
-            == (tuple(token["text"] for token in tokens),)
-        ):
+        tokens = original_caption_tokens(line, region)
+        if tokens and all(inside_box(token["bbox"], line["bbox"]) for token in tokens):
             candidates.append({"region_id": region["region_id"], "role": "caption"})
     if overlaps or len(candidates) > 1:
         return {

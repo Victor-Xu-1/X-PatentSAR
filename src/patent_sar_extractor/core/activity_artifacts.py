@@ -20,6 +20,11 @@ from .activity_observations import has_usable_values
 from .source_role_observations import RoleObservationBuffer, serialize_role_observations
 
 
+def write_activity_payload(path: str | Path, payload: dict) -> None:
+    """One lossless bounded artifact codec, shared with its existing readers."""
+    write_json_atomic(path, payload, shared=True)
+
+
 def save_results(
     rows: list[ActivityRow],
     output_dir: Path,
@@ -60,7 +65,7 @@ def save_results(
     serialized_rows, header_catalog = serialize_header_evidence(
         rows, header_observations or []
     )
-    write_json_atomic(
+    write_activity_payload(
         output_dir / "activity_data.json",
         {
             **artifact_identity(ACTIVITY_SCHEMA, ACTIVITY_SCHEMA_VERSION),

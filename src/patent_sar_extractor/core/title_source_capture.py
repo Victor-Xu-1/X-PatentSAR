@@ -64,7 +64,7 @@ def observe_source_title(
         SourceTokens(layout.native, layout), bounds, native=True
     )
     proof = {
-        "version": 1,
+        "version": 2,
         "page_no": page.number + 1,
         "page_size": size,
         "nomination_source": raw,
@@ -76,6 +76,8 @@ def observe_source_title(
         "ink_source": ink_source,
         "observations": [],
         "rendered_frames": [],
+        "auxiliary_title": None,
+        "auxiliary_title_attempts": [],
     }
     if (
         raw.get("boundary_tokens")
@@ -136,6 +138,10 @@ def observe_source_title(
             maximum_rows=MAX_HEADING_ROWS,
             maximum_row_height=MAX_HEADING_HEIGHT,
         )
+    if source_title_observation(proof) is None:
+        from .title_lexical_recovery import capture_title_lexical_recovery
+
+        capture_title_lexical_recovery(page, proof)
     remember_title_observation(proof, title_cache)
     return proof
 

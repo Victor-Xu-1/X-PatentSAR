@@ -51,6 +51,49 @@ def recover_complete_pair(
                 {"status": "not_attempted", "code": PRIMARY_CONFLICT_CODE}
             )
         return None
+    packet = capture_complete_views(
+        images,
+        primaries,
+        auxiliary,
+        maximum_rows=maximum_rows,
+        allow_chunks=allow_chunks,
+        maximum_row_height=maximum_row_height,
+        evidence_sink=evidence_sink,
+    )
+    if packet is None:
+        return None
+    try:
+        return effective_recovery_cells(packet)
+    except (TypeError, ValueError, KeyError, IndexError):
+        if evidence_sink is not None:
+            evidence_sink.append(
+                {
+                    "status": "rejected",
+                    "code": "unqualified_or_conflicting_rows",
+                    "packet": packet,
+                }
+            )
+        return None
+
+
+def capture_complete_views(
+    images,
+    primaries,
+    auxiliary,
+    *,
+    maximum_rows=32,
+    allow_chunks=True,
+    maximum_row_height=12,
+    evidence_sink=None,
+):
+    """Capture raw source-owned observations, never grant a replacement policy.
+
+    Generic text and narrowly typed title adapters validate their own unchanged
+    original claims after this same bounded physical row capture.
+    """
+    text_scope(maximum_rows, maximum_row_height)
+    if len(images) != 2 or len(primaries) != 2 or type(allow_chunks) is not bool:
+        raise ValueError("Invalid complete source capture inventory")
     budget, views, fingerprint = [], [], None
     for image, primary, dpi in zip(images, primaries, (400, 600), strict=True):
         physical = physical_line_frame(
@@ -120,7 +163,7 @@ def recover_complete_pair(
                 )
             return None
     spec = recipe()
-    packet = {
+    return {
         "version": RECOVERY_VERSION,
         "model": {
             "name": spec["model_name"],
@@ -133,15 +176,3 @@ def recover_complete_pair(
         "allow_chunks": allow_chunks,
         "maximum_row_height": maximum_row_height,
     }
-    try:
-        return effective_recovery_cells(packet)
-    except (TypeError, ValueError, KeyError, IndexError):
-        if evidence_sink is not None:
-            evidence_sink.append(
-                {
-                    "status": "rejected",
-                    "code": "unqualified_or_conflicting_rows",
-                    "packet": packet,
-                }
-            )
-        return None

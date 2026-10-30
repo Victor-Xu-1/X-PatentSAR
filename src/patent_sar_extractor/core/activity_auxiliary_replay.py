@@ -23,8 +23,8 @@ from .role_text_sources import role_text_cells
 from .source_evidence_identity import proof_id
 from .source_geometry import source_layout
 from .source_paint_visibility import native_paint_view, visible_native_tokens
-from .text_ocr.cell_proof import has_auxiliary_text, replay_auxiliary_cell
-from .text_ocr.source_inventory import auxiliary_source_cells
+from .text_ocr.cell_proof import has_auxiliary_text
+from .text_ocr.source_inventory import auxiliary_source_cells, replay_auxiliary_source
 
 # Ordinary observations cover the full dataset, unlike sparse auxiliary rescue.
 # This bounds replay work without reusing the smaller model-request inventory.
@@ -219,7 +219,7 @@ def original_activity_source_errors(
                         "Original activity cell differs from its original page pixels."
                     ]
             for page_no, column in columns:
-                if page_no > len(document) or not replay_auxiliary_cell(
+                if page_no > len(document) or not replay_auxiliary_source(
                     column, document[page_no - 1]
                 ):
                     return [

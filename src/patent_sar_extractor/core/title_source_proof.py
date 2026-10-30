@@ -63,8 +63,24 @@ def source_title_geometry(proof):
             "observations",
             "rendered_frames",
         }
+        | (
+            {"auxiliary_title", "auxiliary_title_attempts"}
+            if proof.get("version") == 2
+            else set()
+        )
         or type(proof["version"]) is not int
-        or proof["version"] != 1
+        or proof["version"] not in {1, 2}
+    ):
+        return None
+    if proof["version"] == 2 and (
+        proof["auxiliary_title"] is not None
+        and not isinstance(proof["auxiliary_title"], dict)
+        or not isinstance(proof["auxiliary_title_attempts"], list)
+        or len(proof["auxiliary_title_attempts"]) > 8
+        or any(
+            not isinstance(attempt, dict)
+            for attempt in proof["auxiliary_title_attempts"]
+        )
     ):
         return None
     size, nomination = proof["page_size"], proof["nomination_source"]
@@ -142,12 +158,22 @@ def source_title_text(proof):
 
 
 def source_title_observation(proof):
-    """Qualified text, or a fully observed local native/optical role conflict.
+    primary = primary_title_observation(proof)
+    if (
+        not isinstance(proof, dict)
+        or proof.get("version") != 2
+        or proof.get("auxiliary_title") is None
+    ):
+        return primary
+    if primary is not None:
+        return None  # Complete primary evidence is never replaced by voting.
+    from .title_lexical_recovery import recovered_title_observation
 
-    A conflict never qualifies its own title. The explicit negative carrier
-    permits an independent physical peer to keep its own complete evidence;
-    weak/missing/incomplete readings still provide no carrier at all.
-    """
+    return recovered_title_observation(proof)
+
+
+def title_source_inputs(proof):
+    """One unchanged geometry/native/window/frame authority for all title reads."""
     geometry = source_title_geometry(proof)
     if (
         geometry is None
@@ -191,12 +217,7 @@ def source_title_observation(proof):
     ):
         return None
     if not observations:
-        return (
-            (native["text"], False)
-            if native_window_complete(window, native)
-            and not (raster is not None and overlaps(raster, bounds))
-            else None
-        )
+        return bounds, native, observations
     scope = proof["title_scope"]
     if scope is not None and scope["method"] == "closed_cell":
         masks = closed_cell_masks(
@@ -213,6 +234,28 @@ def source_title_observation(proof):
             maximum_rows=MAX_HEADING_ROWS,
         ) or not valid_cell_frame(frame, reading, bounds, dpi):
             return None
+    return bounds, native, observations
+
+
+def primary_title_observation(proof):
+    """Qualified text, or a fully observed local native/optical role conflict.
+
+    A conflict never qualifies its own title. The explicit negative carrier
+    permits an independent physical peer to keep its own complete evidence;
+    weak/missing/incomplete readings still provide no carrier at all.
+    """
+    inputs = title_source_inputs(proof)
+    if inputs is None:
+        return None
+    bounds, native, observations = inputs
+    if not observations:
+        raster = proof["raster_bounds"]
+        return (
+            (native["text"], False)
+            if native_window_complete(proof["native_window"], native)
+            and not (raster is not None and overlaps(raster, bounds))
+            else None
+        )
     texts = [reading["raw_text"] for reading in observations]
     if title_literal(texts[0]) != title_literal(
         texts[1]

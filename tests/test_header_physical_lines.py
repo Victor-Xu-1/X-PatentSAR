@@ -1,13 +1,13 @@
 """Controlled narrow original headers, using the actual existing OCR engine."""
 
 import copy
-import json
 import tempfile
 import unittest
 from pathlib import Path
 
 import fitz
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.contracts import (
     ACTIVITY_SCHEMA,
     ACTIVITY_SCHEMA_VERSION,
@@ -15,7 +15,6 @@ from patent_sar_extractor.contracts import (
 )
 from patent_sar_extractor.core.activity_artifacts import save_results
 from patent_sar_extractor.core.activity_coordinates import extract_coordinate_tables
-from patent_sar_extractor.core.activity_coverage import coverage_packet
 from patent_sar_extractor.core.activity_header_columns import observe_header_columns
 from patent_sar_extractor.core.activity_header_evidence import (
     proof_id,
@@ -26,6 +25,7 @@ from patent_sar_extractor.core.activity_header_observation import refine_scanned
 from patent_sar_extractor.core.activity_header_proof import valid_header_proof
 from patent_sar_extractor.core.activity_headers import context_from_text, grid_schema
 from patent_sar_extractor.core.activity_join import activity_evidence_errors
+from tests.activity_source_support import original_coordinate_coverage
 
 
 def scanned_headers(font="tibo", size=6, widths=(20, 39, 47, 43)):
@@ -112,6 +112,7 @@ class HeaderPhysicalLineNativeTests(unittest.TestCase):
             with doc, self.subTest(hybrid=hybrid):
                 original_bytes = doc.tobytes()
                 result = extract_coordinate_tables(doc, [0])
+                packet = original_coordinate_coverage(doc, [0], result)
             self.assertEqual(len(result.rows), 1, result.coverage)
             row = result.rows[0]
             self.assertEqual(row.cpd, "Compound 93")
@@ -124,7 +125,6 @@ class HeaderPhysicalLineNativeTests(unittest.TestCase):
                 },
             )
             self.assertFalse(row.needs_review, row)
-            packet = coverage_packet([0], result.coverage, result.rows)
             with tempfile.TemporaryDirectory() as root:
                 save_results(
                     result.rows,
@@ -133,7 +133,7 @@ class HeaderPhysicalLineNativeTests(unittest.TestCase):
                     coverage=packet,
                     header_observations=result.header_observations,
                 )
-                payload = json.loads((Path(root) / "activity_data.json").read_text())
+                payload = load_json(Path(root) / "activity_data.json", {})
             self.assertIn(
                 "Original PDF is required for activity text replay.",
                 activity_evidence_errors(payload, [0]),

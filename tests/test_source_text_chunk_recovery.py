@@ -72,10 +72,31 @@ class SourceTextChunkRecoveryTests(unittest.TestCase):
             "patent_sar_extractor.core.text_ocr.source_capture.get_auxiliary_text_runtime",
             return_value=None,
         ) as runtime:
+            result = refine_source_text(self.page, self.bounds, readings)
+        runtime.assert_not_called()
+        for old, selected in zip(before, result, strict=True):
             self.assertEqual(
-                refine_source_text(self.page, self.bounds, readings), before
+                {
+                    key: value
+                    for key, value in selected.items()
+                    if key != "auxiliary_text_attempts"
+                },
+                old,
             )
-        runtime.assert_called_once_with()
+            self.assertEqual(
+                selected["auxiliary_text_attempts"],
+                [
+                    {
+                        "status": "not_attempted",
+                        "code": "conflicting_retained_primary_claims",
+                    }
+                ],
+            )
+        self.assertFalse(
+            valid_text_reading(
+                result[0], self.bounds, 400, maximum_rows=32, allow_chunks=True
+            )
+        )
 
     def recover(self, *, reader=None, maximum_rows=32, allow_chunks=True):
         def weak(image, *, use_det, use_cls):

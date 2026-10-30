@@ -3,8 +3,12 @@
 from itertools import chain
 
 from .caption_tail_sources import caption_tail_text_cells
-from .text_ocr.cell_proof import has_auxiliary_text, replay_auxiliary_cell
-from .text_ocr.source_inventory import auxiliary_source_cells, physical_text_sources
+from .text_ocr.source_inventory import (
+    auxiliary_source_cells,
+    has_auxiliary_source,
+    physical_text_sources,
+    replay_auxiliary_source,
+)
 
 
 def binding_text_cells(bindings):
@@ -28,7 +32,7 @@ def binding_text_cells(bindings):
 
 def has_binding_auxiliary(bindings, *, role_text=()):
     return any(
-        has_auxiliary_text(cell)
+        has_auxiliary_source(cell)
         for _, cell in physical_text_sources(
             chain(binding_text_cells(bindings), role_text)
         )
@@ -40,7 +44,7 @@ def original_binding_auxiliary_errors(document, bindings, *, role_text=()):
         for page_no, cell in auxiliary_source_cells(
             chain(binding_text_cells(bindings), role_text)
         ):
-            if page_no > len(document) or not replay_auxiliary_cell(
+            if page_no > len(document) or not replay_auxiliary_source(
                 cell, document[page_no - 1]
             ):
                 return ["Auxiliary binding text differs from its original page pixels."]

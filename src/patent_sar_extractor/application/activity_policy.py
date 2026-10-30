@@ -7,12 +7,12 @@ import re
 from pathlib import Path
 
 from patent_sar_extractor.artifact_io import load_json as _load_json
-from patent_sar_extractor.artifact_io import write_json_atomic as _write_json
 from patent_sar_extractor.contracts import (
     ACTIVITY_SCHEMA,
     ACTIVITY_SCHEMA_VERSION,
     artifact_identity,
 )
+from patent_sar_extractor.core.activity_artifacts import write_activity_payload
 from patent_sar_extractor.core.activity_identity import normalize_compound
 from patent_sar_extractor.core.activity_join import activity_evidence_errors
 from patent_sar_extractor.core.activity_values import has_usable_activity_values
@@ -112,7 +112,7 @@ def _annotate_activity_payload(path: str) -> list[str]:
             payload["metadata"]["n_active_cpds"] = len(active_cpds)
             changed = True
         if changed:
-            _write_json(path, payload)
+            write_activity_payload(path, payload)
     return active_cpds
 
 

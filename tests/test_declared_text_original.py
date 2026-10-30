@@ -8,6 +8,7 @@ from unittest.mock import patch
 
 import fitz
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.activity_auxiliary_replay import original_pdf_reader
 from patent_sar_extractor.core.activity_extractor import extract
 from patent_sar_extractor.core.activity_join import activity_evidence_errors
@@ -41,7 +42,7 @@ class DeclaredTextOriginalTests(unittest.TestCase):
         self.pdf = self.root / "original.pdf"
         original(self.pdf)
         extract(str(self.pdf), {"activity_pages": [0]}, str(self.root / "out"))
-        self.data = json.loads((self.root / "out/activity_data.json").read_text())
+        self.data = load_json(self.root / "out/activity_data.json", {})
 
     def check(self, path):
         return activity_evidence_errors(
@@ -94,9 +95,7 @@ class DeclaredTextOriginalTests(unittest.TestCase):
             extract(
                 str(self.pdf), {"activity_pages": [0]}, str(self.root / "native-only")
             )
-            data = json.loads(
-                (self.root / "native-only/activity_data.json").read_text()
-            )
+            data = load_json(self.root / "native-only/activity_data.json", {})
             self.assertEqual(
                 activity_evidence_errors(
                     data, [0], open_original=original_pdf_reader(self.pdf)
@@ -116,9 +115,7 @@ class DeclaredTextOriginalTests(unittest.TestCase):
                 extract(
                     str(path), {"activity_pages": [0]}, str(self.root / f"out-{angle}")
                 )
-                data = json.loads(
-                    (self.root / f"out-{angle}/activity_data.json").read_text()
-                )
+                data = load_json(self.root / f"out-{angle}/activity_data.json", {})
                 self.assertEqual([row["cpd"] for row in data["rows"]], ["Compound 31"])
                 self.assertEqual(data["rows"][0]["activity_values"], {"IC50 (nM)": "9"})
                 self.assertEqual(
@@ -132,7 +129,7 @@ class DeclaredTextOriginalTests(unittest.TestCase):
         path = self.root / "covered-source.pdf"
         original(path, covered=True)
         extract(str(path), {"activity_pages": [0]}, str(self.root / "covered"))
-        data = json.loads((self.root / "covered/activity_data.json").read_text())
+        data = load_json(self.root / "covered/activity_data.json", {})
         self.assertTrue(data["rows"][0]["needs_review"])
         self.assertTrue(
             activity_evidence_errors(data, [0], open_original=original_pdf_reader(path))
@@ -165,7 +162,7 @@ class DeclaredTextOriginalTests(unittest.TestCase):
             doc.new_page().insert_text((40, 60), "44 | 0.3", fontsize=9)
             doc.save(path)
         extract(str(path), {"activity_pages": [0]}, str(self.root / "continued"))
-        data = json.loads((self.root / "continued/activity_data.json").read_text())
+        data = load_json(self.root / "continued/activity_data.json", {})
         self.assertEqual(
             [row["cpd"] for row in data["rows"]], ["Compound 31", "Compound 44"]
         )
@@ -218,7 +215,7 @@ class RasterDeclaredTextTests(unittest.TestCase):
                 {"activity_pages": [0], "ocr_cache_path": str(cache_path)},
                 str(root / "out"),
             )
-            data = json.loads((root / "out/activity_data.json").read_text())
+            data = load_json(root / "out/activity_data.json", {})
             self.assertEqual(result["n_rows"], 2, cache["page_texts"])
             summary = [
                 (

@@ -151,3 +151,22 @@ def catalog_title_namespace(text):
     if re.search(r"\bexamples?\b|实施例|實施例|実施例", words, re.IGNORECASE):
         namespaces.add("example")
     return next(iter(namespaces)) if len(namespaces) == 1 else ""
+
+
+def closed_catalogue_category(text):
+    """A whole literal category title, not assay prose or an incidental role word.
+
+    This only bounds an optional unresolved-word read. It neither repairs text
+    nor establishes a catalogue without the ordinary complete original proof.
+    """
+    marker = caption_table_marker(text) if isinstance(text, str) else None
+    if marker is None or len(text) > 2048:
+        return None
+    title = role_words(text[marker.end() :]).strip(" .:：")
+    title = re.sub(r"\s+Table$", "", title, flags=re.IGNORECASE)
+    role = catalog_title_role(text)
+    return (
+        role
+        if _CATEGORY_TITLE.fullmatch(title) and role in {"compound", "nonfinal"}
+        else None
+    )
