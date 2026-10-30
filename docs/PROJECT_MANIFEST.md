@@ -10,6 +10,12 @@
   physical links use page4 `continued_columns` under the SAME source ancestry/body
   validator; no new title is required only for a qualified registered link with
   no observed current title ink. Raw caption refusal stays unchanged. The existing
+  title-ink inventory5 retains paired original four-edge strips only for wholly
+  outside cells ending exactly at the title boundary. The same closed-cell SDK
+  owns their rule-only projection; no text/body/blank-cell admission is possible
+  without ordinary full original pixels. Raw strip replay, conservative common
+  black overlap, attached-ink refusal and8M limits remain mandatory. Inventory4
+  retains its old replay, never silent conversion to current admission. The
   bounded `title_geometry_call` surrounds one synchronous binder invocation;
   exact content is rehashed, pure geometry only is reused, and all actual source
   replay/role/acceptance still executes. No new cache authority or raised limit.

@@ -28,6 +28,17 @@ vetoes that join. Current writer/formal/Web consumers cross-check every column
 owner; a rehashed omission/downgrade cannot waive a declaration. Pages without
 such owners keep version2. Historical reads remain non-admitting and immutable.
 
+Title-ink inventory5 additionally accounts for a preceding closed table whose
+bottom edge exactly touches the current title window. Only those wholly outside
+cells may retain paired400/600dpi four-edge strips, using the same closed-cell
+rule SDK. Every strip and its actual-original replay are retained. Overlapping
+strip observations contribute only their common black pixels, never invented
+edges. The internal edge canvas is not original cell-interior evidence: these
+carriers cannot qualify text, body contents or blankness, nor replace current
+cells' full pixel proof. Current title pixels and attached/crossing ink remain
+subject to the existing refusal checks. All existing8M pixel limits remain;
+inventory4 replays under its unchanged old inventory rather than being retagged.
+
 For a native heading alongside an independently active foreign column,
 `heading_title_columns` adapts the existing column-role/body validator. Title
 scope version2 retains complete source sections and the entire original row.

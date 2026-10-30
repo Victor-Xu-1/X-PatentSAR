@@ -40,11 +40,22 @@ def _relative(box, origin, dpi):
 
 
 def _interior(
-    mask, cell, window, dpi, reading, *, content_only=False, boundary_only=False
+    mask,
+    cell,
+    window,
+    dpi,
+    reading,
+    *,
+    content_only=False,
+    boundary_only=False,
+    origin_override=None,
 ):
-    point_origin = retained_pixel_origin(reading, window, dpi)
-    ox, oy = [round(value * dpi / 72) for value in point_origin]
-    origin = fitz.IRect(ox, oy, ox + mask.shape[1], oy + mask.shape[0])
+    if origin_override is None:
+        point_origin = retained_pixel_origin(reading, window, dpi)
+        ox, oy = [round(value * dpi / 72) for value in point_origin]
+        origin = fitz.IRect(ox, oy, ox + mask.shape[1], oy + mask.shape[0])
+    else:
+        origin = origin_override
     box = _relative(cell, origin, dpi)
     inner = _relative(_inset(cell), origin, dpi)
     if not inside_box(box, [0, 0, mask.shape[1], mask.shape[0]]) or not inside_box(
@@ -85,6 +96,12 @@ def closed_cell_masks(packet, cell, size, *, content_only=False, boundary_only=F
     Boundary projection is subordinate to this same complete paired closure
     proof; it never supplies fabricated, dilated or inferred boundary pixels.
     """
+    if isinstance(packet, dict) and packet.get("kind") == "original_cell_boundary":
+        if not boundary_only or content_only:
+            return None  # Unobserved interior can never qualify text/body/blankness.
+        from .boundary_cell_pixels import boundary_cell_masks
+
+        return boundary_cell_masks(packet, cell, size)
     if (
         (content_only and boundary_only)
         or not inside_box(cell, [0, 0, *size])

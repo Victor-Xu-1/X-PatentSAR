@@ -19,6 +19,13 @@ Only their existing complete source/parent proof may make a redundant new-title
 requirement unnecessary for an observed ink-free prefix. Raw caption status is
 not rewritten. Current title ink, weak readings, absent/foreign parents or
 changed frames remain refused; removing the field or downgrading cannot waive it.
+Title-ink inventory5 includes preceding closing cells only when their bottom
+edge exactly touches the current title window. Their original paired edge
+strips prove rule contact, not unseen interior/text/body/blankness. Actual-original
+strip replay and unchanged current-title pixels are required; changed, missing,
+foreign or attached ink cannot be erased to qualify a title. Existing8M limits
+are not raised. Inventory4 continues its original replay without rewriting saved
+proofs. A changed original source still invalidates the saved evidence.
 An independently owned peer's complete same-key native/optical opposite-role
 observation stays a LOCAL CONFLICT, not a qualified title. It may not block a
 distinct complete column, but weak/missing reads, global ink, changed keys and
