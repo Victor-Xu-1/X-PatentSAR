@@ -1,5 +1,5 @@
 import type { CoreStageName, Stage, StageName, StageProgress } from './types';
-import { bindingSourcePhases, stageNames } from './types';
+import { bindingSourcePhases, pageSourcePhases, stageNames } from './types';
 import {
   array,
   boolean,
@@ -49,7 +49,10 @@ const progress: Decoder<StageProgress> = (input, path = '$') => {
     ? nullable(oneOf(['recognition', 'properties', 'lead']))(fields.phase, `${path}.phase`)
     : undefined;
   const sourcePhase = Object.hasOwn(fields, 'source_phase')
-    ? nullable(oneOf(bindingSourcePhases))(fields.source_phase, `${path}.source_phase`)
+    ? nullable(oneOf([...bindingSourcePhases, ...pageSourcePhases]))(
+        fields.source_phase,
+        `${path}.source_phase`,
+      )
     : undefined;
   if (phase != null && sourcePhase != null) throw new ContractError(path);
   return {
@@ -82,8 +85,14 @@ function stageDecoder<const T extends readonly StageName[]>(names: T) {
   });
   return (input: unknown, path = '$') => {
     const stage = shape(input, path);
-    if (stage.name !== 'bind' && stage.progress?.source_phase != null)
-      throw new ContractError(`${path}.progress.source_phase`);
+    const sourcePhase = stage.progress?.source_phase;
+    if (sourcePhase != null) {
+      const owned =
+        stage.name === 'bind'
+          ? bindingSourcePhases.some((phase) => phase === sourcePhase)
+          : stage.name === 'classify' && pageSourcePhases.some((phase) => phase === sourcePhase);
+      if (!owned) throw new ContractError(`${path}.progress.source_phase`);
+    }
     const fields = input as Record<string, unknown>;
     const skipped = Object.hasOwn(fields, 'skipped')
       ? count(fields.skipped, `${path}.skipped`)

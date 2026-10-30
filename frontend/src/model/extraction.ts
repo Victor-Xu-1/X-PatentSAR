@@ -2,7 +2,7 @@ import { t } from '../i18n';
 import type { Compound, Job, Stage, StageName } from '../api/types';
 import { stageNames } from '../api/types';
 import { stageLabels, stageStatusLabels } from './presentation';
-import { bindingProgressText } from './bindingProgress';
+import { sourceProgressText } from './sourceProgress';
 
 export function pageProgressStage(name: StageName): boolean {
   return name === 'structures';
@@ -71,7 +71,7 @@ export function reviewedCoreStage(job: Job | null, stage: Stage | undefined): bo
 }
 
 export function stageProgressText(stage: Stage | undefined): string | null {
-  const sourceWork = bindingProgressText(stage);
+  const sourceWork = sourceProgressText(stage);
   if (sourceWork !== null) return sourceWork;
   const progress = stage?.progress;
   if (!stage || !progress) return null;

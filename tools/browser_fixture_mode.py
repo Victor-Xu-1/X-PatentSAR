@@ -12,6 +12,7 @@ COMMON = {
     "binding-artifact.spec.ts",
     "record-count.spec.ts",
     "binding-source-progress.spec.ts",
+    "classification-source-progress.spec.ts",
     "llm-recovery.spec.ts",  # Self-contained frontend transport; no backend execution.
     "lead-source-admission.spec.ts",
     "session-job-recovery.spec.ts",

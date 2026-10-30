@@ -1,5 +1,25 @@
 # Operations and troubleshooting
 
+## Classification page-work observations
+
+The formal producer reports source work through the same stage-progress1 channel
+used by the workbench, not by scraping log strings. `page_ocr` counts requested
+page observations plus validated reused nonempty source entries. `empty_text_retry`
+counts only the actually retried subset; an empty text observation does NOT prove
+the original page blank. `page_classification` counts the original-page rule pass.
+These are processing observations, not chemical accuracy or extraction acceptance.
+The existing pipeline summary and source/QA rules remain authoritative even when
+a work counter reaches its total. No percentages or remaining time are invented.
+
+Missing, corrupt, over-budget or foreign-phase telemetry stays unavailable.
+Transported counters are reset by a new producer, while a whole reused checkpoint
+keeps its explicit checkpoint status without pretending fresh page work. Both
+languages preserve all original scientific data. A frontend refresh after an
+atomic installed-package upgrade loads its matching optional phase decoder.
+Rollback ignores the added optional classification telemetry and does not modify
+raw source, manual changes or scientific results. Do not deploy while tasks run,
+write progress into an old task by hand, or substitute log counts for source QA.
+
 ## Shared original-column title diagnosis
 
 Current derived binding admission is Binding77/binder88. A numbered physical

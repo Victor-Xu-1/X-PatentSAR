@@ -27,6 +27,7 @@ from patent_sar_extractor.core.page_ocr_cache import (
 )
 from patent_sar_extractor.core.page_ocr_execution import PageObservationError
 
+from .classification_progress import ClassificationProgress
 from .pipeline_context import PipelineContext
 from .pipeline_io import (
     _elapsed_since,
@@ -39,6 +40,7 @@ def execute_classify(state: PipelineContext) -> None:
     # Stage: deterministic classification in original-PDF page coordinates.
     step = "classify"
     state.progress.start(step)
+    source_progress = ClassificationProgress(state.step_dirs[step])
     t0 = time.time()
     source_cache = getattr(state.args, "reuse_ocr_cache", "")
     if source_cache:
@@ -76,7 +78,10 @@ def execute_classify(state: PipelineContext) -> None:
         state.classification = _load_json(state.classify_json, {})
     else:
         state.classification = classify_pdf(
-            state.args.pdf, state.step_dirs[step], force_ocr_cache=state.force
+            state.args.pdf,
+            state.step_dirs[step],
+            force_ocr_cache=state.force,
+            progress=source_progress,
         )
         _write_step_manifest(state.classify_json, classify_fp)
     state.ocr_cache_path = state.classification.get(

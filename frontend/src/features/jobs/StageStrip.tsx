@@ -114,7 +114,7 @@ export function StageStrip({
     verified &&
     job?.status === 'running' &&
     current?.status === 'running' &&
-    current.name === 'bind' &&
+    (current.name === 'bind' || current.name === 'classify') &&
     progress?.source_phase &&
     !waitingResources(job, current)
       ? jobStageProgressText(current)
