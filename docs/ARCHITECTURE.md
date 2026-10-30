@@ -16,15 +16,17 @@ The negative carrier does not trigger auxiliary retries. A unique complete
 shared caption uses the existing shared-caption authority, not a page-half rule.
 
 Declaration pages with original logical headers or captioned continuation links
-use version3 and retain those
-same complete column-source sections in `logical_columns`. Their header/body,
-document/page identity, complete diagram/grid inventory and overlapping raw
-page facts are checked by the existing authorities. Continuations retain their
-existing anchor/caption/registered-parent proof, not a newly inferred role.
-Current writer/formal/Web
-consumers cross-check every column owner; a rehashed removal or downgrade cannot
-waive a declaration. Pages without such owners keep version2. Historical reads
-retain their old representations without current admission or source rewrites.
+use version3 and retain the same complete source sections in `logical_columns`.
+Pages with headerless physical continuations use version4 and also retain their
+`continued_columns`. Their header/body, document/page identity, complete diagram/
+grid inventory and overlapping raw page facts are checked by existing authorities.
+Continuations retain their anchor/caption/registered-parent proof, not an inferred
+role. Only a complete qualified headerless physical link can remove the redundant
+new-title requirement for an observed ink-free prefix; raw unknown/refused caption
+facts remain unchanged. Any current title ink, weak read or ancestry mismatch
+vetoes that join. Current writer/formal/Web consumers cross-check every column
+owner; a rehashed omission/downgrade cannot waive a declaration. Pages without
+such owners keep version2. Historical reads remain non-admitting and immutable.
 
 For a native heading alongside an independently active foreign column,
 `heading_title_columns` adapts the existing column-role/body validator. Title
@@ -34,6 +36,12 @@ horizontal crossing, competing ownership and closing/inactive sources refuse.
 The declaration and title must retain identical column inventories. Original
 readback verifies raw native observations separately from attached title proof,
 then replays that proof and physical sources without another text recognition.
+
+The binding coordinator opens the existing bounded `title_geometry_call` for
+its one synchronous operation. Exact serialized source is rehashed on lookup;
+only pure geometry is shared, at the existing128-entry limit, with copied results
+and finally cleanup. No actual-original replay, model, role or acceptance result
+is cached. Independent calls and mutated source still revalidate normally.
 
 Binding77/binder88 refresh derived ownership only. Raw PDFs/OCR/crops, manual
 audit/history, activity/SMILES, SQL/API, scientific SAR policies, model defaults,

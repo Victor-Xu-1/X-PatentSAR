@@ -14,6 +14,11 @@ changed ownership or a current downgrade cannot become clean partial success.
 Historical pages without this field remain historical review, not current QA.
 Captioned continuations reuse their existing full caption/anchor/registered-parent
 proof in the same ledger; they cannot borrow a neighbour's role or invent rules.
+Headerless physical continuations use declaration-page4 `continued_columns`.
+Only their existing complete source/parent proof may make a redundant new-title
+requirement unnecessary for an observed ink-free prefix. Raw caption status is
+not rewritten. Current title ink, weak readings, absent/foreign parents or
+changed frames remain refused; removing the field or downgrading cannot waive it.
 An independently owned peer's complete same-key native/optical opposite-role
 observation stays a LOCAL CONFLICT, not a qualified title. It may not block a
 distinct complete column, but weak/missing reads, global ink, changed keys and

@@ -6,7 +6,14 @@
   only the independently derived logical header/caption band while retaining
   full original context/ink/pixels. `structure_declaration_columns` reuses the
   SAME full logical source sections and original body/role validators in the
-  existing declaration ledger (page3 only where logical owners exist). Current
+  existing declaration ledger (page3 only where logical owners exist). Headerless
+  physical links use page4 `continued_columns` under the SAME source ancestry/body
+  validator; no new title is required only for a qualified registered link with
+  no observed current title ink. Raw caption refusal stays unchanged. The existing
+  bounded `title_geometry_call` surrounds one synchronous binder invocation;
+  exact content is rehashed, pure geometry only is reused, and all actual source
+  replay/role/acceptance still executes. No new cache authority or raised limit.
+  Current
   consumers cross-check complete owners and reject rehashed omission/downgrade;
   historical review stays non-admitting. `heading_title_columns` adapts the
   existing independently active column authority to complete native row ink;

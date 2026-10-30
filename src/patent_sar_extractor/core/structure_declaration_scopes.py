@@ -35,6 +35,7 @@ from .structure_declaration_columns import (
     logical_column_owns_caption,
     validate_logical_columns,
 )
+from .structure_declaration_continuations import validate_continued_columns
 from .structure_table_headers import possible_structure_header
 
 PAGE_ROLE = "structure_declaration_page"
@@ -70,7 +71,9 @@ def validate_declaration_page(source):
         not isinstance(source, dict)
         or set(source)
         - (
-            {"catalogue_scopes", "logical_columns"}
+            {"catalogue_scopes", "logical_columns", "continued_columns"}
+            if source.get("version") == 4
+            else {"catalogue_scopes", "logical_columns"}
             if source.get("version") == 3
             else {"catalogue_scopes"}
             if source.get("version") == 2
@@ -88,11 +91,13 @@ def validate_declaration_page(source):
         }
         or source["status"] != PAGE_STATUS
         or type(source["version"]) is not int
-        or source["version"] not in {1, 2, 3}
-        or source["version"] in {2, 3}
+        or source["version"] not in {1, 2, 3, 4}
+        or source["version"] in {2, 3, 4}
         and "catalogue_scopes" not in source
-        or source["version"] == 3
+        or source["version"] in {3, 4}
         and "logical_columns" not in source
+        or source["version"] == 4
+        and "continued_columns" not in source
         or not isinstance(source["original_pdf_sha256"], str)
         or not re.fullmatch(r"[a-f0-9]{64}", source["original_pdf_sha256"])
         or type(source["page_no"]) is not int
@@ -109,6 +114,7 @@ def validate_declaration_page(source):
         validate_page_grid(grid, source["page_size"])
     validate_catalogue_scopes(source)
     validate_logical_columns(source)
+    validate_continued_columns(source)
 
 
 def declaration_page_id(source):

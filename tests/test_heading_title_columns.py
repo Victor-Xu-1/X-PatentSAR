@@ -2,11 +2,13 @@
 
 import copy
 import unittest
+from collections import Counter
 from unittest.mock import patch
 
 import fitz
 from lateral_structure_support import LateralStructureControls
 
+from patent_sar_extractor.core import title_ink_geometry
 from patent_sar_extractor.core.heading_declaration_scope import declaration_candidates
 from patent_sar_extractor.core.heading_original_replay import validate_original_heading
 from patent_sar_extractor.core.heading_source_proof import heading_observation_status
@@ -20,6 +22,22 @@ from patent_sar_extractor.core.source_geometry import source_layout
 
 
 class HeadingTitleColumnTests(LateralStructureControls, unittest.TestCase):
+    def test_binding_call_reuses_geometry_but_not_source_or_acceptance_results(self):
+        counts = Counter()
+        original = title_ink_geometry._title_ink_rows
+
+        def calculate(source):
+            counts[
+                proof_id({"status": "original_title_geometry", "source": source})
+            ] += 1
+            return original(source)
+
+        with patch.object(title_ink_geometry, "_title_ink_rows", side_effect=calculate):
+            _result, payload = self.run_case(later_product=True, left_later_centre=430)
+        self.assertEqual(len(payload["compound_catalog"]["entries"]), 6)
+        self.assertTrue(counts)
+        self.assertTrue(all(count == 1 for count in counts.values()), dict(counts))
+
     def original(self, *, ruled=True):
         _result, payload = self.run_case(
             later_product=True, left_later_centre=430, ruled=ruled

@@ -10,6 +10,7 @@ from .source_geometry import overlaps
 from .source_observations import project_source_observation
 from .source_table_roles import title_texts
 from .structure_catalogue_headers import header_catalogue_scope
+from .structure_declaration_continuations import continued_catalogue_role
 from .title_context_grids import caption_title_context
 
 
@@ -98,6 +99,9 @@ def catalogue_declarations(source, page_source_id, *, identifier_lists):
     output = []
     for scope in source.get("catalogue_scopes", []):
         role = caption_role_status(scope, source["page_no"], scope["table_bbox"])
+        inherited = continued_catalogue_role(source, scope)
+        if inherited is not None:
+            role = inherited[0]
         body = list(scope["table_bbox"])
         diagrams = intersecting_source_diagrams(source["page_diagrams"], body)
         texts = title_texts(
@@ -138,6 +142,7 @@ def catalogue_declarations(source, page_source_id, *, identifier_lists):
                 "unproved_nonfinal_role": role in {"unknown", "unresolved"}
                 and catalog_title_role(raw) in {"nonfinal", "mixed"},
                 "unproved_title": role == "unresolved",
+                **({"continuation_source_region": inherited[1]} if inherited else {}),
             }
         )
     return output

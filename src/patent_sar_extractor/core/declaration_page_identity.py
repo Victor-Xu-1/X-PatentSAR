@@ -13,6 +13,7 @@ PAGE_COMPONENTS = (
     "page_grids",
     "catalogue_scopes",
     "logical_columns",
+    "continued_columns",
 )
 
 
