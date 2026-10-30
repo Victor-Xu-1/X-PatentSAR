@@ -36,6 +36,7 @@ def observe_role_cells(
     attach_source_frames=False,
     evidence_sink=None,
     maximum_row_height=12,
+    open_owner=None,
 ):
     """One cell observation carrier for closed grids and visible row fragments."""
     xs, ys = region["xs"], region["ys"]
@@ -49,6 +50,7 @@ def observe_role_cells(
         attach_source_frames=attach_source_frames,
         evidence_sink=evidence_sink,
         maximum_row_height=maximum_row_height,
+        open_owner=open_owner,
     )
 
 
@@ -62,6 +64,8 @@ def _observe_role_cells(
     attach_source_frames=False,
     evidence_sink=None,
     maximum_row_height=12,
+    allow_open_native=False,
+    open_owner=None,
 ):
     """Same observer with the original parent's source decision conserved."""
     xs, ys = region["xs"], region["ys"]
@@ -90,7 +94,7 @@ def _observe_role_cells(
     }
     if evidence_sink is not None:
         evidence_sink.append(carrier)
-    if native and retain_frames:
+    if native and retain_frames and not allow_open_native:
         for index, cell in enumerate(cells):
             row, column = divmod(index, len(xs) - 1)
             if not hints[row][column].strip():
@@ -137,9 +141,18 @@ def _observe_role_cells(
             observations.append(observation)
             if retain_frames:
                 frames.append(rendered)
-            for cell in cells:
+            for cell_index, cell in enumerate(cells):
                 try:
-                    raster = render_cell_raster(page, cell, dpi, purpose="text")
+                    raster = None
+                    if open_owner is not None:
+                        from .open_cell_raster import render_open_cell_raster
+
+                        edges, fragment = open_owner
+                        raster = render_open_cell_raster(
+                            page, list(cell), dpi, edges, fragment, cell_index
+                        )
+                    if raster is None:
+                        raster = render_cell_raster(page, cell, dpi, purpose="text")
                 except CellRenderLimit:
                     return None
                 image = raster.image

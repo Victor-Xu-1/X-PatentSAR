@@ -3,6 +3,8 @@
 import hashlib
 import json
 
+MAX_SOURCE_REGION_BYTES = 1024 * 1024
+
 
 class SourceEvidenceLimit(ValueError):
     """A complete original region cannot fit the unchanged serialization bound."""
@@ -18,7 +20,7 @@ def proof_id(proof: dict) -> str:
         separators=(",", ":"),
         allow_nan=False,
     ).encode("utf-8")
-    if len(encoded) > 1024 * 1024:
+    if len(encoded) > MAX_SOURCE_REGION_BYTES:
         raise SourceEvidenceLimit(
             "Original header evidence exceeds its bounded region limit"
         )

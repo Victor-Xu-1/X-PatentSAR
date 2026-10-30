@@ -1,6 +1,8 @@
 """Whole source regions include open original rows and every accepted grid row."""
 
 import copy
+import hashlib
+import json
 import unittest
 from contextlib import nullcontext
 
@@ -9,9 +11,17 @@ import fitz
 from patent_sar_extractor.core.activity_auxiliary_replay import (
     original_activity_source_errors,
 )
+from patent_sar_extractor.core.binding_source_references import (
+    _regions,
+    reference_scope,
+)
 from patent_sar_extractor.core.binding_source_regions import (
     identifier_references,
     reference_regions,
+)
+from patent_sar_extractor.core.source_evidence_identity import (
+    SourceEvidenceLimit,
+    proof_id,
 )
 from patent_sar_extractor.core.source_grid_edges import edge_intervals
 from patent_sar_extractor.core.source_role_fragments import validate_fragments
@@ -82,6 +92,31 @@ class RoleOriginalBoundaryTests(unittest.TestCase):
                     page, original_pdf_sha256="a" * 64, grids=[grid], tokens=tokens
                 )
                 self.assertEqual(len(regions), 1)
+                region = regions[0]
+                record = {k: v for k, v in region.items() if k != "region_id"}
+                encoded = json.dumps(
+                    record,
+                    ensure_ascii=False,
+                    sort_keys=True,
+                    separators=(",", ":"),
+                    allow_nan=False,
+                ).encode("utf-8")
+                self.assertEqual(
+                    region["region_id"], hashlib.sha256(encoded).hexdigest()
+                )
+                if count == 120:
+                    self.assertGreater(len(encoded), 1024 * 1024)
+                    with self.assertRaises(SourceEvidenceLimit):
+                        proof_id(record)
+                section = {
+                    "role": "characterization_region",
+                    "page_no": 1,
+                    "source_region": region,
+                }
+                scope = reference_scope([section], original_pdf_sha256="a" * 64)
+                self.assertEqual(
+                    _regions([section], scope), {region["region_id"]: region}
+                )
                 self.assertEqual(
                     [item["identifier"] for item in identifier_references(regions[0])],
                     identifiers,

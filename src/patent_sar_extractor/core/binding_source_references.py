@@ -2,7 +2,6 @@
 
 import re
 
-from .activity_grid_role_proof import valid_role_scope
 from .activity_header_evidence import proof_id
 from .binding_source_diagnostics import binding_diagnostic_issues
 from .binding_source_regions import identifier_references, reference_cell
@@ -15,9 +14,10 @@ from .caption_pending_roles import validate_pending_caption_references
 from .caption_role_proof import validate_caption_exclusions
 from .heading_inventory import heading_inventory_issues, heading_sections
 from .printed_identifiers import identifier_key
+from .reference_region_identity import reference_region_id
 from .source_fragment_links import resolved_fragments
 from .source_geometry import _box
-from .source_role_fragments import fragment_issues, validate_fragments
+from .source_role_fragments import fragment_issues
 from .source_role_observations import validate_role_catalog
 from .source_section_roles import section_heading
 from .structure_declaration_proof import declaration_ids, declaration_issues
@@ -172,16 +172,15 @@ def _regions(sections, scope):
             or not scope["original_pdf_sha256"]
             or region["original_pdf_sha256"] != scope["original_pdf_sha256"]
             or region["status"] != "observed_characterization"
-            or not valid_role_scope(region)
             or not isinstance(region["region_id"], str)
-            or region["region_id"]
-            != proof_id({k: v for k, v in region.items() if k != "region_id"})
             or region["region_id"] in regions
         ):
             raise ValueError("Unproved original binding reference region")
         _box(region["bbox"])
-        if scope["version"] in {4, 5, 6}:
-            validate_fragments(region)
+        if region["region_id"] != reference_region_id(
+            {key: value for key, value in region.items() if key != "region_id"}
+        ):
+            raise ValueError("Original characterization-region identity differs")
         regions[region["region_id"]] = region
     if scope["region_ids"] != list(regions):
         raise ValueError("Original binding reference region coverage differs")

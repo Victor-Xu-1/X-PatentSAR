@@ -91,7 +91,68 @@ def observe(doc):
     return blocks, payload, regions
 
 
+def scanned_split_row():
+    native = split_row()
+    scanned = fitz.open()
+    try:
+        for original in native:
+            raster = original.get_pixmap(matrix=fitz.Matrix(3, 3), alpha=False).tobytes(
+                "png"
+            )
+            page = scanned.new_page(width=560, height=700)
+            page.insert_image(page.rect, stream=raster)
+            page.insert_text((40, 690), "WO2026000011", fontsize=8)
+    finally:
+        native.close()
+    return scanned
+
+
 class SourceGridFragmentTests(unittest.TestCase):
+    def test_unqualified_native_open_row_is_replayed_but_not_promoted(self):
+        from patent_sar_extractor.core.role_original_replay import (
+            original_role_source_errors,
+        )
+        from patent_sar_extractor.core.source_cell_claims import cell_source_status
+
+        with split_row() as doc:
+            # A real non-rule stroke inside the open cell prevents a positive
+            # text-only claim even if the printed words themselves are readable.
+            doc[0].draw_line((75, 300), (95, 320))
+            _blocks, _payload, regions = observe(doc)
+            region = regions[0]
+            fragment = region["row_fragments"][0]
+            reading = fragment["source_cells"]["observations"][0]["cells"][0]
+            self.assertIn("native_window", reading)
+            self.assertEqual(cell_source_status(reading), "unqualified")
+            validate_fragments(region)
+            self.assertIsNone(fragment_texts(region, fragment, 0))
+            self.assertEqual(original_role_source_errors(doc, [(1, reading)]), [])
+            changed = copy.deepcopy(reading)
+            changed["native_window"]["paints"][0]["seqno"] += 1
+            self.assertTrue(original_role_source_errors(doc, [(1, changed)]))
+
+    def test_native_open_row_role_is_bound_to_actual_original_grid_and_paints(self):
+        from patent_sar_extractor.core.role_original_replay import (
+            original_role_source_errors,
+        )
+        from patent_sar_extractor.core.role_text_sources import role_text_cells
+
+        with split_row() as doc:
+            _blocks, payload, regions = observe(doc)
+            self.assertEqual(len(resolved_fragments(regions)), 2)
+            sources = [
+                item
+                for item in role_text_cells(payload)
+                if item[1].get("method") == "original_open_native_cell"
+            ]
+            self.assertTrue(sources)
+            self.assertEqual(original_role_source_errors(doc, sources), [])
+            forged = copy.deepcopy(sources)
+            forged[0][1]["grid_edges"]["rule_frame"]["pixel_sha256"] = "0" * 64
+            self.assertTrue(original_role_source_errors(doc, forged))
+            doc[0].draw_line((75, 300), (95, 320))
+            self.assertTrue(original_role_source_errors(doc, sources))
+
     def test_same_number_with_changed_terminal_intermediate_role_never_links(self):
         for repeat in (True, False):
             with (
@@ -205,14 +266,7 @@ class SourceGridFragmentTests(unittest.TestCase):
         self.assertLessEqual(bottom["bbox"][3], 700)
 
     def test_real_raster_blank_continuation_cells_and_frames_remain_auditable(self):
-        with split_row() as native, fitz.open() as doc:
-            for original in native:
-                raster = original.get_pixmap(
-                    matrix=fitz.Matrix(3, 3), alpha=False
-                ).tobytes("png")
-                page = doc.new_page(width=560, height=700)
-                page.insert_image(page.rect, stream=raster)
-                page.insert_text((40, 690), "WO2026000011", fontsize=8)
+        with scanned_split_row() as doc:
             _, payload, regions = observe(doc)
         self.assertEqual(len(resolved_fragments(regions)), 2)
         entries = [{"cpd": f"Compound {n}"} for n in (73, 84, 105, 211, 212)]
@@ -234,15 +288,101 @@ class SourceGridFragmentTests(unittest.TestCase):
             with self.subTest(change=change), self.assertRaises(ValueError):
                 validate_fragments(changed)
 
+    def test_open_scan_cell_uses_replayable_original_rule_strips_only(self):
+        from patent_sar_extractor.core.cell_raster import (
+            original_reading_image,
+            valid_source_window,
+        )
+        from patent_sar_extractor.core.open_cell_raster import render_open_cell_raster
+        from patent_sar_extractor.core.source_grid_edges import original_grid_edges
+        from patent_sar_extractor.core.table_geometry import detect_ruled_table_regions
+
+        with scanned_split_row() as doc:
+            page = doc[0]
+            grids = detect_ruled_table_regions(page, dpi=240)
+            self.assertEqual(len(grids), 1)
+            edges = original_grid_edges(page, grids[0])
+            fragment = next(
+                item for item in edge_intervals(edges) if item["edge"] == "bottom"
+            )
+            xs, box = edges["xs"], fragment["bbox"]
+            bounds = [xs[0], box[1], xs[1], box[3]]
+            raster = render_open_cell_raster(page, bounds, 400, edges, fragment, 0)
+            self.assertIsNotNone(raster)
+            self.assertEqual(raster.source_window["version"], 2)
+            self.assertEqual(raster.source_window["frame_strips"][-1], 0)
+            reading = {
+                "source_window": raster.source_window,
+                "source_frame": raster.frame,
+            }
+            self.assertTrue(
+                (
+                    original_reading_image(page, bounds, 400, reading) == raster.image
+                ).all()
+            )
+            for mutate in ("bounds", "missing_open_edge", "foreign_grid", "hash"):
+                changed = copy.deepcopy(reading)
+                window = changed["source_window"]
+                if mutate == "bounds":
+                    window["read_bounds"][0] += 1
+                elif mutate == "missing_open_edge":
+                    window["frame_strips"][-1] = 1
+                elif mutate == "foreign_grid":
+                    window["open_grid"]["column"] = 1
+                else:
+                    window["source_pixel_sha256"] = "invalid"
+                with self.subTest(mutate=mutate):
+                    self.assertFalse(
+                        valid_source_window(
+                            window, bounds, 400, changed["source_frame"]["shape"]
+                        )
+                    )
+                    with self.assertRaises(ValueError):
+                        original_reading_image(page, bounds, 400, changed)
+            forged = copy.deepcopy(reading)
+            forged["source_window"]["open_grid"]["grid_edges"]["rule_frame"][
+                "pixel_sha256"
+            ] = "0" * 64
+            with self.assertRaises(ValueError):
+                original_reading_image(page, bounds, 400, forged)
+            page.draw_line((75, box[1] + 30), (75, box[1] + 60))
+            with self.assertRaises(ValueError):
+                original_reading_image(page, bounds, 400, reading)
+
+    def test_open_rule_view_never_crops_connected_or_unproved_ink(self):
+        import numpy as np
+
+        from patent_sar_extractor.core.open_cell_raster import open_rule_window
+
+        pixels = np.full((300, 400, 3), 255, dtype=np.uint8)
+        pixels[0:2, :, :] = 0
+        pixels[:, 0:2, :] = 0
+        pixels[:, -2:, :] = 0
+        pixels[30:40, 60:90, :] = 0
+        self.assertIsNotNone(open_rule_window(pixels, 400, "bottom"))
+        connected = pixels.copy()
+        connected[0:35, 65:67, :] = 0
+        self.assertIsNone(open_rule_window(connected, 400, "bottom"))
+        no_rule = pixels.copy()
+        no_rule[:, -2:, :] = 255
+        self.assertIsNone(open_rule_window(no_rule, 400, "bottom"))
+        for invalid_dpi, invalid_edge in (
+            (True, "bottom"),
+            (300, "bottom"),
+            (400, "left"),
+        ):
+            with (
+                self.subTest(dpi=invalid_dpi, edge=invalid_edge),
+                self.assertRaises(ValueError),
+            ):
+                open_rule_window(pixels, invalid_dpi, invalid_edge)
+
     def test_known_measurement_in_an_open_fragment_cannot_borrow_a_synthesis_role(self):
         with split_row() as doc:
+            doc[0].insert_text((325, 310), "DC50 2 nM", fontsize=9)
             _, _, regions = observe(doc)
-        region = copy.deepcopy(regions[0])
+        region = regions[0]
         fragment = region["row_fragments"][0]
-        source = fragment["source_cells"]
-        source["native_hints"][0][2] = "DC50 2 nM"
-        source["observations"][0]["matrix"][0][2] = "DC50 2 nM"
-        source["observations"][0]["cells"][2]["text"] = "DC50 2 nM"
         validate_fragments(region)
         self.assertIsNone(fragment_texts(region, fragment, 0))
         self.assertIsNone(fragment_texts(region, fragment, 1))

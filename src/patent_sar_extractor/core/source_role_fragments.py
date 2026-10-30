@@ -4,7 +4,7 @@ import math
 
 from patent_sar_extractor.contracts import CHARACTERIZATION_ROLE_SCHEMA_VERSION
 
-from .activity_grid_role_observation import observe_role_cells
+from .activity_grid_role_observation import _observe_role_cells, observe_role_cells
 from .activity_grid_roles import (
     MAX_ROLE_ROW_HEIGHT,
     MAX_ROLE_TEXT_ROWS,
@@ -16,6 +16,8 @@ from .cell_text_proof import valid_text_reading
 from .cell_text_scope import text_scope
 from .source_cell_claims import cell_source_status
 from .source_fragment_context import validate_fragment_context
+from .source_fragment_native import open_native_cell_qualified
+from .source_geometry import native_region
 from .source_grid_edges import edge_intervals
 from .source_section_roles import section_heading
 
@@ -47,17 +49,36 @@ def observe_fragments(page, grid_edges, tokens):
     xs = grid_edges["xs"]
     for interval in edge_intervals(grid_edges):
         bounds = interval["bbox"]
-        cells = (
-            observe_role_cells(
-                page,
-                {"xs": xs, "ys": [bounds[1], bounds[3]]},
-                tokens,
-                retain_frames=True,
-                maximum_row_height=MAX_ROLE_ROW_HEIGHT,
-            )
-            if interval["status"] == "observed_columns"
-            else None
-        )
+        cells = None
+        if interval["status"] == "observed_columns":
+            region = {"xs": xs, "ys": [bounds[1], bounds[3]]}
+            if native_region(tokens, bounds, bool(page.get_text("words"))):
+                candidate = _observe_role_cells(
+                    page,
+                    region,
+                    tokens,
+                    native=True,
+                    retain_frames=True,
+                    maximum_row_height=MAX_ROLE_ROW_HEIGHT,
+                    allow_open_native=True,
+                )
+                if candidate is not None and all(
+                    open_native_cell_qualified(grid_edges, interval, column, reading)
+                    for column, reading in enumerate(
+                        candidate["observations"][0]["cells"]
+                    )
+                    if not reading["text"].strip()
+                ):
+                    cells = candidate
+            if cells is None:
+                cells = observe_role_cells(
+                    page,
+                    region,
+                    tokens,
+                    retain_frames=True,
+                    maximum_row_height=MAX_ROLE_ROW_HEIGHT,
+                    open_owner=(grid_edges, interval),
+                )
         fragments.append({**interval, "source_cells": cells})
     return fragments
 
@@ -144,19 +165,33 @@ def validate_fragments(region):
                         "Original open-row cell differs from its physical owner"
                     )
                 if native:
-                    if set(reading) - {"source_observation"} != {
+                    if set(reading) - {"source_observation", "native_window"} != {
                         "method",
                         "text",
                         "bbox",
                     } or (
                         reading["method"] != "native_cell"
                         or reading["text"] != cells["native_hints"][0][column]
+                        or "native_window" in reading
+                        and "source_observation" not in reading
                         or cell_source_status(reading)
-                        not in {"legacy", "qualified", "empty"}
+                        not in {"legacy", "qualified", "empty", "unqualified"}
+                        or cell_source_status(reading) == "unqualified"
+                        and "native_window" not in reading
                     ):
                         raise ValueError("Malformed native open-row cell")
                 else:
                     dpi = (400, 600)[index]
+                    window = reading.get("source_window")
+                    if (
+                        isinstance(window, dict)
+                        and window.get("version") == 2
+                        and window.get("open_grid")
+                        != {"grid_edges": edges, "fragment": interval, "column": column}
+                    ):
+                        raise ValueError(
+                            "Original open-row cell has a foreign grid owner"
+                        )
                     if scope[
                         "version"
                     ] == CHARACTERIZATION_ROLE_SCHEMA_VERSION and reading.get(
@@ -231,7 +266,17 @@ def fragment_texts(region, fragment, column):
     bounds = [xs[column], ys[0], xs[column + 1], ys[1]]
     readings = [observation["cells"][column] for observation in cells["observations"]]
     if readings[0]["method"] == "native_cell":
-        return [readings[0]["text"]]
+        return (
+            [readings[0]["text"]]
+            if cell_source_status(readings[0]) in {"legacy", "qualified"}
+            or open_native_cell_qualified(
+                region["grid_edges"],
+                {name: fragment[name] for name in ("edge", "bbox", "status")},
+                column,
+                readings[0],
+            )
+            else None
+        )
     texts = []
     for reading, dpi in zip(readings, (400, 600)):
         empty = (

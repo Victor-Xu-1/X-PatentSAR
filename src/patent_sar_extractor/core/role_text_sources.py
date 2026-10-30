@@ -8,6 +8,7 @@ from .activity_grid_roles import MAX_ROLE_ROW_HEIGHT, MAX_ROLE_TEXT_ROWS
 from .cell_text_scope import scoped_height, text_scope
 from .role_grid_windows import MAX_ROLE_GRID_CELLS, role_grid_shape
 from .source_evidence_identity import proof_id
+from .source_fragment_native import open_native_cell_qualified
 from .text_ocr.cell_proof import has_auxiliary_text, valid_auxiliary_cell
 from .text_ocr.source_inventory import MAX_SOURCE_CELLS
 
@@ -16,7 +17,7 @@ def _region_scopes(region):
     if not isinstance(region, dict):
         raise TypeError("Malformed original role-text region")
     page_no = region.get("page_no")
-    yield page_no, region.get("role_scope")
+    yield page_no, region.get("role_scope"), None
     fragments = region.get("row_fragments", [])
     if not isinstance(fragments, list) or len(fragments) > 2:
         raise ValueError("Malformed original open-row source inventory")
@@ -25,7 +26,14 @@ def _region_scopes(region):
             raise TypeError("Malformed original open-row source owner")
         cells = fragment.get("source_cells")
         if cells is not None:
-            yield page_no, cells
+            yield (
+                page_no,
+                cells,
+                (
+                    region.get("grid_edges"),
+                    {name: fragment[name] for name in ("edge", "bbox", "status")},
+                ),
+            )
 
 
 def _role_scopes(payload):
@@ -58,7 +66,7 @@ def _role_scopes(payload):
                 "original_ruled_columns",
             ):
                 raise ValueError("Unknown original structure-column header source")
-            yield header.get("page_no"), header.get("role_cells")
+            yield header.get("page_no"), header.get("role_cells"), None
     coverage = payload.get("coverage")
     if coverage is not None and not isinstance(coverage, dict):
         raise TypeError("Malformed original role-text coverage owner")
@@ -81,7 +89,7 @@ def _role_scopes(payload):
                 or observation["version"] != 1
             ):
                 raise ValueError("Unknown original role-text diagnostic owner")
-            yield observation.get("page_no"), cells
+            yield observation.get("page_no"), cells, None
 
 
 def framed_role_cell(scope, view_index, cell_index, cell):
@@ -116,7 +124,7 @@ def role_text_cells(payload):
     deduplicates owners but never merges different pages, bounds or DPI views.
     """
     seen = set()
-    for page_no, scope in _role_scopes(payload):
+    for page_no, scope, open_owner in _role_scopes(payload):
         if (
             not isinstance(scope, dict)
             or role_grid_shape(scope.get("xs"), scope.get("ys")) is None
@@ -159,6 +167,17 @@ def role_text_cells(payload):
                 ):
                     raise ValueError("Original text leaves its original role cell")
                 cell = framed_role_cell(scope, view_index, cell_index, cell)
+                if open_owner is not None and method == "native_cells":
+                    edges, fragment = open_owner
+                    column = list(pairwise(xs)).index((box[0], box[2]))
+                    if open_native_cell_qualified(edges, fragment, column, cell):
+                        cell = {
+                            "method": "original_open_native_cell",
+                            "cell": cell,
+                            "grid_edges": edges,
+                            "fragment": fragment,
+                            "column": column,
+                        }
                 if (
                     scope.get("version") == CHARACTERIZATION_ROLE_SCHEMA_VERSION
                     and method != "native_cells"

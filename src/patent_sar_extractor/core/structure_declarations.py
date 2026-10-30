@@ -3,7 +3,6 @@
 from collections import defaultdict
 
 from .activity_context_geometry import grid_axes
-from .activity_header_evidence import proof_id
 from .binding_progress import observed_items
 from .caption_role_semantics import catalog_title_role, has_continuation_caption
 from .source_document import document_sha256
@@ -14,7 +13,7 @@ from .structure_declaration_catalogues import catalogue_scopes_for_grids
 from .structure_declaration_scopes import (
     PAGE_ROLE,
     PAGE_STATUS,
-    declaration_scopes,
+    declaration_scopes_with_identity,
     declaration_title_nominations,
     nonfinal_declaration_diagrams,
 )
@@ -103,7 +102,7 @@ def observe_declaration_pages(
         observed = iter(attach_title_sources(page, parents, nominations))
         for chunk in source["page_context"]:
             chunk["sources"] = [next(observed) for _ in chunk["sources"]]
-        scopes = declaration_scopes(source)
+        source_id, scopes = declaration_scopes_with_identity(source)
         if not scopes and not grids:
             continue
         sections.append(
@@ -111,7 +110,7 @@ def observe_declaration_pages(
                 "role": PAGE_ROLE,
                 "status": PAGE_STATUS,
                 "page_no": index + 1,
-                "region_id": proof_id(source),
+                "region_id": source_id,
                 "source": source,
             }
         )

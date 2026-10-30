@@ -17,8 +17,8 @@ from .structure_declaration_scopes import (
     PAGE_STATUS,
     REFERENCE_ROLE,
     declaration_scopes,
+    declaration_scopes_with_identity,
     nonfinal_declaration_diagrams,
-    validate_declaration_page,
 )
 from .unruled_body_scope import body_context_window
 
@@ -56,7 +56,7 @@ def _pages(sections, scope, *, current=False):
     seen = set()
     for section in pages:
         source = section.get("source")
-        validate_declaration_page(source)
+        identity, _scopes = declaration_scopes_with_identity(source)
         if current and source["version"] != 2:
             raise ValueError(
                 "Current original declarations require the complete catalogue scopes"
@@ -64,7 +64,7 @@ def _pages(sections, scope, *, current=False):
         if (
             set(section) != {"role", "status", "page_no", "region_id", "source"}
             or not isinstance(source, dict)
-            or section["region_id"] != proof_id(source)
+            or section["region_id"] != identity
             or section["status"] != PAGE_STATUS
             or type(section["page_no"]) is not int
             or section["page_no"] != source.get("page_no")
@@ -72,7 +72,6 @@ def _pages(sections, scope, *, current=False):
             or section["page_no"] in seen
         ):
             raise ValueError("Malformed original declaration identity")
-        declaration_scopes(source)
         seen.add(section["page_no"])
         for parent in parents_by_page[section["page_no"]]:
             old = parent["source"]
