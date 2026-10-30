@@ -1,5 +1,31 @@
 # X-PatentSAR architecture
 
+## One bounded original frame for scanned titles and rulings
+
+`title_ink_source` version6 is the sole current title-ink producer. For a raster
+title and its closed first-row cells, `title_shared_pixels` derives ONE parent
+rectangle from the existing source windows, bounded independently at400/600dpi
+by the unchanged8M-pixel ceiling. It invokes the existing original renderer twice
+and selects exact byte subviews; there is no resampling, image cleanup, new OCR,
+threshold change, dilation or inferred rule. Clipping the same embedded scan
+independently can otherwise produce different interpolation edge pixels and a
+false crossing-ink refusal.
+
+`shared_cell_raster` adds pixel-only source-window3: full parent geometry/digest,
+exact device-coordinate subview and its own digest. The existing source-window
+validator/origin/replayer dispatch to this bounded view, using the SAME original
+renderer on replay. Every title/ruling subview must identify the same parent and
+per-DPI digest. Paired original closed-cell proof and the unchanged exact-rule
+intersection still own removal; real unknown strokes attached to a rule refuse.
+Malformed/mixed/downgraded windows or changed parent pixels cannot qualify.
+
+Native-only, over-parent-budget and outside-edge contexts retain their strict
+existing source recipe. Historical title-ink4/5 replay their original separate
+clips read-only; they are not rewritten/promoted. Binding81/binder92 and
+Activity54/extractor66 refresh affected derived proof only. Raw PDF/OCR/crops,
+chemical observations, manual audit, API/SQL, models and dependencies are unchanged.
+This resolves tested rendering ownership, not universal chemical/OCR accuracy.
+
 ## Unresolved catalogue-title lexical observations
 
 `title_source_proof.title_source_inputs` remains the single geometry, native
@@ -21,7 +47,7 @@ guard or molecular identity/measurement rule was relaxed. Shared source inventor
 counts title requests and rejects conflicting reuse of an observation identity.
 Worker/Web readers replay original pixels without acquiring an OCR runtime.
 
-Binding80/binder91 and Activity53/extractor65 refresh derived semantics only.
+Binding81/binder92 and Activity54/extractor66 refresh derived semantics only.
 Raw PDF/OCR/locator/segmentation/chemical observations and manual audit are not
 rewritten. The optional runtime remains off unless already configured on demand;
 no model/environment installation, new queue, asset store or execution chain.
@@ -1620,7 +1646,7 @@ quotes, changed letters/digits and every endpoint/unit/target/time distinction
 remain protected. Only header and explicit ASSAY comparisons use this projection;
 target/construct/context identity and generic OCR recovery remain literal. This
 does not equate distinct assay technologies or grant model replacement authority.
-Current source epochs are Binding80/binder91 and Activity53/extractor65; raw
+Current source epochs are Binding81/binder92 and Activity54/extractor66; raw
 PDF/OCR/OCSR/preparation, model files, activation, API/SQL and human audit stay intact.
 
 ## Complete closed-grid role coverage with bounded work units

@@ -12,7 +12,7 @@ from .source_cell_pixels import MAX_CELL_PIXELS, closed_cell_masks, source_windo
 from .source_evidence_identity import SourceEvidenceLimit, proof_id
 
 
-def observe_title_raster(page, bounds):
+def observe_title_raster(page, bounds, *, shared=None):
     """Observe complete 400dpi context; paired row reads still own all text.
 
     This is a locator, not a semantic/blankness acceptance certificate. No OCR,
@@ -23,7 +23,12 @@ def observe_title_raster(page, bounds):
     packet = {"version": 1, "bbox": window, "pixels": None, "refusal": None}
     if extent.width * extent.height > MAX_CELL_PIXELS:
         return {**packet, "refusal": "title_raster_pixel_budget"}
-    pixels = observe_pixels(page, window, MAX_CELL_PIXELS, resolutions=(400,))
+    if shared is None:
+        pixels = observe_pixels(page, window, MAX_CELL_PIXELS, resolutions=(400,))
+    else:
+        from .title_shared_pixels import shared_title_pixels
+
+        pixels = shared_title_pixels(shared, window, resolutions=(400,))
     if pixels is None:
         return {**packet, "refusal": "title_raster_pixel_budget"}
     try:

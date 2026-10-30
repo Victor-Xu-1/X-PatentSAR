@@ -1,5 +1,18 @@
 # Project governance manifest
 
+- Shared original title/ruling pixels: current title-ink6 uses one call-local,
+  paired400/600dpi bounded parent through the existing renderer. Source-window3
+  is a pixel-only exact subview with full parent geometry/digest and original
+  byte-view digest; existing validation/origin/replay remain authoritative.
+  `title_shared_pixels` verifies common per-DPI ownership; original paired
+  closed-cell and crossing-ink gates are unchanged. No resampling, morphology,
+  threshold relaxation, extra OCR/model/cache/queue/store or dependency change.
+  The unchanged8M-pixel limit and conservative over-budget/outside-edge recipe
+  remain enforced. Title-ink4/5 stay read-only historical recipes. Binding81/
+  binder92 and Activity54/extractor66 refresh derived proof, never raw PDF/OCR/
+  detector crops/chemical observations/manual audit. Generated controls are not
+  proof of universal patent coverage or scientific accuracy.
+
 - Activity transport authority: `activity_artifacts.write_activity_payload` and
   the existing shared-JSON codec serve row output and metadata annotation. The
   checkpoint copier and SAR condition consumer preserve/decode the same bounded
@@ -23,7 +36,7 @@
   Shared text capture/replay and the existing on-demand runtime are reused;
   generic complete-primary replacement stays prohibited. The common auxiliary
   source inventory includes title requests and enforces identity/session limits.
-  Binding80/binder91 and Activity53/extractor65 refresh derived semantics only;
+  Binding81/binder92 and Activity54/extractor66 refresh derived semantics only;
   raw/manual/history, chemical models, SQL/API, queues/stores and dependencies
   remain unchanged. This bounded coverage is not universal OCR/chemistry accuracy.
 
@@ -703,7 +716,7 @@
   same source replay, not molecule work. Existing row/chunk/pixel/request budgets
   and primary/native/detector conflicts remain; only six known recovery-envelope
   links are admitted in physical-cell diagnostics, not arbitrary deeper JSON.
-  Current derived contracts are Binding80/binder91 and Activity53/extractor65.
+  Current derived contracts are Binding81/binder92 and Activity54/extractor66.
   PDF/raw OCR/OCSR2, preparation12/assets/human audit, API/SQL, numerical SAR,
   model files, dependency recipes and activation policy remain unchanged.
   Historical evidence is preserved without scientific promotion. No second
