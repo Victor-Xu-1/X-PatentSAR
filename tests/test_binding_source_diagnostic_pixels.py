@@ -229,7 +229,8 @@ class BindingDiagnosticPixelTests(unittest.TestCase):
             RoleObservationBuffer().extend([observation])
         with (
             patch(
-                "patent_sar_extractor.core.source_role_observations.MAX_ROLE_ATTEMPTS", 1
+                "patent_sar_extractor.core.source_role_observations.MAX_ROLE_ATTEMPTS",
+                1,
             ),
             self.assertRaisesRegex(ValueError, "inventory"),
         ):
