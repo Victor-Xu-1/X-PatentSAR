@@ -1,5 +1,24 @@
 # Operations and troubleshooting
 
+## Role text was not attempted because its physical rows were unbounded
+
+The ordinary frame may join a paragraph through a touched table rule. A new
+unresolved-only role-cell view can retain one horizontal edge and its attached
+ink while separating the other three independently proved rules. This does not
+change the original source or remove unknown strokes; missing/ambiguous frames
+and side/double-edge contacts keep their conservative refusal. Normal header,
+number, identifier, caption and already-bounded role reads are unchanged.
+
+Check the retained source-window version, preserved edge, full-source/read-view
+hashes and raw row readings. Version4 must replay against the exact original
+without OCR. A bounded row is not an accepted reading: weak/disagreeing primary
+or auxiliary text still refuses, as do unknown roles and explicit measurement
+conflicts. Do not lower confidence, enlarge row/pixel budgets, label an unread
+cell as NMR, or infer an absent result to clear this status. Generated native
+and scanned geometry/replay controls are engineering coverage, not universal
+OCR or patent acceptance. Existing old jobs retain history and raw/manual
+assets; only a new frontend attempt can produce current derived proof.
+
 ## Strong assay-word fragments disagree with a complete header
 
 Formal assay-header owners explicitly use the same closed technology-word

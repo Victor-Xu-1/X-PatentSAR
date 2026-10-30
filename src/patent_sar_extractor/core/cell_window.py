@@ -15,7 +15,7 @@ from .cell_rule_pixels import (
 
 @dataclass(frozen=True)
 class CellWindow:
-    """A source-pixel rectangle and an optional isolated closed frame witness."""
+    """A source-pixel rectangle and optional proved rule-strip thicknesses."""
 
     bounds: tuple[int, int, int, int]
     frame_strips: tuple[int, int, int, int] | None = None

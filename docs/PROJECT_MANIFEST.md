@@ -1,5 +1,18 @@
 # Project governance manifest
 
+- Original role-cell frame authority: `cell_partial_frame` requests the existing
+  renderer's source-window4 ONLY after the ordinary original physical-row
+  inventory is unbounded. Exactly one horizontal edge and all attached source
+  ink remain in the literal view; the other three complete, disconnected rule
+  strips require the same original rule inventory/conservation proof. No
+  painting, resampling, inferred text, confidence/budget relaxation or alternate
+  OCR path. The existing window validator/origin/replayer owns v4 geometry and
+  hashes, with exact old1/2/3 replay. Other text/pixel consumers and already
+  bounded role cells keep their ordinary path. Binding82/binder93 and Activity56/
+  extractor68 invalidate derived source proofs, not raw/chemical/manual assets.
+  Actual generated hard-contact OCR remains refused when it cannot qualify;
+  geometry success must never be reported as scientific recognition success.
+
 - Assay-header fragment identity: one explicit scope is shared by formal header
   columns, original sources, closed boundaries, saved proof and evidence replay.
   `assay_header_comparison` uses the existing closed technology spelling policy
