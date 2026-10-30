@@ -1,5 +1,17 @@
 # X-PatentSAR architecture
 
+## Responsive checkpoint preparation
+
+The extraction queue reserves one durable attempt before returning its queued
+response. Its existing single consumer prepares verified source checkpoints
+outside the HTTP request and outside the SQLite writer transaction. The
+producer cannot claim that attempt until its preparation is ready. Original
+source ownership is rechecked at preparation time, while cancellation and
+shutdown retain their own terminal state. Interrupted preparation can be
+resumed from its declared original parent. A verified resume-parent identity
+allows the interface to reconcile an uncertain submission without replaying a
+write or inferring success from unrelated tasks.
+
 ## Raster title ink attached to original ruling
 
 When retained title pixels are connected to a proved original table rule, the

@@ -238,6 +238,7 @@ export interface JobLLMRecovery {
 export interface Job {
   id: string;
   project_id: string;
+  resume_job_id?: string | null;
   status: 'queued' | 'running' | 'complete' | 'failed' | 'cancelled' | 'interrupted';
   created_at: string;
   started_at: string | null;

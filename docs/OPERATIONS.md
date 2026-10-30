@@ -1,5 +1,15 @@
 # Operations and troubleshooting
 
+## Resume preparation and interrupted requests
+
+A resumed attempt returns as queued while the single extraction consumer
+prepares its bounded checkpoint copy. Copying does not authorize the producer
+until preparation completes. Cancellation remains authoritative; shutdown
+interrupts preparation without changing the original source. If a browser
+cannot confirm a write, it never replays it automatically. A verified new job
+with the exact recorded resume parent resolves the matching warning; a stale,
+unverified or unrelated job does not.
+
 ## Original raster title and ruling overlap
 
 `crossing_title_ruling_ink` means an original context stroke is attached to a

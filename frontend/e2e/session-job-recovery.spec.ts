@@ -2,6 +2,65 @@ import { expect, test } from '@playwright/test';
 import { job, results } from '../tests/fixtures';
 
 for (const width of [390, 1672]) {
+  test(`uncertain resume is reconciled only by its verified parent at ${width}`, async ({
+    page,
+  }, info) => {
+    const origin = new URL(process.env.PATENTSAR_E2E_BASE_URL!);
+    expect(['127.0.0.1', 'localhost', '[::1]']).toContain(origin.hostname);
+    expect(Number(origin.port)).toBeGreaterThanOrEqual(18766);
+    expect(Number(origin.port)).toBeLessThanOrEqual(18866);
+    expect(process.env.PATENTSAR_E2E_RUN_JOBS).toBe('0');
+    const projectId = process.env.PATENTSAR_E2E_SOURCE_PROJECT_ID!;
+    const previous = {
+      ...job,
+      id: 'a'.repeat(32),
+      project_id: projectId,
+      status: 'failed',
+      can_resume: true,
+    };
+    const resumed = {
+      ...previous,
+      id: 'b'.repeat(32),
+      resume_job_id: previous.id,
+      status: 'queued',
+      can_resume: false,
+    };
+    let confirmed = false;
+    const writes: string[] = [],
+      errors: string[] = [];
+    page.on('pageerror', (error) => errors.push(error.message));
+    await page.route('**/api/v1/**', async (route) => {
+      const request = route.request(),
+        url = new URL(request.url());
+      if (request.method() !== 'GET') {
+        writes.push(url.pathname);
+        return route.abort();
+      }
+      if (url.pathname === '/api/v1/jobs')
+        return route.fulfill({ json: { items: [confirmed ? resumed : previous] } });
+      if (url.pathname === `/api/v1/jobs/${previous.id}`) return route.fulfill({ json: previous });
+      if (url.pathname === `/api/v1/jobs/${resumed.id}`) return route.fulfill({ json: resumed });
+      return route.continue();
+    });
+    await page.setViewportSize({ width, height: 940 });
+    await page.goto(`/#/projects/${projectId}`);
+    const resume = page.getByRole('button', { name: 'Resume extraction', exact: true });
+    await expect(resume).toBeEnabled();
+    await resume.click();
+    const warning = page.getByRole('alert');
+    await expect(warning).toContainText('write result is unknown');
+    await expect(resume).toBeDisabled();
+    confirmed = true;
+    await warning.getByRole('button', { name: 'Reload', exact: true }).click();
+    await expect(page.getByRole('button', { name: 'Cancel task', exact: true })).toBeEnabled();
+    await expect(page.getByRole('alert')).toHaveCount(0);
+    await page.screenshot({ path: info.outputPath('verified-resume.png'), animations: 'disabled' });
+    expect(writes).toEqual([`/api/v1/projects/${projectId}/jobs`]);
+    expect(errors).toEqual([]);
+  });
+}
+
+for (const width of [390, 1672]) {
   test(`pending result copy survives a background detail read at ${width}`, async ({
     page,
   }, info) => {

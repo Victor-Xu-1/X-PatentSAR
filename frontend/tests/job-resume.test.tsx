@@ -15,7 +15,12 @@ const interrupted: Job = {
   task_note: '保留原任务选项',
   include_admet: true,
 };
-const resumed: Job = { ...job, id: 'resumed-contract', status: 'queued' };
+const resumed: Job = {
+  ...job,
+  id: 'resumed-contract',
+  resume_job_id: interrupted.id,
+  status: 'queued',
+};
 
 describe('single authoritative interrupted-job resume action', () => {
   beforeEach(() => client.resetSession());
@@ -101,6 +106,49 @@ describe('single authoritative interrupted-job resume action', () => {
       />,
     );
     expect(screen.getByRole('button', { name: '继续提取' })).toBeEnabled();
+    expect(transport).toHaveBeenCalledTimes(2);
+  });
+
+  it('clears only the uncertain resume warning after a verified new job appears', async () => {
+    const transport = vi
+      .fn()
+      .mockResolvedValueOnce(json(session))
+      .mockRejectedValueOnce(new TypeError('controlled connection loss'));
+    vi.stubGlobal('fetch', transport);
+    const onChange = vi.fn();
+    const { rerender } = render(
+      <JobActions verified project={project} job={interrupted} ready onChange={onChange} compact />,
+    );
+    await userEvent.click(screen.getByRole('button', { name: '继续提取' }));
+    expect(await screen.findByRole('alert')).toHaveTextContent('写入结果未知');
+    await userEvent.click(screen.getByRole('button', { name: '重新加载' }));
+    rerender(
+      <JobActions
+        verified={false}
+        project={project}
+        job={resumed}
+        ready
+        onChange={onChange}
+        compact
+      />,
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent('写入结果未知');
+    rerender(
+      <JobActions
+        verified
+        project={project}
+        job={{ ...resumed, resume_job_id: 'different-source' }}
+        ready
+        onChange={onChange}
+        compact
+      />,
+    );
+    expect(screen.getByRole('alert')).toHaveTextContent('写入结果未知');
+    rerender(
+      <JobActions verified project={project} job={resumed} ready onChange={onChange} compact />,
+    );
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+    expect(screen.getByRole('button', { name: '取消任务' })).toBeEnabled();
     expect(transport).toHaveBeenCalledTimes(2);
   });
 

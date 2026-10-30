@@ -127,6 +127,7 @@ class ReleaseQueueTests(WebFixture, unittest.TestCase):
         sealed = history.read_bytes()
         self.assertTrue(service.job(job.id).can_resume)
         resumed = queue.enqueue(project.id, JobRequest(resume_job_id=job.id))
+        self.assertTrue(queue._prepare_pending())
         target = Path(queue._spec(resumed.id).output_dir)
         artifact = target / ARTIFACTS["classify"][0]
         self.assertTrue(artifact.is_file())

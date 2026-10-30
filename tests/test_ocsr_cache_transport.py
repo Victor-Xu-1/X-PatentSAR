@@ -9,6 +9,7 @@ from contextlib import closing
 
 from patent_sar_extractor.contracts import OCSR_OBSERVATION_VERSION
 from patent_sar_extractor.core.ocsr.cache_snapshot import snapshot_observations
+from patent_sar_extractor.core.ocsr.generation import observe_generation
 from patent_sar_extractor.core.ocsr.smiles_cache import OBSERVATIONS_SQL
 
 
@@ -20,6 +21,7 @@ class RawSnapshotTests(unittest.TestCase):
             "status": "success",
             "model_fingerprint": self.identity,
             "raw_smiles": "C[C@H](O)Cl",
+            "generation": observe_generation(["<start>", "C[C@H](O)Cl", "<end>"])[1],
             "token_confidence": 0.87,
         }
         payload.update(changes)
@@ -107,6 +109,7 @@ class RawSnapshotTests(unittest.TestCase):
         row = self.observation()
         cases = (
             self.observation(model_fingerprint="e" * 64),
+            self.observation(generation=None),
             self.observation(raw_smiles=123),
             ("not-a-hash", *row[1:]),
             (row[0], row[1], '{"confidence":NaN}', row[3]),

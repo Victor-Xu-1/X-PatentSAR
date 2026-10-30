@@ -22,6 +22,12 @@ const resourceWait = {
 };
 
 describe('optional producer-owned stage order and resource observations', () => {
+  it('preserves an optional original resume identity without inventing one', () => {
+    expect(decodeJob(job)).not.toHaveProperty('resume_job_id');
+    expect(decodeJob({ ...job, resume_job_id: 'a'.repeat(32) }).resume_job_id).toBe('a'.repeat(32));
+    expect(decodeJob({ ...job, resume_job_id: null }).resume_job_id).toBeNull();
+    expect(() => decodeJob({ ...job, resume_job_id: 42 })).toThrow('契约');
+  });
   it('preserves supplied source-first and other complete orders without changing the legacy default', () => {
     for (const stage_order of [sourceOrder, [...stageNames].reverse()])
       expect(decodeJob({ ...job, stage_order })).toHaveProperty('stage_order', stage_order);

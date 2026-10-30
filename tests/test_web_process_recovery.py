@@ -147,6 +147,7 @@ class ProcessRecoveryTests(WebFixture, unittest.TestCase):
         queue.reconcile()
         self.assertTrue(service.job(spec.job_id).can_resume)
         resumed = queue.enqueue(spec.project_id, JobRequest(resume_job_id=spec.job_id))
+        self.assertTrue(queue._prepare_pending())
         resumed_spec = decode_spec(service.store.job(resumed.id)["spec"])
         new_root = Path(resumed_spec.output_dir)
         self.assertNotEqual(new_root, original_root)

@@ -1,5 +1,5 @@
 import { UiError, useTranslation } from '../../i18n';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { MoreHorizontal, Play, RotateCcw, Square, Table2 } from 'lucide-react';
 import { api } from '../../api';
 import { ApiError } from '../../api/errors';
@@ -36,7 +36,25 @@ export function JobActions({
   const [cancelConfirm, setCancelConfirm] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const inFlight = useRef(false);
+  const uncertainResumeError = useRef<ApiError | null>(null);
   const [submittedResume, setSubmittedResume] = useState<Job | null>(null);
+  useEffect(() => {
+    if (
+      !verified ||
+      !project ||
+      !job ||
+      !submittedResume ||
+      job.project_id !== project.id ||
+      submittedResume.project_id !== project.id ||
+      job.id === submittedResume.id ||
+      job.resume_job_id !== submittedResume.id
+    )
+      return;
+    const reconciledError = uncertainResumeError.current;
+    if (reconciledError) setError((current) => (current === reconciledError ? null : current));
+    uncertainResumeError.current = null;
+    setSubmittedResume(null);
+  }, [job, project, submittedResume, verified]);
   const running = job !== null && activeJob(job);
   const canCancel =
     verified &&
@@ -101,7 +119,10 @@ export function JobActions({
       setCancelConfirm(false);
       onChange();
     } catch (e) {
-      if (action === 'resume' && e instanceof ApiError && e.uncertain) setSubmittedResume(job);
+      if (action === 'resume' && e instanceof ApiError && e.uncertain) {
+        uncertainResumeError.current = e;
+        setSubmittedResume(job);
+      }
       setError(e instanceof Error ? e : new UiError('任务操作失败。'));
     } finally {
       setSubmittingRun(false);

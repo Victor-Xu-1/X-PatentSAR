@@ -75,6 +75,12 @@ class AttemptTests(WebFixture, unittest.TestCase):
             Error(code="controlled_failure", message="Controlled fixture boundary"),
         )
 
+    def prepared(self, service, queue, project_id, request):
+        queued = queue.enqueue(project_id, request)
+        self.assertEqual(queued.status, "queued")
+        self.assertTrue(queue._prepare_pending())
+        return service.job(queued.id)
+
     def classification(self, spec):
         root = Path(spec.output_dir)
         write_json_atomic(
@@ -264,7 +270,9 @@ class AttemptTests(WebFixture, unittest.TestCase):
             path: path.read_bytes() for path in root.rglob("*") if path.is_file()
         }
         self.finish(service, queue, job)
-        resumed = queue.enqueue(project.id, JobRequest(resume_job_id=job.id))
+        resumed = self.prepared(
+            service, queue, project.id, JobRequest(resume_job_id=job.id)
+        )
         new_spec = decode_spec(service.store.job(resumed.id)["spec"])
         target = Path(new_spec.output_dir)
         self.assertNotEqual(target, root)
@@ -289,7 +297,7 @@ class AttemptTests(WebFixture, unittest.TestCase):
         self.summary(spec)
         self.finish(service, queue, job)
         before = service.job(job.id).model_dump()
-        first = queue.enqueue(project.id, JobRequest())
+        first = self.prepared(service, queue, project.id, JobRequest())
         target = Path(decode_spec(service.store.job(first.id)["spec"]).output_dir)
         self.assertNotEqual(str(target), spec.output_dir)
         self.assertTrue((target / ARTIFACTS["classify"][0]).is_file())
@@ -344,7 +352,9 @@ class AttemptTests(WebFixture, unittest.TestCase):
         )
         original = ocr_file.read_bytes()
         self.finish(service, queue, job)
-        resumed = queue.enqueue(project.id, JobRequest(resume_job_id=job.id))
+        resumed = self.prepared(
+            service, queue, project.id, JobRequest(resume_job_id=job.id)
+        )
         target = Path(decode_spec(service.store.job(resumed.id)["spec"]).output_dir)
         self.assertEqual((target / OCR_PATH).read_bytes(), original)
         self.assertTrue((target / ARTIFACTS["locate"][0]).is_file())
@@ -373,7 +383,7 @@ class AttemptTests(WebFixture, unittest.TestCase):
         self.summary(spec)
         self.finish(service, queue, job)
         before = {p: p.read_bytes() for p in root.rglob("*") if p.is_file()}
-        fresh = queue.enqueue(project.id, JobRequest())
+        fresh = self.prepared(service, queue, project.id, JobRequest())
         target = Path(decode_spec(service.store.job(fresh.id)["spec"]).output_dir)
         self.assertTrue((target / ARTIFACTS["classify"][0]).is_file())
         self.assertEqual((target / OCR_PATH).read_bytes(), raw.read_bytes())
@@ -396,7 +406,7 @@ class AttemptTests(WebFixture, unittest.TestCase):
         write_json_atomic(source, payload)
         self.summary(spec)
         self.finish(service, queue, job)
-        fresh = queue.enqueue(project.id, JobRequest())
+        fresh = self.prepared(service, queue, project.id, JobRequest())
         target = Path(decode_spec(service.store.job(fresh.id)["spec"]).output_dir)
         self.assertFalse((target / ARTIFACTS["classify"][0]).exists())
         self.assertEqual((target / OCR_PATH).read_bytes(), raw.read_bytes())
@@ -404,6 +414,7 @@ class AttemptTests(WebFixture, unittest.TestCase):
     def test_failed_smiles_resume_transports_raw_cache_not_failed_output_or_qa(self):
         import sqlite3
 
+        from patent_sar_extractor.core.ocsr.generation import observe_generation
         from patent_sar_extractor.core.ocsr.smiles_cache import SmilesCache
 
         service, project, queue, job, spec = self.draft()
@@ -448,7 +459,14 @@ class AttemptTests(WebFixture, unittest.TestCase):
         cache.save_result(
             "a" * 64,
             engine,
-            {"status": "success", "model_fingerprint": identity, "raw_smiles": "CCO"},
+            {
+                "status": "success",
+                "model_fingerprint": identity,
+                "raw_smiles": "CCO",
+                "generation": observe_generation(["<start>", "C", "C", "O", "<end>"])[
+                    1
+                ],
+            },
         )
         cache.save_result("b" * 64, engine, {"status": "timeout", "raw_smiles": None})
         with sqlite3.connect(cache_file) as connection:
@@ -466,7 +484,10 @@ class AttemptTests(WebFixture, unittest.TestCase):
             },
         )
         self.finish(service, queue, job)
-        resumed = queue.enqueue(project.id, JobRequest(resume_job_id=job.id))
+        resumed = self.prepared(
+            service, queue, project.id, JobRequest(resume_job_id=job.id)
+        )
+        self.assertEqual(resumed.status, "queued", resumed.error)
         target = Path(decode_spec(service.store.job(resumed.id)["spec"]).output_dir)
         copied = target / "smiles/smiles_cache.sqlite"
         with sqlite3.connect(copied) as connection:
@@ -512,7 +533,9 @@ class AttemptTests(WebFixture, unittest.TestCase):
             },
         )
         self.finish(service, queue, job)
-        fresh = queue.enqueue(project.id, JobRequest(resume_job_id=job.id))
+        fresh = self.prepared(
+            service, queue, project.id, JobRequest(resume_job_id=job.id)
+        )
         target = Path(decode_spec(service.store.job(fresh.id)["spec"]).output_dir)
         self.assertTrue((target / ARTIFACTS["classify"][0]).is_file())
         self.assertFalse((target / ARTIFACTS["activity"][0]).exists())
@@ -521,7 +544,9 @@ class AttemptTests(WebFixture, unittest.TestCase):
         payload = json.loads(manifest.read_text())
         payload["ruleset"]["version"] = "0.0.0"
         write_json_atomic(manifest, payload)
-        next_attempt = queue.enqueue(project.id, JobRequest(resume_job_id=job.id))
+        next_attempt = self.prepared(
+            service, queue, project.id, JobRequest(resume_job_id=job.id)
+        )
         target = Path(
             decode_spec(service.store.job(next_attempt.id)["spec"]).output_dir
         )
@@ -538,7 +563,9 @@ class AttemptTests(WebFixture, unittest.TestCase):
         write_json_atomic(manifest, payload)
         old = manifest.read_bytes()
         self.finish(service, queue, job)
-        fresh = queue.enqueue(project.id, JobRequest(resume_job_id=job.id))
+        fresh = self.prepared(
+            service, queue, project.id, JobRequest(resume_job_id=job.id)
+        )
         self.assertEqual(fresh.status, "failed")
         self.assertEqual(fresh.error.code, "unsafe_asset")
         self.assertTrue(
@@ -553,7 +580,9 @@ class AttemptTests(WebFixture, unittest.TestCase):
         self.summary(spec)
         self.finish(service, queue, job)
         with patch("patent_sar_extractor.web.attempts.MAX_COPY_BYTES", 1):
-            fresh = queue.enqueue(project.id, JobRequest(resume_job_id=job.id))
+            fresh = self.prepared(
+                service, queue, project.id, JobRequest(resume_job_id=job.id)
+            )
         self.assertEqual(fresh.status, "failed")
         self.assertEqual(fresh.error.code, "checkpoint_limit")
         self.assertEqual(queue.runner._children, {})
@@ -569,7 +598,9 @@ class AttemptTests(WebFixture, unittest.TestCase):
         write_json_atomic(primary, payload)
         self.summary(spec)
         self.finish(service, queue, job)
-        fresh = queue.enqueue(project.id, JobRequest(resume_job_id=job.id))
+        fresh = self.prepared(
+            service, queue, project.id, JobRequest(resume_job_id=job.id)
+        )
         self.assertEqual(fresh.status, "failed")
         self.assertEqual(fresh.error.code, "unsafe_asset")
         self.assertEqual(queue.runner._children, {})
