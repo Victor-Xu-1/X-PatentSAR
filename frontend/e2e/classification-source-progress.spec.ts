@@ -89,8 +89,16 @@ for (const width of [390, 1672]) {
       .locator('.stage-observation')
       .filter({ hasText: 'Reading original pages' });
     await observation.locator('summary').click();
-    await expect(observation).toContainText('Reused 2 original page observations');
-    await expect(observation).toContainText('does not certify complete extraction');
+    await expect(observation).toHaveAttribute('open', '');
+    await expect(
+      observation.getByText('Reused 2 original page observations', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      observation.getByText(
+        'Page-work progress does not certify complete extraction, identifiers or structures.',
+        { exact: true },
+      ),
+    ).toBeVisible();
     const bounds = await disclosure.locator('.stage-detail-surface').boundingBox();
     expect(bounds!.x).toBeGreaterThanOrEqual(8);
     expect(bounds!.x + bounds!.width).toBeLessThanOrEqual(width - 8);
@@ -105,8 +113,13 @@ for (const width of [390, 1672]) {
     const retry = page
       .locator('.stage-observation')
       .filter({ hasText: 'Re-reading empty text observations' });
-    await retry.locator('summary').click();
-    await expect(retry).toContainText('does not establish a blank source page');
+    if ((await retry.getAttribute('open')) === null) await retry.locator('summary').click();
+    await expect(retry).toHaveAttribute('open', '');
+    await expect(
+      retry.getByText('An empty text observation does not establish a blank source page.', {
+        exact: true,
+      }),
+    ).toBeVisible();
     await page.keyboard.press('Escape');
     phase = 'page_classification';
     completed = total = 13;
