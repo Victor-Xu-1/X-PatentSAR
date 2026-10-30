@@ -12,6 +12,17 @@ from patent_sar_extractor.core.assay_typography import assay_word_typography
 
 
 class AssayTypographyTests(unittest.TestCase):
+    def test_explicit_scientific_declarations_inside_headers_cannot_be_assay_aliases(
+        self,
+    ):
+        for field in ("Target", "Construct", "Cell line", "Batch", "Duration"):
+            old = f"{field}: Hi'BiT; IC50 nM"
+            fresh = f"{field}: HiBiT; IC50 nM"
+            with self.subTest(field=field):
+                self.assertEqual(assay_word_typography(old), old)
+                self.assertNotEqual(compact_header(old), compact_header(fresh))
+                self.assertTrue(header_conflict(old, fresh))
+
     def test_one_internal_quote_in_known_assay_compares_without_changing_raw(self):
         for original, expected in (
             ("Target Q NanoBi'T DC50 nM", "Target Q NanoBiT DC50 nM"),

@@ -2,6 +2,8 @@
 
 import re
 
+from .activity_context_values import context_values
+
 # Existing assay vocabulary only. Manufacturer spellings are documented in
 # OPERATIONS; no target, endpoint, unit, compound or arbitrary word is corrected.
 _ASSAY_WORDS = frozenset({"htrf", "hibit", "nanobit", "facs"})
@@ -16,6 +18,13 @@ def assay_word_typography(text):
     Prime marks, multiple quotes, unknown words and any letter/digit difference
     remain literal. Distinct technologies are never collapsed.
     """
+    declarations, issues = context_values(text, partial=True)
+    if issues or any(
+        value is not None for field, value in declarations.items() if field != "assay"
+    ):
+        # A known word inside an explicitly named target/construct/condition is
+        # still that literal scientific identity, not an assay technology alias.
+        return text
     return _INTERNAL_QUOTE.sub(
         lambda match: (
             "".join(match.groups())
