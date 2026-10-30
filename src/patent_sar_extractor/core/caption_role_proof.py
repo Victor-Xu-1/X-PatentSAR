@@ -25,8 +25,13 @@ __all__ = [
 
 
 @title_geometry_call
-def caption_role_status(scope, page_no, label_cell, *, _depth=0):
+def caption_role_status(scope, page_no, label_cell, *, _depth=0, _diagnostic=None):
     """Return the rederived role or None when its original frame is invalid."""
+
+    def invalid(reason):
+        if _diagnostic is not None:
+            _diagnostic.append(reason)
+
     if (
         _depth > MAX_CONTINUATION_DEPTH
         or type(page_no) is not int
@@ -45,7 +50,7 @@ def caption_role_status(scope, page_no, label_cell, *, _depth=0):
             "sources",
         }
     ):
-        return None
+        return invalid("role_shape")
     if (
         type(scope["version"]) is not int
         or scope["version"] != 1
@@ -58,7 +63,7 @@ def caption_role_status(scope, page_no, label_cell, *, _depth=0):
         or not isinstance(scope["observations"], list)
         or not 0 <= len(scope["observations"]) <= 2
     ):
-        return None
+        return invalid("role_identity")
     table, window = scope["table_bbox"], scope["window"]
     try:
         validate_context_geometry(scope["context_geometry"], table)
@@ -70,11 +75,11 @@ def caption_role_status(scope, page_no, label_cell, *, _depth=0):
             or (label_cell[1], label_cell[3])
             not in tuple(pairwise(scope["grid_axes"]["ys"]))
         ):
-            return None
+            return invalid("cell_ownership")
         if window[1] != context_floor(scope["context_geometry"]):
-            return None
+            return invalid("context_floor")
     except (ValueError, TypeError, KeyError):
-        return None
+        return invalid("grid_context")
     if not (
         window[0] == 0
         and window[3] == table[1]
@@ -82,7 +87,7 @@ def caption_role_status(scope, page_no, label_cell, *, _depth=0):
         and table[0] <= label_cell[0] < label_cell[2] <= table[2]
         and table[1] <= label_cell[1] < label_cell[3] <= table[3]
     ):
-        return None
+        return invalid("caption_window")
     for packet in scope["observations"]:
         if (
             not isinstance(packet, dict)
@@ -92,13 +97,13 @@ def caption_role_status(scope, page_no, label_cell, *, _depth=0):
             or source_observation_status(packet, packet["bbox"], packet.get("text"))
             == "invalid"
         ):
-            return None
+            return invalid("title_observation")
         box = packet["bbox"]
         if not (
             window[0] <= box[0] < box[2] <= window[2]
             and window[1] <= box[1] < box[3] <= window[3]
         ):
-            return None
+            return invalid("title_observation_bounds")
     role, key = observed_role(
         scope["observations"],
         contexts=scope["sources"],
@@ -113,21 +118,21 @@ def caption_role_status(scope, page_no, label_cell, *, _depth=0):
                 for packet in scope["sources"]
             )
         ):
-            return None
+            return invalid("title_source_context")
         if any(packet.get("bbox") != window for packet in scope["sources"]):
-            return None
+            return invalid("title_source_bounds")
         if scope["observations"] != project_caption_titles(
             scope["sources"], scope["context_geometry"]
         ):
-            return None
+            return invalid("title_projection")
     except (ValueError, TypeError, KeyError, AttributeError):
-        return None
+        return invalid("title_source_error")
     if "continuation" in scope:
         if role != "unknown":
-            return None
+            return invalid("continuation_role")
         link = scope["continuation"]
         if not isinstance(link, dict) or not isinstance(link.get("previous"), dict):
-            return None
+            return invalid("continuation_source")
         previous = link["previous"]
         prior = caption_role_status(
             previous,
@@ -136,9 +141,13 @@ def caption_role_status(scope, page_no, label_cell, *, _depth=0):
             _depth=_depth + 1,
         )
         if not valid_role_link(scope, link, prior, previous.get("table_key"), key):
-            return None
+            return invalid("continuation_identity")
         role, key = prior, previous["table_key"]
-    return role if (scope["role"], scope["table_key"]) == (role, key) else None
+    return (
+        role
+        if (scope["role"], scope["table_key"]) == (role, key)
+        else invalid("role_key")
+    )
 
 
 def validate_caption_exclusions(sections, entries):

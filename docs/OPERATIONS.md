@@ -1,5 +1,14 @@
 # Operations and troubleshooting
 
+## Original raster title and ruling overlap
+
+`crossing_title_ruling_ink` means an original context stroke is attached to a
+proved grid line, so automatic title ownership remains unresolved. The original
+context and pixels remain available for review; this status does not claim a
+compound, an intermediate or an empty source. Corrupt or inconsistent source
+proof still fails validation. If a captured role cannot replay at all, the
+bounded diagnostic reports a validation category without logging OCR text.
+
 ## Original catalogue frame conflicts
 
 An identical repeated grid observation is retained in the original inventory

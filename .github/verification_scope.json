@@ -1,54 +1,40 @@
 {
   "schema_version": 1,
-  "base_sha": "b0ecc42325afa7ef682225e743b442b2066da595",
+  "base_sha": "56c4aa809abe3a91d6d66ca43725a900e094c5da",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
     "docs/OPERATIONS.md",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "frontend/src/features/jobs/StageList.tsx",
-    "frontend/src/features/jobs/StageObservation.tsx",
-    "frontend/src/i18n/catalogs/jobs.ts",
-    "frontend/src/model/extraction.ts",
-    "frontend/tests/stage-review-presentation.test.tsx",
     "src/patent_sar_extractor/contracts.py",
     "src/patent_sar_extractor/core/caption_grid_binding.py",
-    "src/patent_sar_extractor/core/caption_role_semantics.py",
-    "src/patent_sar_extractor/core/structure_declaration_catalogues.py",
-    "src/patent_sar_extractor/core/structure_declarations.py",
+    "src/patent_sar_extractor/core/caption_role_proof.py",
+    "src/patent_sar_extractor/core/title_raster_source.py",
     "tests/test_caption_source_roles.py",
-    "tests/test_catalogue_scope_diagnostics.py",
-    "tests/test_historical_source_read.py"
+    "tests/test_title_raster_discovery.py"
   ],
   "python_modules": [
-    "tests.test_catalogue_scope_diagnostics",
-    "tests.test_caption_source_roles.CaptionSourceRoleTests.test_declaration_capture_keeps_duplicate_raw_frames_without_duplicate_scopes",
-    "tests.test_caption_source_roles.CaptionSourceRoleTests.test_reference_and_control_catalogues_do_not_auto_publish_products",
-    "tests.test_caption_source_roles.CaptionSourceRoleTests.test_reference_catalogue_reaches_formal_review_with_original_evidence",
-    "tests.test_caption_source_roles.CaptionSourceRoleTests.test_legacy_reference_role_requires_review_without_mutation",
-    "tests.test_caption_source_roles.CaptionSourceRoleTests.test_duplicate_original_frame_cannot_create_extra_caption_bindings",
+    "tests.test_title_raster_discovery",
+    "tests.test_caption_role_continuation",
+    "tests.test_caption_source_roles.CaptionRoleProofTests",
+    "tests.test_caption_source_roles.CaptionSourceRoleTests.test_unrelated_native_text_grid_source_can_be_replayed",
+    "tests.test_caption_source_roles.CaptionSourceRoleTests.test_unrelated_raster_text_grid_source_can_be_replayed",
     "tests.test_caption_source_roles.CaptionSourceRoleTests.test_unreplayable_catalogue_role_is_rejected_at_source_capture",
-    "tests.test_caption_source_roles.CaptionSourceRoleTests.test_bare_caption_reaches_the_shared_formal_gate_with_original_role",
-    "tests.test_caption_source_roles.CaptionSourceRoleTests.test_explicit_intermediate_catalog_cannot_publish_final_compound_claims",
-    "tests.test_caption_source_roles.CaptionSourceRoleTests.test_mixed_catalogue_roles_are_reviewed_not_silently_excluded",
+    "tests.test_title_ink_discovery.TitleInkDiscoveryTests.test_original_ink_mutation_rejects_source_before_numbered_recognition",
+    "tests.test_title_ink_discovery.TitleInkDiscoveryTests.test_crossing_original_paint_cannot_be_clipped_into_a_title",
+    "tests.test_title_ink_discovery.TitleInkDiscoveryTests.test_raster_context_without_a_text_reader_is_explicitly_unresolved",
+    "tests.test_staggered_title_proof.StaggeredTitleProofTests.test_crossing_body_ink_and_open_cells_refuse_before_ocr",
+    "tests.test_staggered_title_proof.StaggeredTitleProofTests.test_missing_or_changed_body_cell_cannot_authorize_a_saved_role",
+    "tests.test_source_table_caption_semantics",
     "tests.test_binding_cache_identity",
     "tests.test_historical_source_read.HistoricalSourceReadTests.test_new_binding_epoch_preserves_old_sources_and_manual_revision",
     "tests.test_historical_source_read.HistoricalSourceReadTests.test_source_epoch_change_invalidates_sar_snapshot_without_source_writes",
-    "tests.test_historical_source_read.HistoricalSourceReadTests.test_old_catalog_semantics_do_not_block_original_and_raw_review",
-    "tests.test_historical_source_read.HistoricalSourceReadTests.test_old_numbered_sources_without_activity_keep_identity_and_manual_audit",
-    "tests.test_historical_source_read.HistoricalSourceReadTests.test_old_schema_with_parseable_proof_cannot_schedule_or_revive_current_chemistry",
-    "tests.test_source_table_caption_semantics",
-    "tests.test_caption_title_spacing.CaptionTitleSpacingTests.test_case_delimited_original_roles_preserve_categories_and_negation",
-    "tests.test_source_role_terms.SourceRoleTermTests.test_known_intermediate_compound_titles_cannot_become_final_catalogues",
+    "tests.test_contract_version_types",
     "tests.test_release_policy.ReleaseNumberTests",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
-  "frontend_tests": [
-    "frontend/tests/stage-review-presentation.test.tsx"
-  ],
-  "browser_tests": [
-    "frontend/e2e/binding-source-progress.spec.ts"
-  ]
+  "frontend_tests": [],
+  "browser_tests": []
 }

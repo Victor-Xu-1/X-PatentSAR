@@ -34,6 +34,7 @@ def observe_title_raster(page, bounds):
 
 
 def _remove_original_rulings(mask, extent, rulings, size):
+    """Remove proved rules, distinguishing malformed proof from joined ink."""
     allowed = np.zeros_like(mask, dtype=bool)
     for ruling in rulings:
         if ruling["pixels"] is None:
@@ -42,7 +43,7 @@ def _remove_original_rulings(mask, extent, rulings, size):
             ruling["pixels"], ruling["cell"], size, boundary_only=True
         )
         if masks is None:
-            return False
+            return "invalid_ruling_source"
         source = cell_pixel_rect(ruling["pixels"]["bbox"], 400)
         left, top = max(source.x0, extent.x0), max(source.y0, extent.y0)
         right, bottom = min(source.x1, extent.x1), min(source.y1, extent.y1)
@@ -66,9 +67,9 @@ def _remove_original_rulings(mask, extent, rulings, size):
             # A title stroke attached to the table rule must not be cut off
             # merely because the remaining text would become easier to read.
             if joined.any():
-                return False
+                return "crossing_title_ruling_ink"
     mask[allowed] = 0
-    return True
+    return None
 
 
 def _remove_original_bodies(mask, extent, cells, rulings, prior_regions):
@@ -138,8 +139,13 @@ def title_raster_marks(
     except (SourceEvidenceLimit, TypeError, ValueError):
         return None
     mask = retained_pixels(pixels["readings"][0], window, 400, MAX_CELL_PIXELS)
-    if mask is None or not _remove_original_rulings(mask, extent, rulings, size):
+    if mask is None:
         return None
+    ruling_refusal = _remove_original_rulings(mask, extent, rulings, size)
+    if ruling_refusal == "invalid_ruling_source":
+        return None
+    if ruling_refusal is not None:
+        return [], ruling_refusal
     if not _remove_original_bodies(mask, extent, body_cells, rulings, prior_regions):
         return [], "crossing_title_body_ink"
     target = cell_pixel_rect(bounds, 400)

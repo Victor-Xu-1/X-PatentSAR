@@ -80,6 +80,77 @@ def catalog(
 
 
 class CaptionSourceRoleTests(unittest.TestCase):
+    def test_unrelated_raster_text_grid_source_can_be_replayed(self):
+        drawing = fitz.open()
+        page = drawing.new_page(width=600, height=800)
+        page.insert_text((50, 85), "A list of treatments follows.", fontsize=10)
+        for x in (50, 190, 330, 470):
+            page.draw_line((x, 100), (x, 180))
+        for y in (100, 125, 180):
+            page.draw_line((50, y), (470, y))
+        for x, value in ((60, "Target"), (200, "Condition"), (340, "Antibody")):
+            page.insert_text((x, 117), value, fontsize=9)
+        tokens = [
+            {**token, "source": "raster", "confidence": 0.99}
+            for token in source_layout(page).native
+        ]
+        for token in tokens:
+            token.pop("native_paint", None)
+        png = page.get_pixmap(matrix=fitz.Matrix(3, 3), alpha=False).tobytes("png")
+        drawing.close()
+        with fitz.open() as doc:
+            page = doc.new_page(width=600, height=800)
+            page.insert_image(page.rect, stream=png)
+            with (
+                patch(
+                    "patent_sar_extractor.core.page_ocr_cache.get_ocr_engine",
+                    return_value=None,
+                ),
+                patch(
+                    "patent_sar_extractor.core.text_ocr.source_capture.get_auxiliary_text_runtime",
+                    return_value=None,
+                ),
+            ):
+                grids = detect_ruled_table_regions(page, dpi=240, minimum_columns=1)
+                self.assertEqual(len(grids), 1)
+                observed = SourceTokens(tokens, source_layout(page), tuple(page.rect))
+                role = observe_caption_role(page, grids[0], grids, observed)
+                self.assertIsNotNone(role)
+                self.assertIn(
+                    caption_role_status(role, 1, role["table_bbox"]),
+                    {"unknown", "unresolved"},
+                )
+
+    def test_unrelated_native_text_grid_source_can_be_replayed(self):
+        with fitz.open() as doc:
+            page = doc.new_page()
+            page.insert_text((50, 85), "A list of treatments follows.", fontsize=10)
+            for x in (50, 190, 330, 470):
+                page.draw_line((x, 100), (x, 180))
+            for y in (100, 125, 180):
+                page.draw_line((50, y), (470, y))
+            for x, value in ((60, "Target"), (200, "Condition"), (340, "Antibody")):
+                page.insert_text((x, 117), value, fontsize=9)
+            with (
+                patch(
+                    "patent_sar_extractor.core.page_ocr_cache.get_ocr_engine",
+                    return_value=None,
+                ),
+                patch(
+                    "patent_sar_extractor.core.text_ocr.source_capture.get_auxiliary_text_runtime",
+                    return_value=None,
+                ),
+            ):
+                grids = detect_ruled_table_regions(page, dpi=240, minimum_columns=1)
+                self.assertEqual(len(grids), 1)
+                tokens = page_tokens(page, dpi=200, allow_tesseract=False)
+                role = observe_caption_role(page, grids[0], grids, tokens)
+                self.assertIsNotNone(role)
+                self.assertIn(
+                    caption_role_status(role, 1, role["table_bbox"]),
+                    {"unknown", "unresolved"},
+                )
+
     def test_reference_catalogue_reaches_formal_review_with_original_evidence(self):
         from patent_sar_extractor.core.activity_context_geometry import grid_box
         from patent_sar_extractor.core.binding_source_references import reference_scope
@@ -460,6 +531,33 @@ class CaptionRoleProofTests(unittest.TestCase):
             with self.subTest(title=title):
                 scope, cell = self.original_scope(title)
                 self.assertEqual(caption_role_status(scope, 1, cell), expected, scope)
+
+    def test_invalid_role_diagnostics_are_bounded_and_do_not_grant_a_role(self):
+        original, cell = self.original_scope()
+        reasons = []
+        self.assertEqual(
+            caption_role_status(original, 1, cell, _diagnostic=reasons), "compound"
+        )
+        self.assertEqual(reasons, [])
+        for change, expected in (
+            ({"page_no": 2}, "role_identity"),
+            ({"role": "sensitive data must never be logged"}, "role_key"),
+        ):
+            with self.subTest(expected=expected):
+                damaged = copy.deepcopy(original)
+                damaged.update(change)
+                reasons = []
+                self.assertIsNone(
+                    caption_role_status(damaged, 1, cell, _diagnostic=reasons)
+                )
+                self.assertEqual(reasons, [expected])
+                self.assertNotIn("sensitive", str(reasons))
+
+        damaged = copy.deepcopy(original)
+        damaged["sources"][0]["title_context"]["page_size"][0] += 1
+        reasons = []
+        self.assertIsNone(caption_role_status(damaged, 1, cell, _diagnostic=reasons))
+        self.assertEqual(reasons, ["title_source_context"])
 
     def test_saved_role_and_source_frame_cannot_be_changed_by_flags(self):
         original, cell = self.original_scope()
