@@ -5,6 +5,7 @@ import math
 import re
 from itertools import pairwise
 
+from .role_diagnostic_pixels import bounded_large_pixel_packet
 from .source_evidence_identity import proof_id
 
 MAX_ROLE_ATTEMPTS = 4096
@@ -48,16 +49,25 @@ def scope_observations(observations, page_no, *, original_pdf_sha256=""):
     ]
 
 
-def _bounded_tree(value, *, coordinate_tuples=False, max_depth=16, text_carriers=False):
+def _bounded_tree(
+    value,
+    *,
+    coordinate_tuples=False,
+    max_depth=16,
+    text_carriers=False,
+    pixel_carriers=False,
+):
     # A paired recovery wraps the existing reading in packet/views/selected;
     # failed attempts additionally wrap packet in attempts/list. Only this
     # explicit physical-cell owner gets the six carrier links, never an
     # arbitrary nested dictionary or another nested recovery. All node, array,
-    # scalar and whole-catalog byte bounds remain shared and unchanged.
+    # scalar and whole-catalog byte bounds remain shared and unchanged. Rejected
+    # binding proposals may retain complete existing pixel-SDK packets; only
+    # their independently bounded mask scalar differs from ordinary source text.
     owner = ("source_cells", "observations", "[]", "cells", "[]")
-    pending, count = [(value, 0, max_depth, ())], 0
+    pending, count = [(value, 0, max_depth, (), None)], 0
     while pending:
-        item, depth, limit, path = pending.pop()
+        item, depth, limit, path, pixel_owner = pending.pop()
         count += 1
         if depth > limit or count > 200000:
             raise ValueError(
@@ -66,6 +76,9 @@ def _bounded_tree(value, *, coordinate_tuples=False, max_depth=16, text_carriers
         if isinstance(item, dict):
             if len(item) > 128 or any(type(k) is not str or len(k) > 128 for k in item):
                 raise ValueError("Malformed original role diagnostic object")
+            packet = pixel_carriers and bounded_large_pixel_packet(
+                item, text_limit=10000
+            )
             for key, child in item.items():
                 child_limit = (
                     max_depth + 6
@@ -74,21 +87,56 @@ def _bounded_tree(value, *, coordinate_tuples=False, max_depth=16, text_carriers
                     and key in {"auxiliary_text", "auxiliary_text_attempts"}
                     else limit
                 )
-                pending.append((child, depth + 1, child_limit, path + (key,)))
+                child_owner = (
+                    "readings"
+                    if packet and key == "readings"
+                    else "mask"
+                    if pixel_owner == "reading" and key == "mask_hex"
+                    else None
+                )
+                pending.append(
+                    (child, depth + 1, child_limit, path + (key,), child_owner)
+                )
         elif isinstance(item, list) or coordinate_tuples and isinstance(item, tuple):
             if len(item) > 4096:
                 raise ValueError("Original role diagnostic array exceeds its budget")
-            pending.extend((child, depth + 1, limit, path + ("[]",)) for child in item)
+            pending.extend(
+                (
+                    child,
+                    depth + 1,
+                    limit,
+                    path + ("[]",),
+                    "reading" if pixel_owner == "readings" else None,
+                )
+                for child in item
+            )
         elif item is None or type(item) in {bool, int, str, float}:
             if (
                 type(item) is str
                 and len(item) > 10000
+                and pixel_owner != "mask"
                 or type(item) is float
                 and not math.isfinite(item)
                 or type(item) is int
                 and item.bit_length() > 64
             ):
-                raise ValueError("Original role diagnostic value exceeds its budget")
+                location = "/".join(
+                    part
+                    if part == "[]"
+                    or len(part) <= 64
+                    and part.replace("_", "").isalnum()
+                    else "<field>"
+                    for part in path
+                )
+                detail = (
+                    f"{len(item)} characters"
+                    if type(item) is str
+                    else type(item).__name__
+                )
+                raise ValueError(
+                    "Original role diagnostic value exceeds its budget "
+                    f"at {location or '<root>'} ({detail})"
+                )
         else:
             raise TypeError("Original role diagnostic is not literal JSON")
 
@@ -107,6 +155,7 @@ def _validate(observation, *, original_pdf_sha256=None):
             observation,
             coordinate_tuples=True,
             max_depth=16 + 3 * MAX_CONTINUATION_DEPTH,
+            pixel_carriers=True,
         )
         return
     keys = {

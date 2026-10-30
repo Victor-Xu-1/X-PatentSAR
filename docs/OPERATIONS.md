@@ -1,5 +1,30 @@
 # Operations and troubleshooting
 
+## Rejected source evidence and non-molecular grid titles
+
+`Original role diagnostic value exceeds its budget` reports a field path and
+type/size, not private original text. A legitimate existing pixel-SDK mask can
+exceed ordinary text length; current unresolved variant2 retention validates the
+complete bounded packet instead of truncating evidence or raising every text
+limit. Arbitrary long text, malformed/trailing compressed data, changed windows
+and excess pixels remain refusals. Region/catalog/attempt/node/depth budgets are
+unchanged. No retained rejected packet becomes scientific acceptance, even if
+saved issue flags are cleared. A source/readback problem remains unresolved.
+
+A fully qualified characterization table is not a molecule catalogue. Current
+source coverage may discharge only its unknown catalogue-title demand when one
+whole role/pixel owner matches the exact original page and complete grid and
+there are no diagrams or nonfinal conflicts. Do not use partial roles, neighboring
+tables or saved labels to waive a true unknown catalogue title. Whole original
+role replay remains necessary; changed original pixels still refuse.
+
+Binding78/binder89 keeps previous derived proof historical; raw PDF/OCR/crops and
+manual corrections remain unchanged. Resume only through the frontend after the
+latest reviewed main is deployed and idle/backup checks pass. The software's
+normal fingerprint/source checks decide reuse of unchanged completed stages;
+never copy/edit scientific artifacts or force historical acceptance. A passing
+generated control or completed work counter is not real-patent acceptance.
+
 ## Classification page-work observations
 
 The formal producer reports source work through the same stage-progress1 channel

@@ -1,5 +1,21 @@
 # Project governance manifest
 
+- Rejected pixel diagnostics and non-molecular title ownership: current
+  Binding78/binder89 keeps old derived ownership historical without editing raw
+  observations, PDFs, detector assets or manual audit. `role_diagnostic_pixels`
+  permits a large `mask_hex` only inside an entire existing pixel-SDK packet
+  validated under its unchanged geometry/DPI/compression/padding/8M-pixel bounds.
+  This is unresolved variant2 retention, not role/source acceptance. Ordinary
+  text, variant1,1MiB regions,4096attempts,64MiB catalogs and node/depth bounds
+  remain unchanged. `declaration_reference_ownership` discharges only an unknown
+  catalogue-title demand for one complete, same-page/same-grid independently
+  qualified characterization region with no diagrams or nonfinal conflict.
+  Partial/foreign/duplicate/mutated/measurement-bearing owners do not qualify.
+  Raw unresolved title observations remain, and all role cells still require
+  original replay through the existing worker/Web source plan. No alternate
+  parser/store/queue/model, inference pass, numerical SAR/API/SQL/dependency
+  change or scientific-result rewrite accompanies these fixes.
+
 - Page-work observation authority: optional `core/page_progress` notifications
   from the existing page cache/classifier feed the formal classification handler's
   `application/classification_progress` writer on the SAME stage-progress1 file

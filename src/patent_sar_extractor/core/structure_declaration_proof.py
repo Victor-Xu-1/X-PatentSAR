@@ -5,6 +5,7 @@ from collections import defaultdict
 from .activity_context_geometry import context_region, grid_box
 from .activity_header_evidence import proof_id
 from .binding_source_regions import reference_cell
+from .declaration_reference_ownership import characterization_owns_catalogue_title
 from .printed_identifiers import identifier_key
 from .source_binding_proof import annotate_source_binding
 from .source_window_chunks import validate_source_overlap
@@ -191,7 +192,9 @@ def declaration_issues(
                 issues.append(
                     {**finding, "reason": "unproved_original_nonfinal_declaration"}
                 )
-            if original["unproved_title"]:
+            if original["unproved_title"] and not characterization_owns_catalogue_title(
+                original, page["source"], reference_regions[original["page_no"]]
+            ):
                 issues.append(
                     {**finding, "reason": "unproved_original_catalogue_title"}
                 )
