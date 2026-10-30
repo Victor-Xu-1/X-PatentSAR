@@ -3,11 +3,19 @@
 import re
 
 from .activity_context_values import context_values
+from .activity_header_metrics import METRIC, normalize_metric_text
 
 # Existing assay vocabulary only. Manufacturer spellings are documented in
 # OPERATIONS; no target, endpoint, unit, compound or arbitrary word is corrected.
 _ASSAY_WORDS = frozenset({"htrf", "hibit", "nanobit", "facs"})
 _INTERNAL_QUOTE = re.compile(r"(?<![\w'’′])([A-Za-z]+)['’]([A-Za-z]+)(?![\w'’′])")
+
+
+def _assay_context_allowed(text):
+    declarations, issues = context_values(text, partial=True)
+    return not issues and not any(
+        value is not None for field, value in declarations.items() if field != "assay"
+    )
 
 
 def assay_word_typography(text):
@@ -18,10 +26,7 @@ def assay_word_typography(text):
     Prime marks, multiple quotes, unknown words and any letter/digit difference
     remain literal. Distinct technologies are never collapsed.
     """
-    declarations, issues = context_values(text, partial=True)
-    if issues or any(
-        value is not None for field, value in declarations.items() if field != "assay"
-    ):
+    if not _assay_context_allowed(text):
         # A known word inside an explicitly named target/construct/condition is
         # still that literal scientific identity, not an assay technology alias.
         return text
@@ -33,3 +38,19 @@ def assay_word_typography(text):
         ),
         text,
     )
+
+
+def assay_header_comparison(fragment, header):
+    """Scope fragment typography to a complete metric header, never raw text.
+
+    Either operand's explicit non-assay identity disables projection for BOTH.
+    Callers must already own an assay header; a bare label cannot grant it.
+    The original packets and all non-assay characters remain unchanged.
+    """
+    if (
+        not METRIC.search(normalize_metric_text(header))
+        or not _assay_context_allowed(fragment)
+        or not _assay_context_allowed(header)
+    ):
+        return fragment, header
+    return assay_word_typography(fragment), assay_word_typography(header)

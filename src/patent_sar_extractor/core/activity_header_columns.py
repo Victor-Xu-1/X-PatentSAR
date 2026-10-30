@@ -96,7 +96,9 @@ def observe_header_columns(
         crossing = crosses_cell(list(tokens), bounds)
         conflict = bool(
             reading.physical_header_lines
-            and detector_header_conflict(reading.detection_parts, reading.raw_text)
+            and detector_header_conflict(
+                reading.detection_parts, reading.raw_text, assay_context=True
+            )
         )
         columns.append(
             resolve_header_boundary(

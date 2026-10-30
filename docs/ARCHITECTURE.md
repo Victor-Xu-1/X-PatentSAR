@@ -1,5 +1,24 @@
 # X-PatentSAR architecture
 
+## Scoped assay-header fragment comparison
+
+Complete physical assay-header observation, column sources, boundary witnesses,
+saved proof and row-evidence validation now opt into ONE explicit detector
+comparison scope. `assay_header_comparison` reuses the existing closed assay-word
+typography ONLY when the complete fresh header contains a recognized endpoint
+and neither operand has an explicit non-assay scientific declaration. An isolated
+strong technology fragment therefore compares consistently with the complete
+header when neighboring detector words are weak. No original packet is edited.
+
+`detector_header_conflict` stays literal by DEFAULT. Generic auxiliary text/row
+recovery and compound identifiers do not acquire the assay-header permission.
+Unknown words, multiple quotes, primes, target/construct/cell/time/batch claims,
+endpoint names, units and digits retain their existing guards. This is not fuzzy
+OCR correction, primary replacement, missing-field inference or score relaxation.
+Activity55/extractor67 refresh derived header proof; Binding81/binder92, raw
+observations, chemical data, model inventory, Web API/SQL and manual audit
+remain otherwise unchanged.
+
 ## One bounded original frame for scanned titles and rulings
 
 `title_ink_source` version6 is the sole current title-ink producer. For a raster
@@ -22,7 +41,7 @@ Malformed/mixed/downgraded windows or changed parent pixels cannot qualify.
 Native-only, over-parent-budget and outside-edge contexts retain their strict
 existing source recipe. Historical title-ink4/5 replay their original separate
 clips read-only; they are not rewritten/promoted. Binding81/binder92 and
-Activity54/extractor66 refresh affected derived proof only. Raw PDF/OCR/crops,
+Activity55/extractor67 refresh affected derived proof only. Raw PDF/OCR/crops,
 chemical observations, manual audit, API/SQL, models and dependencies are unchanged.
 This resolves tested rendering ownership, not universal chemical/OCR accuracy.
 
@@ -47,7 +66,7 @@ guard or molecular identity/measurement rule was relaxed. Shared source inventor
 counts title requests and rejects conflicting reuse of an observation identity.
 Worker/Web readers replay original pixels without acquiring an OCR runtime.
 
-Binding81/binder92 and Activity54/extractor66 refresh derived semantics only.
+Binding81/binder92 and Activity55/extractor67 refresh derived semantics only.
 Raw PDF/OCR/locator/segmentation/chemical observations and manual audit are not
 rewritten. The optional runtime remains off unless already configured on demand;
 no model/environment installation, new queue, asset store or execution chain.
@@ -1646,7 +1665,7 @@ quotes, changed letters/digits and every endpoint/unit/target/time distinction
 remain protected. Only header and explicit ASSAY comparisons use this projection;
 target/construct/context identity and generic OCR recovery remain literal. This
 does not equate distinct assay technologies or grant model replacement authority.
-Current source epochs are Binding81/binder92 and Activity54/extractor66; raw
+Current source epochs are Binding81/binder92 and Activity55/extractor67; raw
 PDF/OCR/OCSR/preparation, model files, activation, API/SQL and human audit stay intact.
 
 ## Complete closed-grid role coverage with bounded work units

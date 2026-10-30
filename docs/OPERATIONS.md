@@ -1,5 +1,17 @@
 # Operations and troubleshooting
 
+## Strong assay-word fragments disagree with a complete header
+
+Formal assay-header owners explicitly use the same closed technology-word
+comparison for isolated qualified detector fragments as for complete headers.
+Both the fragment and whole fresh header must permit that typography; a named
+target/construct/cell/duration/batch or missing endpoint disables it. Raw detector
+scores/text and complete primary reads remain unchanged. Do not copy this
+permission into generic text or compound-ID recovery: its default stays literal.
+Unknown words, scientific identities, endpoint/unit/digit conflicts and source
+quality/refusal remain enforced. Activity55/extractor67 require fresh derived
+header proof; do not edit old artifacts or relabel history as current.
+
 ## Scanned table edges disagree between original clips
 
 Current title-ink6 captures a title and its bounded closed first-row rulings from
@@ -12,7 +24,7 @@ The8M-pixel per-render limit is unchanged. Oversized parents and outside-edge
 witnesses stay on the conservative existing recipe; no full-page upscale/cache
 or additional recognizer is created.
 
-Binding81/binder92 and Activity54/extractor66 require new derived source proof.
+Binding81/binder92 and Activity55/extractor67 require new derived source proof.
 Keep old attempt artifacts and manual audit intact. Legacy title-ink4/5 replay
 their exact old rendering recipe and remain history, not auto-accepted current
 results. Only the ordinary frontend lifecycle may resume/recompute the affected
@@ -35,7 +47,7 @@ replay. The standard environment setting stays authoritative: disabled means no
 auxiliary call, and enabling never installs a missing runtime automatically.
 Requests share the existing source inventory/session limits and identity checks.
 
-Binding81/binder92 and Activity54/extractor66 require fresh derived associations;
+Binding81/binder92 and Activity55/extractor67 require fresh derived associations;
 old attempts remain reviewable history, not automatically relabelled current.
 Unchanged raw observations/structure assets/manual audit remain preserved. Normal
 frontend resume decides safe checkpoint reuse. Never edit old artifacts or lower
@@ -1358,7 +1370,7 @@ Canonical technology spelling is supported by
 [Promega HiBiT](https://worldwide.promega.com/resources/protocols/technical-manuals/500/nano-glo-hibit-lytic-detection-system-protocol/)
 and [Revvity HTRF](https://www.revvity.com/ask/htrf-basics); these sources do not
 establish OCR accuracy, which requires independent original-source validation.
-Binding81/binder92 and Activity54/extractor66 refresh affected derived proof.
+Binding81/binder92 and Activity55/extractor67 refresh affected derived proof.
 The recovery3-era Binding47/binder57, Activity30/extractor40 and role4 outputs
 remain historical; current derived source contracts require normal frontend
 regeneration. Preserve old tasks/manual audit and matching

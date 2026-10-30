@@ -17,7 +17,7 @@ from .activity_header_metrics import (
 from .activity_headers import infer_value_keys
 from .activity_identity import is_id_header
 from .activity_metadata import metadata_role
-from .assay_typography import assay_word_typography
+from .assay_typography import assay_header_comparison, assay_word_typography
 from .ocr_claims import qualified_text_runs
 from .structure_table_headers import structure_header_role
 
@@ -142,19 +142,27 @@ def context_conflict(original, fresh, *, partial=False) -> bool:
     )
 
 
-def detector_header_conflict(parts, fresh: str) -> bool:
-    """Keep valid detector claims alongside complete physical line rereads."""
+def detector_header_conflict(parts, fresh: str, *, assay_context=False) -> bool:
+    """Keep detector claims; generic text recovery remains literal by default."""
+    if type(assay_context) is not bool:
+        raise ValueError("Invalid detector header comparison scope")
     runs = qualified_text_runs(parts)
     if runs is None:
         return True
-    return any(
-        header_conflict("\n".join(run), _fragment_comparison("\n".join(run), fresh))
-        or _missing_literal_fragment("\n".join(run), fresh)
-        or not literal_header_units("\n".join(run)).issubset(
-            literal_header_units(fresh)
+    for run in runs:
+        original = "\n".join(run)
+        before, after = (
+            assay_header_comparison(original, fresh)
+            if assay_context
+            else (original, fresh)
         )
-        for run in runs
-    )
+        if (
+            header_conflict(before, _fragment_comparison(before, after))
+            or _missing_literal_fragment(before, after)
+            or not literal_header_units(original).issubset(literal_header_units(fresh))
+        ):
+            return True
+    return False
 
 
 def _fragment_comparison(original: str, fresh: str) -> str:

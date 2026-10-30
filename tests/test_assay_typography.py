@@ -5,13 +5,94 @@ import unittest
 from patent_sar_extractor.core.activity_header_identity import (
     compact_header,
     context_conflict,
+    detector_header_conflict,
     header_conflict,
 )
+from patent_sar_extractor.core.activity_header_sources import _column_conflict
 from patent_sar_extractor.core.activity_headers import context_from_text
 from patent_sar_extractor.core.assay_typography import assay_word_typography
+from patent_sar_extractor.core.source_geometry import SourceLayout, SourceTokens
+from patent_sar_extractor.core.source_observations import (
+    source_cell_observation,
+    source_observation_status,
+)
 
 
 class AssayTypographyTests(unittest.TestCase):
+    def test_original_column_source_uses_the_same_scoped_fragment_contract(self):
+        for original, fresh, conflict in (
+            ("NanoBi'T", "NanoBiT DC50 nM", False),
+            ("NanoBi'T", "Target: NanoBiT; DC50 nM", True),
+            ("Target: NanoBi'T", "NanoBiT DC50 nM", True),
+            ("nM", "NanoBiT DC50 uM", True),
+            ("24 h", "NanoBiT DC50 nM 48 h", True),
+        ):
+            bounds = [0, 0, 200, 35]
+            parts = [
+                {
+                    "text": original,
+                    "confidence": 0.999,
+                    "source": "raster",
+                    "x": 45,
+                    "y": 15,
+                    "bbox": [4, 8, 86, 22],
+                }
+            ]
+            tokens = SourceTokens(parts, SourceLayout((), tuple(bounds)), tuple(bounds))
+            packet = source_cell_observation(tokens, bounds, native=False)
+            self.assertEqual(
+                source_observation_status(packet, bounds, original), "qualified"
+            )
+            with self.subTest(original=original, fresh=fresh):
+                self.assertEqual(_column_conflict(packet, fresh), conflict)
+                self.assertEqual(packet["text"], original)
+
+    def test_detector_fragments_need_explicit_assay_header_context(self):
+        for original, fresh in (
+            ("NanoBi'T", "NanoBiT DC50 nM"),
+            ("H'TRF", "HTRF IC50 nM"),
+            ("Hi’BiT", "HiBiT EC50 uM"),
+        ):
+            parts = [{"text": original, "confidence": 0.999}]
+            with self.subTest(original=original):
+                self.assertTrue(detector_header_conflict(parts, fresh))
+                self.assertFalse(
+                    detector_header_conflict(parts, fresh, assay_context=True)
+                )
+                self.assertEqual(parts[0]["text"], original)
+        self.assertTrue(
+            detector_header_conflict(
+                [{"text": "NanoBi'T", "confidence": 0.999}],
+                "NanoBiT",
+                assay_context=True,
+            )
+        )
+
+    def test_fragment_context_does_not_change_named_scientific_identity(self):
+        for field in ("Target", "Construct", "Cell line", "Batch", "Duration"):
+            parts = [{"text": "NanoBi'T", "confidence": 0.999}]
+            fresh = f"{field}: NanoBiT; IC50 nM"
+            with self.subTest(field=field):
+                self.assertTrue(
+                    detector_header_conflict(parts, fresh, assay_context=True)
+                )
+        for original, fresh in (
+            ("Target Q NanoBi'T", "Target R NanoBiT DC50 nM"),
+            ("NanoBi'T DC50 nM", "NanoBiT DC50 uM"),
+            ("NanoBi'T DC50 nM", "NanoBiT EC50 nM"),
+            ("NanoBiT7", "NanoBiT DC50 nM"),
+            ("Nano'Bi'T", "NanoBiT DC50 nM"),
+            ("5′RNA", "5RNA DC50 nM"),
+        ):
+            with self.subTest(original=original, fresh=fresh):
+                self.assertTrue(
+                    detector_header_conflict(
+                        [{"text": original, "confidence": 0.999}],
+                        fresh,
+                        assay_context=True,
+                    )
+                )
+
     def test_explicit_scientific_declarations_inside_headers_cannot_be_assay_aliases(
         self,
     ):

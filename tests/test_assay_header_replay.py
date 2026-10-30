@@ -11,6 +11,42 @@ from tests.test_header_physical_lines import scanned_headers
 
 
 class AssayHeaderReplayTests(unittest.TestCase):
+    def test_saved_detector_fragment_uses_the_same_closed_assay_comparison(self):
+        document, page, region, _headers = scanned_headers()
+        with (
+            document,
+            patch(
+                "patent_sar_extractor.core.text_ocr.configuration.get_auxiliary_text_runtime",
+                return_value=None,
+            ),
+        ):
+            source = grid_schema(
+                context_from_text("Table 58. Binding activity"),
+                [["No.", "Noise", "Noise", "Noise"]],
+            )
+            proof = refine_scanned_header(page, region, source).header_resolution
+        self.assertTrue(valid_header_proof(proof))
+        for fragment, expected in (
+            ("NanoBi'T", True),
+            ("NanoBiT7", False),
+            ("Nano'Bi'T", False),
+            ("Target: NanoBi'T", False),
+        ):
+            with self.subTest(fragment=fragment):
+                changed = copy.deepcopy(proof)
+                column = changed["observations"][0]["columns"][2]
+                detected = next(
+                    part
+                    for part in column["detection_parts"]
+                    if part["text"] == "NanoBiT"
+                )
+                for part in column["detection_parts"]:
+                    part["confidence"] = 0.2
+                detected["text"] = fragment
+                detected["confidence"] = 0.999
+                self.assertEqual(valid_header_proof(changed), expected)
+                self.assertEqual(detected["text"], fragment)
+
     def test_complete_saved_pair_accepts_only_closed_assay_typography_not_scientific_changes(
         self,
     ):
