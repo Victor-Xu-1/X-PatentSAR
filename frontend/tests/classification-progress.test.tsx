@@ -15,6 +15,7 @@ function current(phase: PageSourcePhase = 'page_ocr', completed = 7): Job {
     ...job,
     status: 'running',
     history_available: true,
+    stage_order: ['classify', 'locate', 'structures', 'bind', 'activity', 'smiles', 'final', 'qa'],
     stages: job.stages.map((stage) => ({
       ...stage,
       status: stage.name === 'classify' ? 'running' : 'pending',

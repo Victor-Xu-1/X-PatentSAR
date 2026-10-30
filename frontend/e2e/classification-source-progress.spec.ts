@@ -47,6 +47,16 @@ for (const width of [390, 1672]) {
         ...job,
         id: 'controlled-page-work',
         project_id: project,
+        stage_order: [
+          'classify',
+          'locate',
+          'structures',
+          'bind',
+          'activity',
+          'smiles',
+          'final',
+          'qa',
+        ],
         status: terminal ? 'failed' : 'running',
         error: terminal
           ? { code: 'extraction_failed', message: 'Controlled source failure.' }
@@ -81,6 +91,14 @@ for (const width of [390, 1672]) {
     const current = page.locator('.stage-current');
     await expect(current).toContainText('Reading original pages · 7 / 13 pages');
     await expect(current).toHaveClass(/is-running/);
+    if (width >= 1280) {
+      await expect(page.locator('.workflow-group')).toHaveCount(4);
+      expect(
+        await current
+          .locator('.stage-current-text')
+          .evaluate((node) => node.scrollWidth <= node.clientWidth + 1),
+      ).toBe(true);
+    }
     await expect.poll(() => resultReads).toBeGreaterThan(0);
     const count = resultReads;
     await page.locator('.stage-current-line').click();
