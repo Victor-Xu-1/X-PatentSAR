@@ -13,7 +13,8 @@
     "src/patent_sar_extractor/core/cell_partial_frame.py",
     "src/patent_sar_extractor/core/cell_raster.py",
     "src/patent_sar_extractor/core/cell_window.py",
-    "tests/test_preserved_cell_frame.py"
+    "tests/test_preserved_cell_frame.py",
+    "tests/test_role_grid_raster_coverage.py"
   ],
   "python_modules": [
     "tests.test_preserved_cell_frame",

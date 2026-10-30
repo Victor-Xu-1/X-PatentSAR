@@ -53,13 +53,16 @@ class RasterRoleGridCoverageTests(unittest.TestCase):
         current = {"text": "", "tail": False}
         frames = []
 
-        def render(source, bounds, dpi, *, purpose):
+        def render(source, bounds, dpi, *, purpose, role_text_height):
             current["text"] = native_cell_text(original, bounds)
             current["tail"] = bounds[1] == grid["ys"][-2]
             if render_tail and current["tail"]:
                 raise CellRenderLimit("Controlled last-window render refusal")
             frames.append((tuple(bounds), dpi))
-            return render_cell_raster(source, bounds, dpi, purpose=purpose)
+            self.assertEqual(role_text_height, 32)
+            return render_cell_raster(
+                source, bounds, dpi, purpose=purpose, role_text_height=role_text_height
+            )
 
         def reader(image, *, use_det, use_cls):
             # This supplies text only. Real source pixels, ink crops, line
