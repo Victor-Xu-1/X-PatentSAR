@@ -1,4 +1,4 @@
-"""One compact-padding alternative over an unchanged complete original ink row."""
+"""Bounded blank-padding views over one unchanged complete original ink row."""
 
 import re
 
@@ -74,3 +74,53 @@ def checked_frame(frame):
         raise ValueError("Unproved complete original row padding")
     compact = row_recognition_border(crop[3] - crop[1], border)
     return compact if compact != border else None
+
+
+def preparation_shapes(frame, *, version):
+    """The exact request sequence; historical evidence retains its old recipe."""
+    compact = checked_frame(frame)
+    shape, crop, border = (
+        frame["source_shape"],
+        frame["ink_crop_pixels"],
+        frame["border_pixels"],
+    )
+    shapes = [tuple(shape)]
+    if compact is not None:
+        shapes.append(
+            (crop[3] - crop[1] + 2 * compact, crop[2] - crop[0] + 2 * compact, 3)
+        )
+    if version >= 5:
+        horizontal = max(border, crop[3] - crop[1])
+        width = crop[2] - crop[0] + 2 * horizontal
+        candidate = (shape[0], width, 3)
+        if candidate not in shapes and width <= 4096 and shape[0] * width <= MAX_PIXELS:
+            shapes.append(candidate)
+    return tuple(shapes)
+
+
+def preparation_views(image, *, version):
+    frame, compact = row_frame(image)
+    shapes = preparation_shapes(frame, version=version)
+    views = [image]
+    if compact is not None:
+        views.append(compact)
+    if len(shapes) > len(views):
+        x0, y0, x1, y1 = frame["ink_crop_pixels"]
+        border = frame["border_pixels"]
+        horizontal = max(border, y1 - y0)
+        views.append(
+            cv2.copyMakeBorder(
+                image[y0:y1, x0:x1],
+                border,
+                border,
+                horizontal,
+                horizontal,
+                cv2.BORDER_CONSTANT,
+                value=(255, 255, 255),
+            )
+        )
+    if tuple(tuple(view.shape) for view in views) != shapes:
+        raise ValueError("Original blank-padding preparation differs")
+    for view in views:
+        frame_digest(view)
+    return frame, tuple(views)

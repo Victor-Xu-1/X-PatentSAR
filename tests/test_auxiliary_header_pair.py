@@ -126,10 +126,10 @@ class AuxiliaryHeaderPairTests(unittest.TestCase):
                     self.assertEqual(attempt["code"], "unqualified_original_row")
                     observations = attempt["views"][0]["requests"][0]["observations"]
                     self.assertGreaterEqual(len(observations), 1)
-                    self.assertLessEqual(len(observations), 2)
+                    self.assertLessEqual(len(observations), 3)
                     self.assertTrue(all(o["confidence"] == score for o in observations))
                     self.assertTrue(all(o["text"] == text for o in observations))
-                self.assertLessEqual(reader.calls, 2)
+                self.assertLessEqual(reader.calls, 3)
 
     def test_invalid_reply_is_not_reported_as_a_quality_rejection(self):
         reader = cell_fixture.ControlledAuxiliary()

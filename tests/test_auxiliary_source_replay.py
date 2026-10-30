@@ -15,6 +15,7 @@ from patent_sar_extractor.core.text_ocr.cell_capture import refine_text_pair
 from patent_sar_extractor.core.text_ocr.cell_proof import (
     replay_auxiliary_cell,
 )
+from patent_sar_extractor.core.text_ocr.source_inventory import replay_auxiliary_source
 from tests import test_auxiliary_cell_evidence as cell_fixture
 
 
@@ -54,8 +55,8 @@ class AuxiliarySourceReplayTests(unittest.TestCase):
                 side_effect=AssertionError("read side inference"),
             ),
             patch(
-                "patent_sar_extractor.core.activity_auxiliary_replay.replay_auxiliary_cell",
-                wraps=replay_auxiliary_cell,
+                "patent_sar_extractor.core.activity_auxiliary_replay.replay_auxiliary_source",
+                wraps=replay_auxiliary_source,
             ) as replay,
         ):
             self.assertEqual(

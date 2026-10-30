@@ -18,6 +18,7 @@ from .recovery_primary import (
     source_metadata,
 )
 from .recovery_proof import RECOVERY_VERSION, effective_recovery_cells
+from .recovery_retained_rows import retained_pair_rows
 from .recovery_rows import RecoveryRowEngine, UnqualifiedRecoveryRow
 
 
@@ -94,8 +95,24 @@ def capture_complete_views(
     text_scope(maximum_rows, maximum_row_height)
     if len(images) != 2 or len(primaries) != 2 or type(allow_chunks) is not bool:
         raise ValueError("Invalid complete source capture inventory")
+    frames = [
+        {
+            "dpi": dpi,
+            "shape": list(image.shape),
+            "pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
+        }
+        for image, dpi in zip(images, (400, 600), strict=True)
+    ]
+    retained = retained_pair_rows(
+        primaries,
+        frames,
+        maximum_rows=maximum_rows,
+        maximum_row_height=maximum_row_height,
+    )
     budget, views, fingerprint = [], [], None
-    for image, primary, dpi in zip(images, primaries, (400, 600), strict=True):
+    for index, (image, primary, dpi) in enumerate(
+        zip(images, primaries, (400, 600), strict=True)
+    ):
         physical = physical_line_frame(
             image,
             0,
@@ -109,13 +126,13 @@ def capture_complete_views(
                     {"status": "not_attempted", "code": "unbounded_original_rows"}
                 )
             return None
-        frame = {
-            "dpi": dpi,
-            "shape": list(image.shape),
-            "pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
-        }
+        frame = frames[index]
         engine = RecoveryRowEngine(
-            auxiliary=auxiliary, budget=budget, fingerprint=fingerprint
+            auxiliary=auxiliary,
+            budget=budget,
+            fingerprint=fingerprint,
+            version=RECOVERY_VERSION,
+            retained_rows=retained[index],
         )
         view = {
             "dpi": dpi,

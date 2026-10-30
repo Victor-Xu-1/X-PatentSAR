@@ -140,7 +140,9 @@ class SourceEpochAuthorityTests(WebFixture, unittest.TestCase):
         identity = runtime_identity()
         with patch.object(core, "STEREO_EVIDENCE_VERSION", self.next_epoch):
             self.assertEqual(runtime_identity(), identity)
-            new_job = queue.enqueue(project.id, JobRequest())
+            new_job = attempt_cases.AttemptTests.prepared(
+                self, service, queue, project.id, JobRequest()
+            )
         target = Path(decode_spec(service.store.job(new_job.id)["spec"]).output_dir)
         for stage in ("classify", "locate", "structures", "bind", "activity"):
             self.assertTrue((target / ARTIFACTS[stage][0]).is_file(), stage)

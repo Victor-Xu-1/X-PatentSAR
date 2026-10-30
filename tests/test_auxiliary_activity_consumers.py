@@ -14,9 +14,11 @@ from patent_sar_extractor.core.activity_header_evidence import (
 )
 from patent_sar_extractor.core.activity_header_proof import valid_header_proof
 from patent_sar_extractor.core.activity_join import activity_evidence_errors
+from patent_sar_extractor.core.cell_frame_proof import original_cell_frame_matches
 from patent_sar_extractor.core.qa_report import build_qa_report
 from patent_sar_extractor.core.table_cells import observe_original_cell
 from patent_sar_extractor.core.text_ocr.cell_capture import refine_text_pair
+from patent_sar_extractor.core.text_ocr.cell_proof import replay_auxiliary_cell
 from patent_sar_extractor.web.acceptance import authority
 from patent_sar_extractor.workers.gen_final_results import export_validation
 from tests import test_auxiliary_cell_evidence as cell_fixture
@@ -115,7 +117,16 @@ class AuxiliaryActivityConsumerTests(unittest.TestCase):
             marker=None,
             open_original=lambda: nullcontext(self.fixture.document),
         )
-        self.assertEqual(decision.state, "accepted", decision.errors)
+        # This fixture proves the isolated auxiliary header, not a complete
+        # activity dataset. An original header cannot waive the independently
+        # required whole-page partition or certify the synthetic legacy rows.
+        self.assertEqual(decision.state, "failed")
+        self.assertTrue(
+            any("partition inventory" in error for error in decision.errors)
+        )
+        columns = self.proof["observations"][0]["columns"]
+        self.assertTrue(original_cell_frame_matches(columns[0], self.fixture.page))
+        self.assertTrue(replay_auxiliary_cell(columns[1], self.fixture.page))
         # Only the ordinary primary ID column changes; the paired auxiliary
         # measurement crop and all saved success flags remain identical.
         self.fixture.page.insert_text((3, 60), "X", fontsize=3)
@@ -126,7 +137,8 @@ class AuxiliaryActivityConsumerTests(unittest.TestCase):
             open_original=lambda: nullcontext(self.fixture.document),
         )
         self.assertEqual(decision.state, "failed")
-        self.assertIn("original page pixels", " ".join(decision.errors))
+        self.assertFalse(original_cell_frame_matches(columns[0], self.fixture.page))
+        self.assertTrue(replay_auxiliary_cell(columns[1], self.fixture.page))
 
     def test_export_and_deterministic_qa_cannot_omit_original_replay(self):
         with tempfile.TemporaryDirectory() as temporary:

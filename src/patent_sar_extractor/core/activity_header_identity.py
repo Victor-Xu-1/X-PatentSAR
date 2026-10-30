@@ -4,9 +4,9 @@ import re
 
 from .activity_context_values import (
     CONTEXT_IDENTITY_FIELDS,
+    compact_context_value,
     partial_context_value_matches,
 )
-from .activity_context_values import compact_context_value as compact_header
 from .activity_header_metrics import (
     METRIC,
     explicit_unit,
@@ -17,8 +17,14 @@ from .activity_header_metrics import (
 from .activity_headers import infer_value_keys
 from .activity_identity import is_id_header
 from .activity_metadata import metadata_role
+from .assay_typography import assay_word_typography
 from .ocr_claims import qualified_text_runs
 from .structure_table_headers import structure_header_role
+
+
+def compact_header(text):
+    """Known assay typography only; all remaining scientific characters literal."""
+    return compact_context_value(assay_word_typography(text))
 
 
 def schema_requires_review(schema) -> bool:
@@ -126,7 +132,8 @@ def context_conflict(original, fresh, *, partial=False) -> bool:
     return bool(issues or fresh.claim_conflicts) or any(
         old
         and new
-        and compact_header(old) != compact_header(new)
+        and (compact_header if field == "assay" else compact_context_value)(old)
+        != (compact_header if field == "assay" else compact_context_value)(new)
         and not (
             partial and field != "table_id" and partial_context_value_matches(old, new)
         )

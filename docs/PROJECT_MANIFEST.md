@@ -23,7 +23,7 @@
   Shared text capture/replay and the existing on-demand runtime are reused;
   generic complete-primary replacement stays prohibited. The common auxiliary
   source inventory includes title requests and enforces identity/session limits.
-  Binding79/binder90 and Activity52/extractor64 refresh derived semantics only;
+  Binding80/binder91 and Activity53/extractor65 refresh derived semantics only;
   raw/manual/history, chemical models, SQL/API, queues/stores and dependencies
   remain unchanged. This bounded coverage is not universal OCR/chemistry accuracy.
 
@@ -686,21 +686,34 @@
 
 - Complete auxiliary text authority: `text_ocr/recovery_capture` and
   `recovery_proof` compose the SAME physical text observer through one row-only
-  live/cached adapter. Recovery3 is the only current producer; recovery1/2 are
-  bounded historical reading. `row_preparation` owns exactly one compact-padding
-  alternative after a valid below0.99 reply, keeping every raw observation and
-  unchanged source pixels/quality/request limits. `role_text_capture` refines
-  unresolved whole role cells before classification; role4 admits paired proof.
+  live/cached adapter. Recovery5 is the only current producer; recovery1/2/3/4
+  have bounded historical readers. `recovery_retained_rows` conserves qualified
+  literal rows from BOTH original version2 physical views with unchanged primary
+  text/score and source-pixel identity; it does not fabricate model replies or
+  align weak/chunked layouts heuristically. `row_preparation` owns one compact
+  then at most one horizontal blank-padding alternative after valid below0.99
+  replies, keeping every raw observation and unchanged ink/quality/request limits.
+  Actual calls alone spend inventory. Clear replies stop the fixed sequence;
+  all-weak, malformed or conflicting output cannot publish success.
+  `role_text_capture` refines
+  unresolved whole role cells before classification; the existing role contract
+  admits paired proof.
   `role_text_sources` inventories explicit accepted/rejected owners; binding
   recognition/candidate/worker/QA/Web and activity readback conserve them in the
   same source replay, not molecule work. Existing row/chunk/pixel/request budgets
   and primary/native/detector conflicts remain; only six known recovery-envelope
   links are admitted in physical-cell diagnostics, not arbitrary deeper JSON.
-  Current derived contracts are Binding47/binder57 and Activity30/extractor40.
+  Current derived contracts are Binding80/binder91 and Activity53/extractor65.
   PDF/raw OCR/OCSR2, preparation12/assets/human audit, API/SQL, numerical SAR,
   model files, dependency recipes and activation policy remain unchanged.
   Historical evidence is preserved without scientific promotion. No second
   execution/store/queue, read-side model loading or private-data repair exists.
+
+- Assay typography authority: `core/assay_typography` projects one internal
+  apostrophe only in existing HTRF/HiBiT/NanoBiT/FACS words for header/explicit
+  assay comparisons. Raw scientific records, generic OCR constraints, unknown
+  tokens, primes, targets/constructs, units/endpoints/time remain literal. This
+  is not fuzzy matching, new assay inference or a competing measurement parser.
 
 - Closed-grid role authority: `role_grid_windows` owns deterministic complete
   row windows, at most96cells per work unit,64columns and4096cells per whole

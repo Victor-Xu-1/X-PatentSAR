@@ -145,9 +145,57 @@ def physical_text_valid(
     maximum_row_height=12,
 ):
     """One pure bounded pixel-frame replay shared by header and caption readers."""
+    return _physical_text_valid(
+        reading,
+        packet_name=packet_name,
+        part_method=part_method,
+        minimum_rows=minimum_rows,
+        maximum_rows=maximum_rows,
+        maximum_row_height=maximum_row_height,
+        require_quality=True,
+    )
+
+
+def original_physical_parts(reading, *, maximum_rows=8, maximum_row_height=12):
+    """Validate original row structure, not qualification of a weak whole cell.
+
+    Only version2 original physical rows retain each primary observation. This
+    grants no replacement or whole-cell acceptance; callers must separately
+    qualify each conserved row and its independently captured peer.
+    """
+    packet = reading.get("physical_header_lines") if isinstance(reading, dict) else None
+    if (
+        not isinstance(packet, dict)
+        or packet.get("version") != 2
+        or not _physical_text_valid(
+            reading,
+            packet_name="physical_header_lines",
+            part_method="physical_header_line",
+            minimum_rows=2,
+            maximum_rows=maximum_rows,
+            maximum_row_height=maximum_row_height,
+            require_quality=False,
+        )
+    ):
+        return None
+    return tuple(reading["parts"])
+
+
+def _physical_text_valid(
+    reading,
+    *,
+    packet_name,
+    part_method,
+    minimum_rows,
+    maximum_rows,
+    maximum_row_height,
+    require_quality,
+):
     if not isinstance(reading, dict):
         return False
     if _auxiliary_marker(reading, packet_name):
+        if not require_quality:
+            return False
         from .text_ocr.cell_proof import valid_auxiliary_cell
 
         return (
@@ -177,7 +225,8 @@ def physical_text_valid(
     if (
         type(packet["version"]) is not int
         or packet["version"] not in {1, 2, PHYSICAL_CAPTION_LINE_VERSION}
-        or packet["status"] != "observed"
+        or packet["status"]
+        not in ({"observed"} if require_quality else {"observed", "unresolved"})
         or (packet["version"] == 2) != ("row_readings" in packet)
     ):
         return False
@@ -259,19 +308,28 @@ def physical_text_valid(
             not isinstance(part, dict)
             or set(part) != {"text", "confidence", "bbox", "coordinate_space", "method"}
             or not isinstance(part["text"], str)
-            or not part["text"].strip()
+            or require_quality
+            and not part["text"].strip()
             or len(part["text"]) > 4096
             or part["bbox"] != [[x0, y0], [x1, y0], [x1, y1], [x0, y1]]
             or part["coordinate_space"] != "cell_ink_crop_pixels"
             or part["method"] != part_method
             or type(part["confidence"]) not in {int, float}
             or not math.isfinite(part["confidence"])
-            or not 0.85 <= part["confidence"] <= 1
+            or not (0.85 if require_quality else 0) <= part["confidence"] <= 1
         ):
             return False
         scores.append(part["confidence"])
     return (
         packet["ink_pixels"] <= area
+        and packet["status"]
+        == (
+            "observed"
+            if all(
+                part["text"].strip() and part["confidence"] >= 0.85 for part in parts
+            )
+            else "unresolved"
+        )
         and reading.get("raw_text") == "\n".join(part["text"] for part in parts)
         and type(reading.get("confidence")) in {int, float}
         and reading["confidence"] == min(scores)
@@ -298,7 +356,7 @@ def _recovery_marker(reading):
         "auxiliary_text_version" in reading
         or isinstance(packet, dict)
         and type(packet.get("version")) is int
-        and packet["version"] in (2, 3, AUXILIARY_TEXT_RECOVERY_VERSION)
+        and packet["version"] in (2, 3, 4, AUXILIARY_TEXT_RECOVERY_VERSION)
     )
 
 
