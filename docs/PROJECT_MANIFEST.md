@@ -1,5 +1,13 @@
 # Project governance manifest
 
+- Presentation-upgrade authority: `web/projection_upgrade` is subordinate to the
+  existing `Store.snapshot` write transaction and run-root/PDF guards. Only a
+  complete identical current snapshot and raw row inventory retains the latest
+  committed correction basis on an implicit presentation upgrade. Explicit
+  refresh, changed scientific/runtime/source facts and new attempts retain
+  existing invalidation. No audit rewrite, automatic rebase, database migration,
+  public API setting, model call or alternate publication path is introduced.
+
 - Complete original-inventory identity authority: `composite_source_identity`
   streams exact canonical JSON with the existing finite32MiB artifact ceiling.
   Schema-specific page and characterization-region adapters validate complete

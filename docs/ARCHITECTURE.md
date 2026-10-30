@@ -1,5 +1,17 @@
 # X-PatentSAR architecture
 
+## Presentation upgrades and manual source identity
+
+An implicit read-model presentation rebuild does not rebase manual corrections.
+Inside the same SQLite publication transaction, `projection_upgrade` compares
+the complete current snapshot (except the two presentation-version markers)
+and every raw row's ID, ordinal, JSON payload, image path and geometry space.
+Only an exact unchanged non-historical source may retain the latest committed
+projection identity. All source/runtime/acceptance changes, historical sources,
+explicit refreshes and new attempts keep the existing invalidation behavior.
+Run-root/PDF ownership guards execute before comparison; neither correction
+rows nor immutable audit records are rewritten. This does not approve chemistry.
+
 ## Complete original-inventory identities
 
 A page inventory is a collection of original context chunks, diagram frames,

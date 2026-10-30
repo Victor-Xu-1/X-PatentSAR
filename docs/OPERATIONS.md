@@ -1,5 +1,14 @@
 # Operations and troubleshooting
 
+## Manual review after presentation rebuilds
+
+An automatic display-cache upgrade preserves a correction's source basis only
+when the complete current source projection is identical inside publication's
+transaction. Changed records, ordering, source images/geometry, runtime identity,
+acceptance or historical status cannot reuse that basis. Explicit refresh and a
+new attempt still invalidate previous overlays as before. Audit history is not
+rewritten; a genuine stale edit remains available for explicit user review.
+
 ## Original inventory evidence budgets
 
 Complete page and characterization-grid identities stream every original
