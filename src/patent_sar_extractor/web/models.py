@@ -289,6 +289,9 @@ class Stage(DTO):
 class Job(DTO):
     id: str
     project_id: str
+    resume_job_id: str | None = Field(
+        default=None, pattern=r"^[a-f0-9]{32}$", exclude_if=lambda value: value is None
+    )
     status: JobStatus
     created_at: str
     started_at: str | None

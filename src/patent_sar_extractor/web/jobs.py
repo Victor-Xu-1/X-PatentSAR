@@ -29,7 +29,7 @@ from .errors import WebError
 from .files import SafeFiles, private_directory
 from .history_storage import ensure_job_visible, ensure_project_visible
 from .job_phases import OwnedPhase, PhaseResult
-from .job_preparation import checkpoint_origin, prepare_attempt
+from .job_preparation import checkpoint_origin, prepare_oldest_queued
 from .job_recovery import decode_identity, preserve_cleanup, release_retained_identity
 from .models import Error, Job, JobRequest, Stage
 from .prediction_jobs import correction_prediction, enqueue_prediction
@@ -462,15 +462,9 @@ class JobQueue:
             raise WebError(
                 409, "job_active", "Project already has a queued or running extraction."
             ) from exc
-        preparation_error = (
-            prepare_attempt(self.store, job_id, old, output)
-            if old is not None
-            else None
-        )
+        # The durable queue owns slow checkpoint preparation. Returning the
+        # queued attempt must not wait for copying source assets over HTTP.
         self.wake.set()
-        if preparation_error:
-            row = self.store.job(job_id)
-            self._seal(row, "failed", row["finished_at"])
         return self.service.job(job_id)
 
     def cancel(self, job_id: str) -> Job:
@@ -654,6 +648,20 @@ class JobQueue:
                     clear_identity=False,
                 )
 
+    def _prepare_pending(self) -> bool:
+        """Prepare the oldest queued attempt without claiming its producer."""
+        selected = prepare_oldest_queued(
+            self.store, self._spec, self.service.attempts.unique, self.shutdown.is_set
+        )
+        if selected is None:
+            return False
+        job_id, error = selected
+        if error is not None:
+            final = self.store.job(job_id)
+            if final["status"] in {"failed", "interrupted"} and final["finished_at"]:
+                self._seal(final, final["status"], final["finished_at"], error)
+        return True
+
     def _claim_ready(self) -> dict[str, Any] | None:
         # Idle polling is read-only. Slow preparation cannot starve API writers
         # or start the CLI on a partially copied directory.
@@ -684,6 +692,8 @@ class JobQueue:
 
     def _consume(self) -> None:
         while not self.shutdown.is_set():
+            if self._prepare_pending():
+                continue
             row = self._claim_ready()
             if row:
                 self._execute(row["id"])

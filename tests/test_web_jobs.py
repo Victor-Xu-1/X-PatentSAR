@@ -114,6 +114,7 @@ class JobTests(WebFixture, unittest.TestCase):
                 json={"resume_job_id": first["id"]},
             )
             self.assertEqual(resumed.status_code, 202, resumed.text)
+            self.assertEqual(resumed.json()["resume_job_id"], first["id"])
             wait_job(client, resumed.json()["id"], "failed")
             service = WorkspaceService(self.state)
             self.assertNotEqual(

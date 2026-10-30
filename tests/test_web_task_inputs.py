@@ -52,8 +52,17 @@ class TaskInputTests(WebFixture, unittest.TestCase):
             fresh = response.json()
             fresh_spec = client.app.state.queue._spec(fresh["id"])
             self.assertNotEqual(fresh_spec.output_dir, old_spec.output_dir)
-            self.assertEqual(fresh_spec.source_ocr_cache, str(source))
-            self.assertIn("--reuse-ocr-cache", CLIProcessRunner().command(fresh_spec))
+            self.assertEqual(fresh_spec.source_ocr_cache, "")
+            fresh_record = json.loads(service.store.job(fresh["id"])["spec"])
+            self.assertEqual(fresh_record["checkpoint_source_job_id"], old["id"])
+            wait_job(client, fresh["id"], "running")
+            copied = (
+                Path(fresh_spec.output_dir) / "page_classification/page_ocr_cache.json"
+            )
+            self.assertEqual(json.loads(copied.read_bytes()), json.loads(before))
+            self.assertNotIn(
+                "--reuse-ocr-cache", CLIProcessRunner().command(fresh_spec)
+            )
             self.assertEqual(source.read_bytes(), before)
             client.post(f"/api/v1/jobs/{fresh['id']}/cancel")
             wait_job(client, fresh["id"], "cancelled")

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 import uuid
 from pathlib import Path
 from typing import Any
@@ -466,9 +467,13 @@ class WorkspaceService:
             from .resource_progress import read_wait
 
             admet_stage.resource_wait = read_wait(SafeFiles(output), "admet")
+        parent = spec.get("resume_job_id")
+        if not isinstance(parent, str) or not re.fullmatch(r"[a-f0-9]{32}", parent):
+            parent = None
         return Job(
             id=row["id"],
             project_id=row["project_id"],
+            resume_job_id=parent,
             status=row["status"],
             created_at=row["created_at"],
             started_at=row["started_at"],

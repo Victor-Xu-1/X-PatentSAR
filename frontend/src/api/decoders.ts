@@ -305,6 +305,9 @@ export const decodeJob: Decoder<Job> = (input, path = '$') => {
   const fields = input as Record<string, unknown>;
   const result: Job = {
     ...job,
+    ...(Object.hasOwn(fields, 'resume_job_id')
+      ? { resume_job_id: nullable(string)(fields.resume_job_id, `${path}.resume_job_id`) }
+      : {}),
     ...(Object.hasOwn(fields, 'llm_recovery')
       ? { llm_recovery: decodeLLMRecovery(fields.llm_recovery, `${path}.llm_recovery`) }
       : {}),
