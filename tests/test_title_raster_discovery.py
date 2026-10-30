@@ -216,6 +216,9 @@ class TitleRasterDiscoveryTests(unittest.TestCase):
                 grids = detect_ruled_table_regions(document[0], dpi=240)
                 scope = observe_caption_role(document[0], grids[0], grids, tokens)
             self.assertEqual(scope["role"], "unresolved")
+            self.assertEqual(
+                caption_role_status(scope, 1, scope["table_bbox"]), "unresolved"
+            )
 
     def test_oversized_context_refuses_before_text_or_pixel_allocation(self):
         document, _structures, _boxes = raster_catalogue(
@@ -310,14 +313,115 @@ class TitleRasterDiscoveryTests(unittest.TestCase):
                     self.assertEqual(scope["role"], "unresolved")
 
     def test_unknown_ink_attached_to_a_rule_is_not_erased_to_make_text_readable(self):
+        from patent_sar_extractor.core import title_raster_source
+
         document, _structures, _boxes = raster_catalogue("Table 62. Compounds")
         with document:
             document[0].draw_line((150, 90), (150, 102), width=1)
-            _grids, _tokens, scope, calls = self.observe(
-                document, "Table 62. Compounds"
-            )
+            removals = []
+            original = title_raster_source._remove_original_rulings
+
+            def observe_removal(*args):
+                result = original(*args)
+                removals.append(result)
+                return result
+
+            with patch.object(
+                title_raster_source,
+                "_remove_original_rulings",
+                side_effect=observe_removal,
+            ):
+                _grids, _tokens, scope, calls = self.observe(
+                    document, "Table 62. Compounds"
+                )
             self.assertEqual(calls, 0)
             self.assertEqual(scope["role"], "unresolved")
+            self.assertIn("crossing_title_ruling_ink", removals)
+            ink = scope["sources"][0]["title_context"]["ink_source"]
+            self.assertEqual(title_ink_rows(ink), ([], "crossing_title_ruling_ink"))
+            self.assertEqual(
+                caption_role_status(scope, 1, scope["table_bbox"]), "unresolved"
+            )
+            forged_role = copy.deepcopy(scope)
+            forged_role["role"] = "compound"
+            self.assertIsNone(
+                caption_role_status(forged_role, 1, forged_role["table_bbox"])
+            )
+            invalid = copy.deepcopy(ink["ruling_sources"])
+            self.assertTrue(invalid)
+            invalid[0]["pixels"] = {"version": 0}
+            self.assertIsNone(
+                title_raster_source.title_raster_marks(
+                    ink["raster_source"], ink["bbox"], ink["page_size"], invalid
+                )
+            )
+            forged = copy.deepcopy(scope)
+            for parent in forged["sources"]:
+                parent["title_context"]["ink_source"]["ruling_sources"] = invalid
+            self.assertIsNone(caption_role_status(forged, 1, forged["table_bbox"]))
+
+    def test_rule_attached_ink_reaches_formal_review_without_admitting_structures(self):
+        from patent_sar_extractor.core.binding_source_references import reference_scope
+        from patent_sar_extractor.core.structure_declaration_proof import (
+            declaration_issues,
+        )
+        from patent_sar_extractor.core.structure_declarations import (
+            observe_declaration_pages,
+        )
+
+        document, structures, boxes = raster_catalogue("Table 62. Compounds")
+        with document:
+            page = document[0]
+            page.draw_line((150, 90), (150, 102), width=1)
+            layout = source_layout(page)
+            tokens = SourceTokens([], layout, tuple(page.rect))
+            grids = detect_ruled_table_regions(page, dpi=240)
+            with patch(
+                "patent_sar_extractor.core.page_ocr_cache.get_ocr_engine",
+                side_effect=AssertionError("Ambiguous ink must not invoke OCR"),
+            ):
+                result = bind_caption_grids(
+                    document,
+                    structures,
+                    boxes,
+                    [1],
+                    grids_for_page=lambda _page: grids,
+                    tokens_for_page=lambda _page: tokens,
+                )
+                self.assertEqual(result.bindings, [])
+                self.assertEqual(result.exclusions, [])
+                self.assertEqual(len(result.roles), 1)
+                role = next(iter(result.roles.values()))
+                self.assertEqual(
+                    caption_role_status(role, 1, role["table_bbox"]), "unresolved"
+                )
+                sections, withheld = observe_declaration_pages(
+                    document,
+                    structures[1],
+                    [0],
+                    {0: ""},
+                    lambda _page: tokens,
+                    grids_for_page=lambda _page: grids,
+                    caption_roles=result.roles,
+                )
+                self.assertEqual(withheld, set())
+                self.assertEqual(len(sections), 1)
+                issues = declaration_issues(
+                    sections,
+                    reference_scope(sections),
+                    [],
+                    nonfinal_diagrams=set(),
+                    current=True,
+                )
+                self.assertIn(
+                    "unproved_original_catalogue_title",
+                    {issue["reason"] for issue in issues},
+                )
+                cells = list(title_source_cells({"source_sections": sections}))
+                self.assertTrue(cells)
+                self.assertEqual(original_role_source_errors(document, cells), [])
+                page.draw_rect(fitz.Rect(420, 40, 424, 45), fill=(0, 0, 0))
+                self.assertTrue(original_role_source_errors(document, cells))
 
     def test_unnumbered_scan_category_never_invents_a_table_identifier(self):
         title = "Intermediate compounds"

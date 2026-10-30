@@ -170,9 +170,14 @@ def bind_caption_grids(
             )
             role_status = caption_role_status(role, page_no, grid_box(region))
             if role is not None and role_status is None:
+                diagnostic = []
+                caption_role_status(
+                    role, page_no, grid_box(region), _diagnostic=diagnostic
+                )
                 raise ValueError(
                     f"Original caption role cannot be replayed on page {page_no} "
-                    f"for frame {grid_box(region)}"
+                    f"for frame {grid_box(region)}; "
+                    f"reason {diagnostic[0] if diagnostic else 'unknown'}"
                 )
             # A qualified original title may come from independent native text
             # or the existing bounded title reader, not the layout lane. Keep

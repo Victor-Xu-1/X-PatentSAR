@@ -1,5 +1,17 @@
 # X-PatentSAR architecture
 
+## Raster title ink attached to original ruling
+
+When retained title pixels are connected to a proved original table rule, the
+system keeps the entire original pixel evidence and records an explicit
+`crossing_title_ruling_ink` refusal. The caption role remains unresolved and
+replayable; neither the attached stroke nor the rule is erased to infer a
+title. Malformed ruling or pixel evidence remains invalid, not an uncertainty
+that can admit a structure. Downstream declaration coverage continues to
+withhold unsupported structures and reports the original title for review.
+Binder and binding artifact epochs advance; old original observations and manual
+revisions remain unchanged and require current-proof evaluation before reuse.
+
 ## Original catalogue frame association
 
 Declaration capture retains the complete original grid inventory, including
