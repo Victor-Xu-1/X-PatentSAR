@@ -123,6 +123,16 @@ class SharedTitleRasterTests(unittest.TestCase):
             self.assertEqual(title_ink_rows(legacy), ([], "crossing_title_ruling_ink"))
             replay_title_ink(document[0], legacy)
 
+    def test_malformed_shared_raster_readings_refuse_without_an_internal_error(self):
+        with scanned_grid(216, 0.27, 0.65) as document:
+            scope = self.observe(document)
+            ink = scope["sources"][0]["title_context"]["ink_source"]
+            for invalid in ([], {}, None, "400", True, 400.0):
+                changed = copy.deepcopy(ink)
+                changed["raster_source"]["pixels"]["readings"][0]["dpi"] = invalid
+                with self.subTest(invalid_dpi=invalid):
+                    self.assertIsNone(title_ink_rows(changed))
+
     def test_one_paired_parent_per_capture_and_no_budget_or_outside_edge_escape(self):
         from patent_sar_extractor.core import title_shared_pixels
 

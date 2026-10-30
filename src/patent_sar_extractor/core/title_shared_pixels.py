@@ -1,5 +1,7 @@
 """Call-local paired source for a title and its independently closed rulings."""
 
+import re
+
 from .cell_raster import cell_pixel_rect, render_cell_raster
 from .plot_reference_pixels import pixel_reading
 from .shared_cell_raster import shared_cell_view
@@ -70,6 +72,9 @@ def valid_shared_title_sources(bounds, size, cells, raster, rulings, *, active):
         for reading in readings:
             if not isinstance(reading, dict):
                 return False
+            dpi = reading.get("dpi")
+            if type(dpi) is not int or dpi not in {400, 600}:
+                return False
             window = reading.get("source_window") or {}
             if not isinstance(window, dict):
                 return False
@@ -79,7 +84,12 @@ def valid_shared_title_sources(bounds, size, cells, raster, rulings, *, active):
             else:
                 if window.get("version") != 3 or window.get("source_bbox") != owner:
                     return False
-                dpi, digest = reading["dpi"], window.get("source_pixel_sha256")
+                digest = window.get("source_pixel_sha256")
+                if (
+                    not isinstance(digest, str)
+                    or re.fullmatch(r"[a-f0-9]{64}", digest) is None
+                ):
+                    return False
                 if dpi in digests and digests[dpi] != digest:
                     return False
                 digests[dpi] = digest
