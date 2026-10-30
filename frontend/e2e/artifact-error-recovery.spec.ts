@@ -63,9 +63,13 @@ for (const width of [390, 1672]) {
     await expect.poll(() => reads).toBeGreaterThan(before);
     await expect(page.getByText(chinese, { exact: true })).toHaveCount(0);
     await expect(page.getByRole('table')).toBeVisible();
-    await expect(page.getByRole('cell', { name: 'Compound 1', exact: true })).toBeVisible();
+    const original = page.getByRole('button', { name: '查看 Compound 1 结构详情', exact: true });
+    await expect(original).toBeVisible();
+    await expect(original).toHaveText('Compound 1');
     await page.getByRole('combobox', { name: '界面语言', exact: true }).selectOption('en');
-    await expect(page.getByRole('cell', { name: 'Compound 1', exact: true })).toBeVisible();
+    await expect(
+      page.getByRole('button', { name: 'View Compound 1 structure details', exact: true }),
+    ).toHaveText('Compound 1');
     await page.screenshot({
       path: info.outputPath('02-artifact-recovered-en.png'),
       animations: 'disabled',
