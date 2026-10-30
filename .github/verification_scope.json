@@ -5,6 +5,8 @@
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
     "docs/OPERATIONS.md",
+    "frontend/package-lock.json",
+    "frontend/package.json",
     "src/patent_sar_extractor/contracts.py",
     "src/patent_sar_extractor/core/caption_grid_binding.py",
     "src/patent_sar_extractor/core/caption_role_proof.py",
