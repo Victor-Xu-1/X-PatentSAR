@@ -8,6 +8,9 @@ from contextlib import nullcontext
 from pathlib import Path
 
 from patent_sar_extractor.artifact_catalog import expand_shared_json, pack_shared_json
+from patent_sar_extractor.core.activity_auxiliary_replay import (
+    original_activity_source_errors,
+)
 from patent_sar_extractor.core.activity_header_evidence import (
     proof_id,
     validate_header_evidence,
@@ -115,7 +118,20 @@ class AuxiliaryActivityConsumerTests(unittest.TestCase):
             marker=None,
             open_original=lambda: nullcontext(self.fixture.document),
         )
-        self.assertEqual(decision.state, "accepted", decision.errors)
+        # This fixture proves the isolated auxiliary header, not a complete
+        # activity dataset. An original header cannot waive the independently
+        # required whole-page partition or certify the synthetic legacy rows.
+        self.assertEqual(decision.state, "failed")
+        self.assertTrue(
+            any("partition inventory" in error for error in decision.errors)
+        )
+        self.assertEqual(
+            original_activity_source_errors(
+                payloads["activity"],
+                open_original=lambda: nullcontext(self.fixture.document),
+            ),
+            [],
+        )
         # Only the ordinary primary ID column changes; the paired auxiliary
         # measurement crop and all saved success flags remain identical.
         self.fixture.page.insert_text((3, 60), "X", fontsize=3)

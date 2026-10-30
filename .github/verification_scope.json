@@ -21,9 +21,12 @@
     "src/patent_sar_extractor/core/text_ocr/source_inventory.py",
     "tests/test_assay_header_replay.py",
     "tests/test_assay_typography.py",
+    "tests/test_auxiliary_activity_consumers.py",
     "tests/test_auxiliary_header_pair.py",
     "tests/test_auxiliary_row_padding.py",
-    "tests/test_selective_row_recovery.py"
+    "tests/test_auxiliary_source_replay.py",
+    "tests/test_selective_row_recovery.py",
+    "tests/test_source_epoch_guards.py"
   ],
   "python_modules": [
     "tests.test_selective_row_recovery",
