@@ -1,6 +1,5 @@
 """Existing-engine column-header checks on isolated controlled original renders."""
 
-import json
 import tempfile
 import unittest
 from contextlib import nullcontext
@@ -8,12 +7,13 @@ from pathlib import Path
 
 import fitz
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.activity_artifacts import save_results
 from patent_sar_extractor.core.activity_coordinates import extract_coordinate_tables
-from patent_sar_extractor.core.activity_coverage import coverage_packet
 from patent_sar_extractor.core.activity_header_observation import refine_scanned_header
 from patent_sar_extractor.core.activity_headers import context_from_text, grid_schema
 from patent_sar_extractor.core.activity_join import activity_evidence_errors
+from tests.activity_source_support import original_coordinate_coverage
 
 
 class HeaderColumnNativeTests(unittest.TestCase):
@@ -27,7 +27,7 @@ class HeaderColumnNativeTests(unittest.TestCase):
             result.rows[0].activity_values, {"IC50 (nM)": "0.125", "Dmax (%)": "85"}
         )
         self.assertFalse(result.rows[0].needs_review)
-        coverage = coverage_packet([1], result.coverage, result.rows)
+        coverage = original_coordinate_coverage(doc, [1], result)
         with tempfile.TemporaryDirectory() as root:
             save_results(
                 result.rows,
@@ -36,7 +36,7 @@ class HeaderColumnNativeTests(unittest.TestCase):
                 coverage=coverage,
                 header_observations=result.header_observations,
             )
-            payload = json.loads((Path(root) / "activity_data.json").read_text())
+            payload = load_json(Path(root) / "activity_data.json", {})
         self.assertEqual(len(payload["header_observations"]), 1)
         self.assertTrue(activity_evidence_errors(payload, [1]))
         self.assertEqual(

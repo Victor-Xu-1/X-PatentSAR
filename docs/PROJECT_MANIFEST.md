@@ -1,5 +1,32 @@
 # Project governance manifest
 
+- Activity transport authority: `activity_artifacts.write_activity_payload` and
+  the existing shared-JSON codec serve row output and metadata annotation. The
+  checkpoint copier and SAR condition consumer preserve/decode the same bounded
+  representation, with exact file digest and all raw fields intact. No second
+  parser/writer format or raised limit; historical oversized artifacts are
+  retained, not copied/relabelled current or rewritten in place.
+
+- Caption locator/partition authority: `activity_caption_claims` is subordinate
+  to existing registered context and complete text-cell readers. It projects
+  only marker separators and unifies one overlapping literal caption source
+  before fresh reads; strict containment/unique ownership remains on replay.
+  Declared-text5 does not promote incomplete/competing sources or rewrite raw
+  OCR. Existing independent text tables and completeness gates remain enforced.
+
+- Original-title lexical recovery: title-source2 preserves both primary reads
+  and keeps an optional separate auxiliary witness. `title_lexical_policy` admits
+  only one unknown category word when a qualified raster locator and a complete
+  primary already agree on the whole literal category title. Known roles/table
+  identity/other tokens/native claims/measurements remain immutable constraints.
+  `title_source_inputs` owns all ordinary geometry/window/ink/frame guards.
+  Shared text capture/replay and the existing on-demand runtime are reused;
+  generic complete-primary replacement stays prohibited. The common auxiliary
+  source inventory includes title requests and enforces identity/session limits.
+  Binding79/binder90 and Activity52/extractor64 refresh derived semantics only;
+  raw/manual/history, chemical models, SQL/API, queues/stores and dependencies
+  remain unchanged. This bounded coverage is not universal OCR/chemistry accuracy.
+
 - Write-once attempt-file publication: `web/file_publication` owns durable
   exclusive publication for checkpoint bytes and immutable extraction history.
   Callers retain approved private roots, budgets and identities. Complete owned

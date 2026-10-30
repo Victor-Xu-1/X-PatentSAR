@@ -585,12 +585,12 @@ class CheckpointCopy:
                     "Chunk checkpoint path is outside its approved stage.",
                 )
             path = chunk_path
-        if stage == "bind":
+        if stage in {"bind", "activity"}:
             try:
                 if self.files.byte_size(path) > MAX_ARTIFACT_BYTES:
                     # Preserve oversized legacy proof as historical output.
                     # Earlier verified checkpoints survive; the CLI regenerates
-                    # binding through the normal producer, never this copier.
+                    # source evidence through the normal producer, never this copier.
                     return None
             except WebError as exc:
                 if exc.code == "asset_unavailable":
@@ -690,7 +690,7 @@ class CheckpointCopy:
             _stable_digest,
         )
 
-        shared = verified.stage == "bind"
+        shared = verified.stage in {"bind", "activity"}
         if shared:
             # Retain the existing long original-role packets under the same
             # finite transport limits; this does not approve a checkpoint.
@@ -741,7 +741,7 @@ class CheckpointCopy:
 
 def checkpoint_json(payload: Any, *, shared: bool = False) -> bytes:
     # Match the canonical stage writer: dependency hashes bind exact bytes.
-    # Binding uses shared compact JSON; unchanged stages keep pretty JSON.
+    # Binding/activity use shared compact JSON; unchanged stages keep pretty JSON.
     return artifact_json_bytes(payload, shared=shared)
 
 

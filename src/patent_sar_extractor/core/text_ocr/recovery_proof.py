@@ -7,6 +7,7 @@ from patent_sar_extractor.contracts import (
     AUXILIARY_TEXT_CELL_VERSION,
     AUXILIARY_TEXT_RECOVERY_VERSION,
 )
+from patent_sar_extractor.core.cell_frame_proof import valid_cell_frame
 from patent_sar_extractor.core.cell_text_chunks import observe_text_cell
 from patent_sar_extractor.core.cell_text_proof import valid_text_reading
 from patent_sar_extractor.core.cell_text_scope import text_scope
@@ -19,7 +20,8 @@ from .recovery_rows import RecoveryRowEngine, checked_group, checked_row
 RECOVERY_VERSION = AUXILIARY_TEXT_RECOVERY_VERSION
 
 
-def effective_recovery_cells(packet):
+def recovery_observation_views(packet):
+    """Verify model/row/frame observations only, not permission to replace text."""
     if (
         not isinstance(packet, dict)
         or set(packet)
@@ -92,10 +94,12 @@ def effective_recovery_cells(packet):
             maximum_rows=maximum,
             allow_chunks=allow,
             maximum_row_height=height,
-        ) or not compatible_primary(
-            primary, selected, view["frame"], dpi, maximum, maximum_row_height=height
+        ) or (
+            source_metadata(primary) != source_metadata(selected)
+            or primary.get("bbox") != selected.get("bbox")
+            or not valid_cell_frame(view["frame"], selected, selected.get("bbox"), dpi)
         ):
-            raise ValueError("Recovery changed qualified original text or scope")
+            raise ValueError("Recovery changed original source metadata or scope")
         requests = view["requests"]
         if not isinstance(requests, list) or not requests or len(requests) > _MAX_ROWS:
             raise ValueError("Missing or unbounded recovery row inventory")
@@ -127,6 +131,29 @@ def effective_recovery_cells(packet):
         for a, b in zip(first, second, strict=True)
     ):
         raise ValueError("Complete recovered source views disagree")
+    return tuple(outputs)
+
+
+def effective_recovery_cells(packet):
+    outputs = recovery_observation_views(packet)
+    views, maximum, allow = (
+        packet["views"],
+        packet["rows_per_chunk"],
+        packet["allow_chunks"],
+    )
+    height = packet.get("maximum_row_height", 12)
+    if any(
+        not compatible_primary(
+            view["primary"],
+            view["selected"],
+            view["frame"],
+            dpi,
+            maximum,
+            maximum_row_height=height,
+        )
+        for view, dpi in zip(views, (400, 600), strict=True)
+    ):
+        raise ValueError("Recovery changed qualified original text or scope")
     if all(
         valid_text_reading(
             view["primary"],

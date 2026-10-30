@@ -2,6 +2,7 @@
 
 from patent_sar_extractor.contracts import DECLARED_TEXT_SOURCE_VERSION
 
+from .activity_caption_claims import caption_nomination_bounds
 from .activity_text_sources import (
     MAX_TEXT_SOURCE_LINES,
     same_text,
@@ -105,6 +106,10 @@ def capture_text_page(page, text, cached_lines=(), *, coordinate_regions=()):
         ):
             return proof
         bounds = list(line["bbox"])
+        if not native:
+            bounds = caption_nomination_bounds(
+                line, coordinate_regions, proof["page_size"]
+            )
         readings = _line_readings(page, bounds, tokens, layout, paints)
         # No character/value inference: only an independently qualified reading
         # pair may replace a low-resolution location nomination in new derived

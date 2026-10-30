@@ -1,5 +1,54 @@
 # X-PatentSAR architecture
 
+## Unresolved catalogue-title lexical observations
+
+`title_source_proof.title_source_inputs` remains the single geometry, native
+window, complete frame and original-ink authority for title observations.
+Title-source2 adds a separate optional `auxiliary_title` witness and bounded
+failed-attempt history; it does not edit either original primary reading.
+`title_lexical_policy` permits a new read only when a qualified raster locator
+and one complete primary already agree on a whole closed category title, while
+the other complete primary has exactly one unknown category word. All numbers,
+punctuation and other words remain literal. Native/hybrid claims, known opposing
+roles, mixed/control/negative titles and assay prose cannot use this permission.
+
+`title_lexical_recovery` uses the SAME on-demand text runtime and shared bounded
+row/frame capture as ordinary text recovery. Both auxiliary views must agree
+with the already-observed title; model/row/frame/source replay remains mandatory.
+The generic measurement recovery validator still rejects changes to complete
+high-score primary text, including the title packet itself. No generic conflict
+guard or molecular identity/measurement rule was relaxed. Shared source inventory
+counts title requests and rejects conflicting reuse of an observation identity.
+Worker/Web readers replay original pixels without acquiring an OCR runtime.
+
+Binding79/binder90 and Activity52/extractor64 refresh derived semantics only.
+Raw PDF/OCR/locator/segmentation/chemical observations and manual audit are not
+rewritten. The optional runtime remains off unless already configured on demand;
+no model/environment installation, new queue, asset store or execution chain.
+
+## Bounded complete activity evidence transport
+
+`activity_artifacts.write_activity_payload` is the activity byte writer for both
+the production row writer and the application metadata adapter. It uses the
+existing shared-JSON codec, preserving every ordered row/value/source/failed
+observation without copying common source packets per occurrence. The 32 MiB
+encoded bound and existing expanded graph/node/depth limits are unchanged.
+`CheckpointCopy` preserves this encoding for activity as for binding, and leaves
+oversized historical activity files untouched for ordinary producer regeneration.
+The SAR condition reader uses the SAME bounded codec while its provenance digest
+still binds exact file bytes. Its obsolete plain-JSON-only parser was removed.
+Shared references are transport only; source validation and scientific refusal
+remain mandatory. No large historical artifact is repacked or promoted in place.
+
+`activity_caption_claims` shares one exact caption identity with text capture
+and partition replay: only table-marker separators may differ; numbers, words,
+conditions and all remaining punctuation remain literal. A located OCR proposal
+may be unified with the full overlapping row of ONE already-registered original
+caption BEFORE fresh complete reads. This is not a bbox tolerance or post-read
+repair. Strict complete containment still owns admission; missing words, another
+table/row, competing owners and grid crossings stay unresolved. Declared-text5
+records this source-window semantics, retaining raw location text and every read.
+
 ## Exclusive complete attempt-file publication
 
 `web/file_publication.publish_bytes_once` is the byte-publication authority for

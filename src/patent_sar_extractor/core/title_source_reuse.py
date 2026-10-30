@@ -35,6 +35,11 @@ def reuse_title_observation(page, proof, cache, *, layout, paint_view):
     replay_source_title(page, previous, layout=layout, paint_view=paint_view)
     for name in ("observations", "rendered_frames"):
         proof[name] = deepcopy(previous[name])
+    if proof["version"] == 2:
+        proof["auxiliary_title"] = deepcopy(previous.get("auxiliary_title"))
+        proof["auxiliary_title_attempts"] = deepcopy(
+            previous.get("auxiliary_title_attempts", [])
+        )
     return True
 
 

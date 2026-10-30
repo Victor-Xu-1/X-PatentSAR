@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import hashlib
-import json
 from pathlib import Path
 
+from ...artifact_catalog import read_artifact_json
+from ...artifact_nodes import MAX_ARTIFACT_BYTES
 from ...core.activity_context_values import normalized_context_conditions
 from ...core.pipeline_rules import _label_key
 from ..activity_provenance import metric_unit, source_evidence
@@ -31,7 +32,7 @@ def _condition_bytes(project: dict) -> tuple[bytes | None, str]:
 
     try:
         data = SafeFiles(Path(project["run_root"])).read(
-            "activity/activity_data.json", max_bytes=32 * 1024 * 1024
+            "activity/activity_data.json", max_bytes=MAX_ARTIFACT_BYTES
         )
     except WebError as error:
         if error.code == "asset_unavailable":
@@ -44,10 +45,6 @@ def conditions_sha256(project: dict) -> str:
     return _condition_bytes(project)[1]
 
 
-def _nonfinite(value: str):
-    raise ValueError("Nonfinite condition source")
-
-
 class ObservationContexts:
     def __init__(self, project: dict):
         self.exact: dict[tuple, dict[str, dict]] = {}
@@ -57,7 +54,7 @@ class ObservationContexts:
         if data is None:
             return
         try:
-            payload = json.loads(data, parse_constant=_nonfinite)
+            payload = read_artifact_json(data, strict_numbers=True)
         except (ValueError, RecursionError, UnicodeError) as error:
             raise WebError(
                 422, "invalid_artifact", "Condition source JSON is invalid."

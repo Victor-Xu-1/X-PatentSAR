@@ -95,6 +95,10 @@ def replay_source_title(page, proof, *, layout=None, paint_view=None):
             "pixel_sha256": hashlib.sha256(image.tobytes()).hexdigest(),
         }:
             raise ValueError("Original title pixels differ")
+    if proof.get("auxiliary_title") is not None:
+        from .title_lexical_recovery import replay_title_lexical_recovery
+
+        replay_title_lexical_recovery(page, proof)
 
 
 def reuse_title_sources(page, sources, previous):

@@ -1,7 +1,6 @@
 """Generated physical sources: one grid never certifies its entire page."""
 
 import copy
-import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -9,6 +8,7 @@ from unittest.mock import patch
 
 import fitz
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.activity_auxiliary_replay import original_pdf_reader
 from patent_sar_extractor.core.activity_coordinates import extract_coordinate_tables
 from patent_sar_extractor.core.activity_extractor import extract
@@ -85,7 +85,7 @@ class ActivityMixedOwnershipTests(unittest.TestCase):
         original(pdf, **options)
         result = extract(str(pdf), {"activity_pages": [0]}, str(self.root / "out"))
         path = self.root / "out/activity_data.json"
-        return pdf, result, json.loads(path.read_text())
+        return pdf, result, load_json(path, {})
 
     def errors(self, data, pdf):
         return activity_evidence_errors(
