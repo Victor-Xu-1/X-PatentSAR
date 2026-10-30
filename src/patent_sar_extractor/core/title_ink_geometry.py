@@ -50,7 +50,7 @@ def _title_ink_rows(source):
             "raster_source",
         }
         or type(source["version"]) is not int
-        or source["version"] not in {4, 5}
+        or source["version"] not in {4, 5, 6}
     ):
         return None
     native, window, bounds, size = (
@@ -68,7 +68,7 @@ def _title_ink_rows(source):
         return None
     try:
         cells = context_ruling_cells(
-            source["context"], bounds, boundary_contacts=source["version"] == 5
+            source["context"], bounds, boundary_contacts=source["version"] >= 5
         )
     except (ValueError, TypeError, KeyError, AttributeError, IndexError):
         return None
@@ -76,7 +76,7 @@ def _title_ink_rows(source):
     if not isinstance(rulings, list) or len(rulings) != len(cells):
         return None
     if not title_ruling_budget(
-        cells, size, bounds=bounds if source["version"] == 5 else None
+        cells, size, bounds=bounds if source["version"] >= 5 else None
     ):
         return (
             ([], "title_ruling_budget")
@@ -102,7 +102,7 @@ def _title_ink_rows(source):
                 isinstance(ruling["pixels"], dict)
                 and ruling["pixels"].get("kind") == "original_cell_boundary"
             )
-            if boundary and not (source["version"] == 5 and cell[3] == bounds[1]):
+            if boundary and not (source["version"] >= 5 and cell[3] == bounds[1]):
                 return None
             if (
                 closed_cell_masks(ruling["pixels"], cell, size, boundary_only=boundary)
@@ -112,6 +112,18 @@ def _title_ink_rows(source):
             proved.append(cell)
     if window["refusal"] is not None:
         return [], window["refusal"]
+    from .title_shared_pixels import valid_shared_title_sources
+
+    if not valid_shared_title_sources(
+        bounds,
+        size,
+        cells,
+        source["raster_source"],
+        rulings,
+        active=source["version"] == 6
+        and any(p["kind"] == "fill-image" for p in window["paints"]),
+    ):
+        return None
     if "parallel_grids" in source["context"] and len(proved) != len(cells):
         return [], "unproved_parallel_title_grid"
     bodies = family_body_cells(source["context"], bounds)

@@ -125,6 +125,10 @@ def render_cell_raster(
 
 def valid_source_window(window, bounds, dpi, reading_shape):
     """Validate geometry only; a saved digest cannot establish original truth."""
+    if isinstance(window, dict) and window.get("version") == 3:
+        from .shared_cell_raster import valid_shared_source_window
+
+        return valid_shared_source_window(window, bounds, dpi, reading_shape)
     if isinstance(window, dict) and window.get("version") == 2:
         from .open_cell_raster import valid_open_source_window
 
@@ -220,7 +224,9 @@ def cell_window_origin(window, bounds, dpi, reading_shape):
     """Project reading pixels using their proved source window, never an inset."""
     if not valid_source_window(window, bounds, dpi, reading_shape):
         raise ValueError("Invalid original cell reading window")
-    extent = cell_pixel_rect(bounds, dpi)
+    extent = cell_pixel_rect(
+        window["source_bbox"] if window["version"] == 3 else bounds, dpi
+    )
     return [
         (extent.x0 + window["read_bounds"][0]) * 72 / dpi,
         (extent.y0 + window["read_bounds"][1]) * 72 / dpi,
@@ -247,7 +253,11 @@ def original_reading_image(page, bounds, dpi, reading):
     shape = frame.get("shape") if isinstance(frame, dict) else None
     if not valid_source_window(window, bounds, dpi, shape):
         raise ValueError("Invalid retained original cell window")
-    if window["version"] == 2:
+    if window["version"] == 3:
+        from .shared_cell_raster import render_shared_cell_raster
+
+        observed = render_shared_cell_raster(page, window["source_bbox"], bounds, dpi)
+    elif window["version"] == 2:
         from .open_cell_raster import render_open_cell_raster
 
         owner = window["open_grid"]

@@ -1,7 +1,7 @@
 """Capture/replay original context paint and physical rulings without OCR."""
 
 from .native_window_coverage import observe_native_window
-from .source_cell_pixels import observe_closed_cell
+from .source_cell_pixels import closed_cell_masks, observe_closed_cell, source_window
 from .source_geometry import SourceTokens, source_layout
 from .source_observations import source_cell_observation
 from .source_paint_visibility import native_paint_view
@@ -11,22 +11,38 @@ from .title_context_grids import (
 )
 from .title_ink_geometry import title_ink_rows
 from .title_raster_source import observe_title_raster
+from .title_shared_pixels import observe_shared_title, shared_title_pixels
+
+
+def _shared_closed_cell(shared, cell, size):
+    pixels = shared_title_pixels(shared, source_window(cell, size))
+    return pixels if closed_cell_masks(pixels, cell, size) is not None else None
 
 
 def observe_title_ink(
-    page, bounds, context, *, layout=None, paint_view=None, version=5
+    page, bounds, context, *, layout=None, paint_view=None, version=6
 ):
-    if type(version) is not int or version not in {4, 5}:
+    if type(version) is not int or version not in {4, 5, 6}:
         raise ValueError("Unknown original title-ink version")
     layout = source_layout(page) if layout is None else layout
     size = [page.rect.width, page.rect.height]
-    cells = context_ruling_cells(context, bounds, boundary_contacts=version == 5)
+    cells = context_ruling_cells(context, bounds, boundary_contacts=version >= 5)
     within_budget = title_ruling_budget(
-        cells, size, bounds=bounds if version == 5 else None
+        cells, size, bounds=bounds if version >= 5 else None
     )
     from .boundary_cell_pixels import observe_boundary_cell
 
     window = observe_native_window(page, bounds, paint_view=paint_view)
+    raster_needed = (
+        within_budget
+        and window["refusal"] is None
+        and any(p["kind"] == "fill-image" for p in window["paints"])
+    )
+    shared = (
+        observe_shared_title(page, bounds, size, cells)
+        if version == 6 and raster_needed
+        else None
+    )
     return {
         "version": version,
         "page_no": page.number + 1,
@@ -37,17 +53,17 @@ def observe_title_ink(
             SourceTokens(layout.native, layout), bounds, native=True
         ),
         "native_window": window,
-        "raster_source": observe_title_raster(page, bounds)
-        if within_budget
-        and window["refusal"] is None
-        and any(p["kind"] == "fill-image" for p in window["paints"])
+        "raster_source": observe_title_raster(page, bounds, shared=shared)
+        if raster_needed
         else None,
         "ruling_sources": [
             {
                 "cell": cell,
                 "pixels": (
-                    observe_boundary_cell(page, cell)
-                    if version == 5 and cell[3] <= bounds[1]
+                    _shared_closed_cell(shared, cell, size)
+                    if shared is not None
+                    else observe_boundary_cell(page, cell)
+                    if version >= 5 and cell[3] <= bounds[1]
                     else observe_closed_cell(page, cell)
                 )
                 if within_budget
