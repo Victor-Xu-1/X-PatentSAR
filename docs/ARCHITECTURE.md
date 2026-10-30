@@ -1,5 +1,28 @@
 # X-PatentSAR architecture
 
+## Exclusive complete attempt-file publication
+
+`web/file_publication.publish_bytes_once` is the byte-publication authority for
+`CheckpointCopy.put` and `AttemptHistory.seal`. Both retain their prior source,
+path, file/aggregate and lifecycle validation; the duplicate direct-final-name
+write blocks are removed. The publisher opens the complete private parent chain
+without following symlinks, writes one new0600temporary inode, flushes/fsyncs,
+rechecks cancellation where supplied and atomically creates the final name
+without replacement. This links ONLY its own complete temporary, never a source
+inode; the verified temporary name is removed and the directory synchronized.
+Failure before commit exposes no final prefix. Existing files and foreign or
+changed temporary identities are never overwritten or removed. Source bytes,
+independent copy identity and counters are unchanged; counters advance only after
+successful publication. The existing overwrite-atomic producer JSON writer is
+unchanged and has a different update contract.
+
+SafeFiles still rejects actual malformed completed JSON. The frontend normalizes
+only API-owned `invalid_artifact` into one bilingual UiError source; raw bounded
+detail remains in its descriptor values and is not default banner copy. Unknown
+messages, scientific identifiers/values, status/code and uncertainty semantics
+remain literal/unchanged. This introduces no workflow, queue, store, scientific
+epoch, schema or dependency, and cannot turn a failed read into acceptance.
+
 ## Bounded rejected pixels and independently owned characterization grids
 
 `source_role_observations` still owns the single rejected-evidence catalog.

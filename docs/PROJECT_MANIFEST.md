@@ -1,5 +1,18 @@
 # Project governance manifest
 
+- Write-once attempt-file publication: `web/file_publication` owns durable
+  exclusive publication for checkpoint bytes and immutable extraction history.
+  Callers retain approved private roots, budgets and identities. Complete owned
+  temporary bytes are flushed/fsynced before one no-replace name commit; only
+  verified temporary inodes are cleaned. Originals are never hardlinked or
+  overwritten. Readers see absence or complete bytes, not a final-name prefix;
+  cancellation is rechecked before checkpoint commit. Existing scientific
+  bytes/paths/schemas/epochs, API/SQL and source validation are unchanged.
+  The API error descriptor localizes only the known `invalid_artifact` category
+  using the existing UiError/catalog, retaining bounded diagnostic detail and
+  exact status/code. Unknown original messages stay literal; genuine malformed
+  completed files still fail. No retrying writes or hiding corruption.
+
 - Rejected pixel diagnostics and non-molecular title ownership: current
   Binding78/binder89 keeps old derived ownership historical without editing raw
   observations, PDFs, detector assets or manual audit. `role_diagnostic_pixels`

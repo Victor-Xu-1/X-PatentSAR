@@ -26,6 +26,7 @@ from patent_sar_extractor.artifact_nodes import MAX_DEPTH, JsonGraph
 from patent_sar_extractor.core.binding_records import binding_records
 
 from .errors import WebError
+from .file_publication import publish_bytes_once
 from .files import MAX_ARTIFACT_BYTES, MAX_RECORDS, SafeFiles, private_directory
 from .models import STAGES, Stage
 from .processes import RunSpec, runtime_identity_matches
@@ -434,15 +435,7 @@ class AttemptHistory:
             raise WebError(
                 413, "history_limit", "Attempt history exceeds its size limit."
             )
-        fd = os.open(
-            directory / f"{row['id']}.json",
-            os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW,
-            0o600,
-        )
-        with os.fdopen(fd, "wb") as stream:
-            stream.write(payload)
-            stream.flush()
-            os.fsync(stream.fileno())
+        publish_bytes_once(directory / f"{row['id']}.json", payload)
 
 
 @dataclass(frozen=True)
@@ -454,7 +447,7 @@ class VerifiedCheckpoint:
 
 
 class CheckpointCopy:
-    """A bounded, independent copy; never directory copying or hardlinks."""
+    """A bounded independent copy; no source inode links or directory copying."""
 
     def __init__(
         self,
@@ -490,13 +483,7 @@ class CheckpointCopy:
         # each transport-owned ancestor privately before any nested crop copy.
         for part in Path(relative).parts[:-1]:
             parent = private_directory(parent / part)
-        fd = os.open(
-            destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600
-        )
-        with os.fdopen(fd, "wb") as stream:
-            stream.write(content)
-            stream.flush()
-            os.fsync(stream.fileno())
+        publish_bytes_once(destination, content, before_publish=self.check_cancel)
         self.content[relative] = hashlib.sha256(content).hexdigest()
         self.total += len(content)
 

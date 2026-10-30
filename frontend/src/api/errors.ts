@@ -24,7 +24,13 @@ export function errorFrom(status: number, input: unknown): ApiError {
       typeof error.code === 'string' &&
       typeof error.message === 'string'
     ) {
-      return new ApiError(status, error.code, error.message.slice(0, 1000));
+      const detail = error.message.slice(0, 1000);
+      if (error.code === 'invalid_artifact') {
+        return new ApiError(status, error.code, '任务文件格式异常，结果尚不可用。', false, {
+          detail,
+        });
+      }
+      return new ApiError(status, error.code, detail);
     }
   }
   return new ApiError(
