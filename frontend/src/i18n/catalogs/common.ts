@@ -97,6 +97,7 @@ export const common: Record<string, string> = {
   'API 响应过大，已停止加载。': 'The API response is too large. Loading stopped.',
   '服务返回了无效 JSON，请检查 API 是否运行。':
     'The server returned invalid JSON. Check that the API is running.',
+  '任务文件格式异常，结果尚不可用。': 'The task artifact is invalid; results are not available.',
   '连接中断，写入结果未知。请先刷新状态，再决定是否重新提交。':
     'The connection was interrupted and the write result is unknown. Refresh the state before deciding whether to submit again.',
   '无法连接 API 服务，请检查服务地址并重新加载。':

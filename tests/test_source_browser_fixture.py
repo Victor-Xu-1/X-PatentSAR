@@ -121,6 +121,18 @@ class SourceBrowserFixtureTests(unittest.TestCase):
 
     def test_unrelated_read_only_or_feature_scopes_retain_their_own_preconditions(self):
         self.assertEqual(
+            fixture_mode({"frontend/e2e/artifact-error-recovery.spec.ts"}), "read-only"
+        )
+        self.assertEqual(
+            fixture_mode(
+                {
+                    "frontend/e2e/artifact-error-recovery.spec.ts",
+                    "frontend/e2e/unknown-execution.spec.ts",
+                }
+            ),
+            "execution",
+        )
+        self.assertEqual(
             fixture_mode({"frontend/e2e/product-version.spec.ts"}), "read-only"
         )
         self.assertEqual(

@@ -1,5 +1,24 @@
 # Operations and troubleshooting
 
+## Checkpoint preparation and immutable history publication
+
+Write-once attempt files are published only when complete, using the shared
+private-parent, no-symlink, no-overwrite publisher. A pending final path may be
+absent while a private temporary is written. Do not expose or manually rename
+temporary files, reuse a failed partial attempt, share source inodes, bypass
+copy budgets or force a queued producer to start before preparation is ready.
+Cancellation before checkpoint commit leaves no published prefix. Existing
+files are preserved, and only an exactly owned temporary inode is cleaned.
+Normal lifecycle/source fingerprints remain the sole reuse and start authority.
+
+An actual malformed completed file still returns invalid_artifact/422, with no
+successful data or automatic write replay. The UI presents that owned category
+in its selected language; bounded diagnostic detail stays available in the
+descriptor instead of being rendered as mixed-language main copy. Unknown
+original text is never translated. These transport fixes preserve every source
+byte and scientific epoch; product release labels advance through the sole
+generator, not by retagging historical scientific output.
+
 ## Rejected source evidence and non-molecular grid titles
 
 `Original role diagnostic value exceeds its budget` reports a field path and

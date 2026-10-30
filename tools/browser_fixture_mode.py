@@ -8,6 +8,7 @@ from pathlib import Path
 PREFIX = "frontend/e2e/"
 # Read-only specs can accompany any controlled feature fixture.
 COMMON = {
+    "artifact-error-recovery.spec.ts",
     "auxiliary-text-environment.spec.ts",
     "binding-artifact.spec.ts",
     "record-count.spec.ts",
