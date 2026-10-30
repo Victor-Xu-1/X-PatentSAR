@@ -6,6 +6,8 @@ An implicit read-model presentation rebuild does not rebase manual corrections.
 Inside the same SQLite publication transaction, `projection_upgrade` compares
 the complete current snapshot (except the two presentation-version markers)
 and every raw row's ID, ordinal, JSON payload, image path and geometry space.
+JSON comparison ignores object-key order only, preserves scalar types and
+numeric forms, and streams the stored rows instead of copying the dataset.
 Only an exact unchanged non-historical source may retain the latest committed
 projection identity. All source/runtime/acceptance changes, historical sources,
 explicit refreshes and new attempts keep the existing invalidation behavior.

@@ -75,6 +75,9 @@ class ProjectionUpgradeIdentityTests(WebFixture, unittest.TestCase):
     def test_row_content_owner_order_and_source_identity_changes_do_not_rebase(self):
         for change in (
             "payload",
+            "boolean_payload",
+            "numeric_form",
+            "snapshot_number",
             "row_id",
             "order",
             "image",
@@ -92,6 +95,13 @@ class ProjectionUpgradeIdentityTests(WebFixture, unittest.TestCase):
                 candidate, rows = self.candidate(), copy.deepcopy(self.rows)
                 if change == "payload":
                     rows[0]["dto"]["source"]["page"] = 99
+                elif change == "boolean_payload":
+                    rows[0]["dto"]["source"]["page"] = True
+                elif change == "numeric_form":
+                    rows[0]["dto"]["source"]["page"] = 1.0
+                elif change == "snapshot_number":
+                    previous["summary"] = {"records": 1}
+                    candidate["summary"] = {"records": True}
                 elif change == "row_id":
                     rows[0]["dto"]["id"] = "other-original"
                 elif change == "order":
