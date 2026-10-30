@@ -110,7 +110,18 @@ def _title_ink_rows(source):
         logical_outside = logical_title_exclusions(source["context"], bounds)
     except (ValueError, TypeError, KeyError, IndexError):
         return None
-    if not native_title_context_complete(native, window, [*excluded, *logical_outside]):
+    physical_columns = (
+        family_column_windows(
+            source["context"], family_column_spans(source["context"], rulings, size)
+        )
+        or []
+    )
+    # Each owned physical row keeps its independent complete text/native gate.
+    # This inventories all row geometry; it grants no role and drops no marks.
+    # Unowned/global native ink must still satisfy the whole-context check.
+    if not native_title_context_complete(
+        native, window, [*excluded, *logical_outside, *physical_columns]
+    ):
         return [], "incomplete_native_title_context"
     geometry = source["context"]["geometry"]
     if (

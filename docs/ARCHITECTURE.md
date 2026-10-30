@@ -7,11 +7,21 @@ catalogue-role schema. An earlier weak/unknown caption owner is not overwritten.
 Logical unruled headers retain their full original context/paint/pixels; only
 their independently rederived header/caption partition owns a title band.
 Whole crossing marks remain unresolved. No logical boundary is a printed rule.
+Every physical peer row still needs complete original evidence. A same-key,
+opposite native/optical role with both complete strong optical frames may be
+retained as an explicit LOCAL CONFLICT, never a qualified title. Only a distinct
+independently owned peer can retain its own role; missing/weak reads, changed
+keys, global ink and same-key competing catalogues still refuse the family.
+The negative carrier does not trigger auxiliary retries. A unique complete
+shared caption uses the existing shared-caption authority, not a page-half rule.
 
-Declaration pages with original logical headers use version3 and retain those
+Declaration pages with original logical headers or captioned continuation links
+use version3 and retain those
 same complete column-source sections in `logical_columns`. Their header/body,
 document/page identity, complete diagram/grid inventory and overlapping raw
-page facts are checked by the existing authorities. Current writer/formal/Web
+page facts are checked by the existing authorities. Continuations retain their
+existing anchor/caption/registered-parent proof, not a newly inferred role.
+Current writer/formal/Web
 consumers cross-check every column owner; a rehashed removal or downgrade cannot
 waive a declaration. Pages without such owners keep version2. Historical reads
 retain their old representations without current admission or source rewrites.

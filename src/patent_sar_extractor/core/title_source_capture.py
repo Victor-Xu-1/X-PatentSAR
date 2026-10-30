@@ -32,6 +32,7 @@ from .title_source_proof import (
     MAX_TITLE_SOURCES,
     TITLE_SOURCES,
     raw_title_packet,
+    source_title_observation,
     source_title_text,
     title_nomination_bounds,
 )
@@ -86,11 +87,16 @@ def observe_source_title(
         and (scoped is None or scoped[1] is not None)
     ):
         return proof
-    if native["text"].strip() and (
-        source_observation_status(native, bounds, native["text"]) != "qualified"
-        or not visible_native_tokens(page, native, paint_view=paint_view)
-    ):
-        return proof
+    if native["text"].strip():
+        if source_observation_status(native, bounds, native["text"]) != "qualified":
+            return proof
+        if not visible_native_tokens(page, native, paint_view=paint_view) and not (
+            ink_source is not None
+            and "parallel_grids" in ink_source["inventory"]["context"]
+            and rows[0][ink_source["row_index"]].get("owner") is not None
+            and ink_source["inventory"]["raster_source"] is not None
+        ):
+            return proof
     if (
         scope is None
         and ink_source is None
@@ -120,7 +126,7 @@ def observe_source_title(
         maximum_rows=MAX_HEADING_ROWS,
         maximum_row_height=MAX_HEADING_HEIGHT,
     )
-    if source_title_text(proof) is None:
+    if source_title_observation(proof) is None:
         from .text_ocr.source_capture import refine_source_text
 
         proof["observations"] = refine_source_text(

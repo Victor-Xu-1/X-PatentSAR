@@ -101,7 +101,8 @@ def _parents(payload):
             if not isinstance(columns, list) or len(columns) > 4096:
                 raise ValueError("Malformed original declaration logical title scopes")
             for column in columns:
-                yield from column["source"]["header_scope"]["context_sources"]
+                header = column["source"]["header_scope"]
+                yield from header.get("anchor_scope", header)["context_sources"]
     observations = payload.get("source_role_observations", {})
     if not isinstance(observations, dict):
         raise TypeError("Malformed original title observation ledger")

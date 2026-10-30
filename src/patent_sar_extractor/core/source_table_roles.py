@@ -16,7 +16,7 @@ from .title_source_proof import (
     TITLE_SOURCES,
     qualified_title_claim_agrees,
     source_title_geometry,
-    source_title_text,
+    source_title_observation,
     title_packet_text,
 )
 
@@ -44,7 +44,7 @@ def _discovered_titles(contexts, context):
     if rows is None or rows[1] is not None:
         return None
     expected = {index for index, row in enumerate(rows[0]) if row["requires_read"]}
-    readings = {}
+    readings, conflicts = {}, set()
     for parent in contexts:
         records = parent.get(TITLE_SOURCES)
         if not isinstance(records, list) or len(records) > MAX_TITLE_SOURCES:
@@ -59,7 +59,8 @@ def _discovered_titles(contexts, context):
                 or ink["row_index"] in readings
             ):
                 return None
-            text = source_title_text(record)
+            observed = source_title_observation(record)
+            text = observed[0] if observed is not None else None
             if (
                 text is None
                 or parent["origin"] != "native"
@@ -68,11 +69,16 @@ def _discovered_titles(contexts, context):
             ):
                 return None
             readings[ink["row_index"]] = text
+            if observed[1]:
+                if "parallel_grids" not in context:
+                    return None
+                conflicts.add(ink["row_index"])
     if set(readings) != expected:
         return None
     observed = [
         {
             **row,
+            "native_conflict": index in conflicts,
             "text": readings[index]
             if row["requires_read"]
             else project_source_observation(source["native_source"], row["bbox"])[

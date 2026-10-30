@@ -12,6 +12,13 @@ source section retained by the row binder. Header/body, document/page, original
 diagram/grid inventory and raw overlapping observations must agree. Omission,
 changed ownership or a current downgrade cannot become clean partial success.
 Historical pages without this field remain historical review, not current QA.
+Captioned continuations reuse their existing full caption/anchor/registered-parent
+proof in the same ledger; they cannot borrow a neighbour's role or invent rules.
+An independently owned peer's complete same-key native/optical opposite-role
+observation stays a LOCAL CONFLICT, not a qualified title. It may not block a
+distinct complete column, but weak/missing reads, global ink, changed keys and
+same-key competing catalogue claims still refuse. The conflicting column stays
+unresolved and final completeness is not waived; no auxiliary voting retries.
 
 For a heading beside another column's drawing/rules, title scope version2 keeps
 the full row and original column sources. The normal column validator must prove
