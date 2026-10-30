@@ -15,9 +15,44 @@ from patent_sar_extractor.core.cell_text_scope import text_scope
 from .cell_frames import literal
 from .identity import recipe
 from .recovery_primary import compatible_primary, parts, source_metadata
+from .recovery_retained_rows import checked_retained_request, retained_pair_rows
 from .recovery_rows import RecoveryRowEngine, checked_group, checked_row
 
 RECOVERY_VERSION = AUXILIARY_TEXT_RECOVERY_VERSION
+
+
+def _checked_requests(view, retained, *, version, fingerprint):
+    from .source_inventory import _MAX_ROWS
+
+    requests = view["requests"]
+    if not isinstance(requests, list) or not requests or len(requests) > _MAX_ROWS:
+        raise ValueError("Missing or unbounded recovery row inventory")
+    grouped = version in (3, 4, RECOVERY_VERSION)
+    outputs = []
+    for index, observed in enumerate(requests):
+        part = retained[index] if index < len(retained) else None
+        if version >= 5 and part is not None:
+            outputs.append(checked_retained_request(observed, part, index))
+        else:
+            outputs.append(
+                checked_group(observed, fingerprint, version=version)
+                if grouped
+                else checked_row(observed, fingerprint)
+            )
+    selected_parts = parts(view["selected"])
+    if len(outputs) != len(selected_parts) or any(
+        literal(observed["text"]) != literal(part["text"])
+        or observed["confidence"] != part["confidence"]
+        for observed, part in zip(outputs, selected_parts, strict=True)
+    ):
+        raise ValueError(
+            "Recovery outputs do not conserve their original row observations"
+        )
+    return (
+        sum(len(row.get("observations", [])) for row in requests)
+        if grouped
+        else len(requests)
+    )
 
 
 def recovery_observation_views(packet):
@@ -28,11 +63,11 @@ def recovery_observation_views(packet):
         != {"version", "model", "views", "rows_per_chunk", "allow_chunks"}
         | (
             {"maximum_row_height"}
-            if packet.get("version") == RECOVERY_VERSION
+            if packet.get("version") in (4, RECOVERY_VERSION)
             else set()
         )
         or type(packet["version"]) is not int
-        or packet["version"] not in (2, 3, RECOVERY_VERSION)
+        or packet["version"] not in (2, 3, 4, RECOVERY_VERSION)
     ):
         raise ValueError("Unknown complete auxiliary recovery evidence")
     maximum, allow = packet["rows_per_chunk"], packet["allow_chunks"]
@@ -60,9 +95,19 @@ def recovery_observation_views(packet):
     ):
         raise ValueError("Unproved complete recovery model or limits")
     outputs, count = [], 0
+    retained = (
+        retained_pair_rows(
+            [view.get("primary") for view in views],
+            [view.get("frame") for view in views],
+            maximum_rows=maximum,
+            maximum_row_height=height,
+        )
+        if packet["version"] >= 5 and all(isinstance(view, dict) for view in views)
+        else ((), ())
+    )
     from .source_inventory import _MAX_ROWS
 
-    for view, dpi in zip(views, (400, 600), strict=True):
+    for view_index, (view, dpi) in enumerate(zip(views, (400, 600), strict=True)):
         if (
             not isinstance(view, dict)
             or set(view) != {"dpi", "primary", "frame", "selected", "requests"}
@@ -100,27 +145,11 @@ def recovery_observation_views(packet):
             or not valid_cell_frame(view["frame"], selected, selected.get("bbox"), dpi)
         ):
             raise ValueError("Recovery changed original source metadata or scope")
-        requests = view["requests"]
-        if not isinstance(requests, list) or not requests or len(requests) > _MAX_ROWS:
-            raise ValueError("Missing or unbounded recovery row inventory")
-        grouped = packet["version"] in (3, RECOVERY_VERSION)
-        selected_requests = [
-            (checked_group if grouped else checked_row)(observed, model["fingerprint"])
-            for observed in requests
-        ]
-        selected_parts = parts(selected)
-        if len(selected_requests) != len(selected_parts) or any(
-            literal(observed["text"]) != literal(part["text"])
-            or observed["confidence"] != part["confidence"]
-            for observed, part in zip(selected_requests, selected_parts, strict=True)
-        ):
-            raise ValueError(
-                "Recovery outputs do not conserve their original row observations"
-            )
-        count += (
-            sum(len(row["observations"]) for row in requests)
-            if grouped
-            else len(requests)
+        count += _checked_requests(
+            view,
+            retained[view_index],
+            version=packet["version"],
+            fingerprint=model["fingerprint"],
         )
         outputs.append(selected)
     if count > _MAX_ROWS or views[0]["primary"]["bbox"] != views[1]["primary"]["bbox"]:
@@ -194,7 +223,17 @@ def replay_recovery_cell(reading, page):
     from patent_sar_extractor.core.cell_raster import original_reading_image
 
     packet = reading["auxiliary_text"]
-    for view in packet["views"]:
+    retained = (
+        retained_pair_rows(
+            [view["primary"] for view in packet["views"]],
+            [view["frame"] for view in packet["views"]],
+            maximum_rows=packet["rows_per_chunk"],
+            maximum_row_height=packet.get("maximum_row_height", 12),
+        )
+        if packet["version"] >= 5
+        else ((), ())
+    )
+    for index, view in enumerate(packet["views"]):
         dpi, primary = view["dpi"], view["primary"]
         if "source_window" not in primary:
             return False
@@ -209,6 +248,7 @@ def replay_recovery_cell(reading, page):
             requests=view["requests"],
             fingerprint=packet["model"]["fingerprint"],
             version=packet["version"],
+            retained_rows=retained[index],
         )
         observed = {
             **source_metadata(primary),

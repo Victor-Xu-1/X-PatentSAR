@@ -106,9 +106,9 @@ def auxiliary_source_cells(sources):
                     [
                         observed
                         for row in view["requests"]
-                        for observed in row["observations"]
+                        for observed in row.get("observations", [])
                     ]
-                    if packet["version"] in (3, AUXILIARY_TEXT_RECOVERY_VERSION)
+                    if packet["version"] in (3, 4, AUXILIARY_TEXT_RECOVERY_VERSION)
                     else view["requests"]
                 )
             )

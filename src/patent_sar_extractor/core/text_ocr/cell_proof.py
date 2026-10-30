@@ -34,7 +34,7 @@ def effective_cells(packet):
     if (
         isinstance(packet, dict)
         and type(packet.get("version")) is int
-        and packet["version"] in (2, 3, AUXILIARY_TEXT_RECOVERY_VERSION)
+        and packet["version"] in (2, 3, 4, AUXILIARY_TEXT_RECOVERY_VERSION)
     ):
         from .recovery_proof import effective_recovery_cells
 
@@ -114,6 +114,7 @@ def replay_auxiliary_cell(reading, page):
         if reading["auxiliary_text"]["version"] in (
             2,
             3,
+            4,
             AUXILIARY_TEXT_RECOVERY_VERSION,
         ):
             from .recovery_proof import replay_recovery_cell

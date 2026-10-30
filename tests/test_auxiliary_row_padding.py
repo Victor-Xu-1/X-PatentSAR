@@ -28,6 +28,41 @@ class PaddingAuxiliary(fixture.ControlledAuxiliary):
 class AuxiliaryRowPaddingTests(unittest.TestCase):
     setUp = fixture.AuxiliaryCellEvidenceTests.setUp
 
+    def test_historical_v4_two_observation_recipe_remains_model_free_and_bounded(self):
+        baseline = refine_text_pair(self.images, self.primaries, PaddingAuxiliary())
+        historical = copy.deepcopy(baseline[0])
+        historical["auxiliary_text"]["version"] = 4
+        historical["auxiliary_text_version"] = 4
+        self.assertTrue(valid_auxiliary_cell(historical, 400))
+        self.assertTrue(replay_auxiliary_cell(historical, self.page))
+        self.assertEqual(len(list(auxiliary_source_cells([(1, historical)]))), 1)
+
+    def test_third_horizontal_blank_view_recovers_only_after_two_weak_reads(self):
+        class HorizontalAuxiliary(fixture.ControlledAuxiliary):
+            def __init__(self):
+                super().__init__(("HTRF", "HTRF", "HTRF", "EC50", "EC50", "EC50"))
+
+            def observe(self, image):
+                observed = super().observe(image)
+                observed["confidence"] = 0.999 if self.calls % 3 == 0 else 0.975
+                return observed
+
+        reader = HorizontalAuxiliary()
+        pair = refine_text_pair(self.images, self.primaries, reader)
+        self.assertIsNotNone(pair)
+        self.assertEqual(reader.calls, 12)
+        for view in pair[0]["auxiliary_text"]["views"]:
+            for row in view["requests"]:
+                self.assertEqual(
+                    [r["confidence"] for r in row["observations"]],
+                    [0.975, 0.975, 0.999],
+                )
+        self.assertTrue(replay_auxiliary_cell(pair[0], self.page))
+        legacy = copy.deepcopy(pair[0])
+        legacy["auxiliary_text"]["version"] = 4
+        legacy["auxiliary_text_version"] = 4
+        self.assertFalse(valid_auxiliary_cell(legacy, 400))
+
     def test_one_compact_retry_keeps_weak_raw_observation_and_original_replay(self):
         reader = PaddingAuxiliary()
         pair = refine_text_pair(self.images, self.primaries, reader)
@@ -42,15 +77,15 @@ class AuxiliaryRowPaddingTests(unittest.TestCase):
                         [r["confidence"] for r in row["observations"]], [0.975, 0.999]
                     )
 
-    def test_two_weak_observations_stay_rejected_with_both_retained(self):
+    def test_all_three_weak_observations_stay_rejected_and_retained(self):
         reader, evidence = PaddingAuxiliary(weak_second=True), []
         self.assertIsNone(
             refine_text_pair(
                 self.images, self.primaries, reader, evidence_sink=evidence
             )
         )
-        self.assertEqual(reader.calls, 2)
-        self.assertEqual(len(evidence[0]["views"][0]["requests"][0]["observations"]), 2)
+        self.assertEqual(reader.calls, 3)
+        self.assertEqual(len(evidence[0]["views"][0]["requests"][0]["observations"]), 3)
 
     def test_qualified_first_read_never_requests_padding_vote(self):
         reader = fixture.ControlledAuxiliary()

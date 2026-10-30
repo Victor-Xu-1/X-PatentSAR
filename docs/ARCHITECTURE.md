@@ -21,7 +21,7 @@ guard or molecular identity/measurement rule was relaxed. Shared source inventor
 counts title requests and rejects conflicting reuse of an observation identity.
 Worker/Web readers replay original pixels without acquiring an OCR runtime.
 
-Binding79/binder90 and Activity52/extractor64 refresh derived semantics only.
+Binding80/binder91 and Activity53/extractor65 refresh derived semantics only.
 Raw PDF/OCR/locator/segmentation/chemical observations and manual audit are not
 rewritten. The optional runtime remains off unless already configured on demand;
 no model/environment installation, new queue, asset store or execution chain.
@@ -1542,7 +1542,7 @@ are not private-patent, universal recall, chemical or full SAR acceptance.
 
 ## Complete auxiliary text recovery and original-role replay
 
-The optional `text_ocr` adapter now produces recovery3 through one row-only
+The optional `text_ocr` adapter produces recovery5 through one row-only
 `RecoveryRowEngine` and the SAME `observe_text_cell` geometry. Trusted role
 callers allow32rows per chunk; ordinary scalar/header callers retain8rows and
 no chunks. Existing128chunk,8Mcell-pixel,1Mrow-pixel and2048session-request
@@ -1564,20 +1564,34 @@ change. All producer and read-side auxiliary/header/source consumers share this
 authority; no extra parser, repair engine or model vote is introduced.
 
 `recovery_capture` retains both400/600dpi primary views, full frame digests,
-selected complete observations and every literal row response. A well-formed
-response below the unchanged0.99 auxiliary threshold may use exactly one
-compact blank-padding alternative from `row_preparation`, governed by the SAME
-original row-border rule. No resizing, rotation, text substitution, unit repair
-or confidence inflation occurs. First-qualified responses never trigger voting;
-two weak responses remain rejected. Malformed/foreign replies abort rather than
-retry. Every actual request, including weak/cached replies, spends the unchanged
-2048session budget. Each logical row retains its original pixel/shape/ink bounds
-and both raw observations when used; the global inventory checks losing replies
-for request/model conflicts too. `recovery_proof`
+selected complete observations and every literal row response. The shared
+`cell_text_proof.original_physical_parts` validates complete original version2
+row structure without granting whole-cell acceptance. `recovery_retained_rows`
+retains a row only when BOTH original views have the same literal text, valid
+physical ordinal and existing primary-quality score. Text and confidence stay
+exactly primary; the request carrier records that origin and source-pixel hash,
+never a fictitious auxiliary observation/model score. One weak or missing peer
+requires auxiliary observation. Complete qualified cells and strong conflicting
+claims retain their original skip/refusal policy. Chunked and unsupported primary
+layouts use the same ordinary full-row capture, not guessed alignment.
+
+A well-formed auxiliary response below the unchanged0.99 threshold can use the
+existing compact blank-padding view, then at most one horizontal blank-padding
+view (one ink-row height on either side, original vertical border). Each view
+preserves all original ink; fixed source-shape/pixel budgets still apply. No
+resizing, rotation, text substitution, unit repair or confidence inflation occurs.
+The first qualified reply stops the fixed sequence; three weak replies remain
+rejected, not voted. Malformed/foreign replies abort. Every ACTUAL request,
+including weak/cached replies, spends the unchanged2048session budget; retained
+primary rows are not model calls. Each row retains its original pixel/shape/ink
+bounds and every losing reply; source inventory rejects request/model conflicts.
+`recovery_proof`
 replays the same physical observer with recorded pixel-keyed responses, without
 a model or SDK on reads. The existing auxiliary physical marker remains even
-if outer packet fields are stripped. Recovery1/2 have only bounded historical
-readers; neither has a live producer. Original replay reconstructs every compact
+if outer packet fields are stripped. Recovery1/2/3/4 have only bounded historical
+readers; none has a live producer. Version4 preserves its two-view recipe; a
+version5 third view/retained-row marker cannot be downgraded into old permission.
+Original replay reconstructs every prepared
 pixel view without a model, and missing/extra/reordered requests refuse.
 No new recognizer, dependency,
 installer, queue or source store is introduced.
@@ -1591,12 +1605,23 @@ readback conserve them through the same original replay. Role diagnostics allow
 six additional envelope links only at physical-cell recovery/attempt paths;
 unrelated nesting, node/array/scalar/catalog budgets remain unchanged.
 
-Binding47/binder57 and Activity30/extractor40 refresh affected derived evidence.
+Recovery3 originally introduced Binding47/binder57 and Activity30/extractor40;
+the current derived source epochs are listed below.
 Original PDF/raw OCR/OCSR2, preparation12, structures, human audit, numerical SAR,
 API/SQL, model files and activation policy remain unchanged. Old role1/2 and
 recovery1 evidence remains historical, never retagged as current acceptance.
 Generated controlled/native checks establish integration, not universal patent
 recall, structure correctness or successful real extraction-to-SAR acceptance.
+
+`assay_typography` is a comparison-only closed-vocabulary policy for the existing
+HTRF/HiBiT/NanoBiT/FACS assay words. It projects at most one internal apostrophe;
+raw headers and observations remain literal. Prime marks, unknown words, multiple
+quotes, changed letters/digits and every endpoint/unit/target/time distinction
+remain protected. Only header and explicit ASSAY comparisons use this projection;
+target/construct/context identity and generic OCR recovery remain literal. This
+does not equate distinct assay technologies or grant model replacement authority.
+Current source epochs are Binding80/binder91 and Activity53/extractor65; raw
+PDF/OCR/OCSR/preparation, model files, activation, API/SQL and human audit stay intact.
 
 ## Complete closed-grid role coverage with bounded work units
 

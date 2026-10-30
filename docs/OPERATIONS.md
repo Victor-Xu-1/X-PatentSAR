@@ -17,7 +17,7 @@ replay. The standard environment setting stays authoritative: disabled means no
 auxiliary call, and enabling never installs a missing runtime automatically.
 Requests share the existing source inventory/session limits and identity checks.
 
-Binding79/binder90 and Activity52/extractor64 require fresh derived associations;
+Binding80/binder91 and Activity53/extractor65 require fresh derived associations;
 old attempts remain reviewable history, not automatically relabelled current.
 Unchanged raw observations/structure assets/manual audit remain preserved. Normal
 frontend resume decides safe checkpoint reuse. Never edit old artifacts or lower
@@ -1293,19 +1293,31 @@ scientific acceptance or authorization for private CLI processing.
 
 The same on-demand ordinary OCR can refine unresolved complete role cells.
 Inspect retained primary views, selected physical rows/chunks, original-frame
-digests and row responses. Each physical row needs a response in both400/600dpi
-views. Long role text uses32row work chunks, not an eight-row truncation; scalar
+digests and row responses. Each physical row needs an original observation or
+qualified auxiliary response in both400/600dpi views. Long role text uses32row
+work chunks, not an eight-row truncation; scalar
 and header scopes do not inherit this permission. Unknown/contradictory roles,
 missing tails, unavailable runtime, exhausted budgets and cancelled requests
 remain refused with observations, not fabricated values or successful tables.
 
-Recovery3 is the sole current producer. Historical recovery1/2 stay read-only.
-An otherwise valid SDK reply below0.99 can try one compact blank-padding view of
-the same complete ink row. Inspect grouped `requests[].observations`: both weak
-and selected replies remain, with original shape/crop/pixel identity. No quality
-threshold is lowered; two weak replies, malformed transport, budget exhaustion
-or cancellation cannot publish success. Clear first replies have no extra call.
-All requests count, not just the winning replies. Padding does not repair units,
+Recovery5 is the sole current producer. Historical recovery1/2/3/4 stay read-only;
+version4 retains its two-view padding recipe. Current original version2 physical
+rows that agree literally and qualify in BOTH primaries can be retained without
+a model call. Inspect `requests[].retained_primary_row` and its original pixel
+hash: neither auxiliary observations nor a higher confidence may be invented.
+Weak/missing/disagreeing peers are not retained. Existing complete-cell skips and
+strong-conflict refusals are unchanged; unsupported/chunked source layouts are
+not heuristically aligned.
+
+An otherwise valid SDK reply below0.99 can try one compact blank-padding view,
+then at most one horizontal-whitespace view of the same complete ink row. The
+last view uses one ink-row height on each side, original vertical padding and
+unchanged frame budgets. Inspect grouped `requests[].observations`: ALL weak and
+selected replies remain, with original shape/crop/pixel identity. No quality
+threshold is lowered; three weak replies, malformed transport, budget exhaustion
+or cancellation cannot publish success. First-qualified replies have no extra
+call. All actual requests count, not just selected replies; retained primary rows
+do not spend fictitious calls. Padding does not repair units,
 conditions, unknown semantics or contradictory native/detector claims.
 Original readback uses cached row observations plus actual original pixels, not
 model inference. Source native text, physical column identity, boundaries and
@@ -1319,8 +1331,19 @@ auxiliary cell/header/discovery/identifier/binding/activity consumers, source
 epochs and safe Web/export consumers. Native generated-text checks require the
 existing explicit runtime/model opt-in; no downloads or dependency changes.
 These are not private-patent processing or universal scientific acceptance.
-Binding47/binder57, Activity30/extractor40 and characterization-role4 require
-normal frontend regeneration. Preserve old tasks/manual audit and matching
+The same header comparison admits one internal apostrophe only inside existing
+closed assay terms HTRF/HiBiT/NanoBiT/FACS. Raw text is preserved; unknown words,
+prime marks, multiple quotes, targets/constructs, endpoints, units and durations
+remain literal. This cannot make NanoBiT and another assay interchangeable.
+Canonical technology spelling is supported by
+[Promega NanoBiT](https://www.promega.com/resources/protocols/technical-manuals/101/nanobit-protein-protein-interaction-system-protocol/),
+[Promega HiBiT](https://worldwide.promega.com/resources/protocols/technical-manuals/500/nano-glo-hibit-lytic-detection-system-protocol/)
+and [Revvity HTRF](https://www.revvity.com/ask/htrf-basics); these sources do not
+establish OCR accuracy, which requires independent original-source validation.
+Binding80/binder91 and Activity53/extractor65 refresh affected derived proof.
+The recovery3-era Binding47/binder57, Activity30/extractor40 and role4 outputs
+remain historical; current derived source contracts require normal frontend
+regeneration. Preserve old tasks/manual audit and matching
 rollback code/config/state; never upgrade saved proof fields manually.
 
 ## A closed source table exceeds one observation work unit
