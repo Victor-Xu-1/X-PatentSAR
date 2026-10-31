@@ -14,9 +14,9 @@ export function sourceProjectLabels(projects: readonly Project[]): Map<string, s
     const label =
       titleCounts.get(project.title)! > 1
         ? [
-            project.title,
-            t(project.read_error ? '结果数据需修复' : acceptanceLabels[project.acceptance.state]),
             dateText(project.created_at),
+            t(project.read_error ? '结果数据需修复' : acceptanceLabels[project.acceptance.state]),
+            project.title,
           ].join(' · ')
         : project.title;
     labels.set(project.id, label);
@@ -29,7 +29,7 @@ export function sourceProjectLabels(projects: readonly Project[]): Map<string, s
     // Equal timestamps/states are still distinct sources. Stable ordinals avoid
     // exposing internal IDs or silently collapsing records when lists reorder.
     ids.sort().forEach((id, index) => {
-      labels.set(id, `${label} · ${t('来源 {number}', { number: index + 1 })}`);
+      labels.set(id, `${t('来源 {number}', { number: index + 1 })} · ${label}`);
     });
   }
   return labels;

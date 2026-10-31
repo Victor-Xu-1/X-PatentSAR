@@ -64,8 +64,8 @@ for (const width of [390, 1672]) {
         .allTextContents(),
     ).toEqual(
       expect.arrayContaining([
-        expect.stringContaining('来源 1'),
-        expect.stringContaining('来源 2'),
+        expect.stringMatching(/^来源 1 · /),
+        expect.stringMatching(/^来源 2 · /),
       ]),
     );
     expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1)).toBe(

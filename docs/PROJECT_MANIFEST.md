@@ -11,9 +11,11 @@
   chemistry, environment or manual-audit migration and no competing store.
 
 - SAR source-choice presentation: `model/projectOptionLabels` disambiguates
-  duplicate literal project titles with the existing translated acceptance
-  status and creation-time formatter. Remaining equal labels use stable
-  source ordinals derived from source IDs without displaying those IDs. The
+  duplicate literal project titles with the existing creation-time formatter
+  and translated acceptance status. Distinguishing metadata and remaining
+  equal-label source ordinals are prefixed so native narrow-screen selects
+  cannot crop away the distinction. Ordinals use source IDs without exposing
+  those IDs. The
   option value and explicit snapshot request retain the exact original project
   identity; locale, list order, draft and read-error gates do not create/import
   data or change scientific acceptance. Unique titles keep their prior label.

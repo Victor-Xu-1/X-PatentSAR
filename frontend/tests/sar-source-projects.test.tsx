@@ -33,10 +33,10 @@ it('keeps unique source titles literal and never mutates projects to add UI meta
   expect(sourceProjectLabels([first]).get(first.id)).toBe(first.title);
   const labels = sourceProjectLabels([first, second]);
   expect(labels.get(first.id)).toBe(
-    `${first.title} · ${t(acceptanceLabels.failed)} · ${dateText(first.created_at)}`,
+    `${dateText(first.created_at)} · ${t(acceptanceLabels.failed)} · ${first.title}`,
   );
   expect(labels.get(second.id)).toBe(
-    `${second.title} · ${t(acceptanceLabels.accepted)} · ${dateText(second.created_at)}`,
+    `${dateText(second.created_at)} · ${t(acceptanceLabels.accepted)} · ${second.title}`,
   );
   expect(labels.get(first.id)).not.toBe(labels.get(second.id));
   expect([first, second]).toEqual(before);
@@ -46,8 +46,8 @@ it('disambiguates equal title, state and timestamp without exposing IDs or depen
   const same = { ...second, created_at: first.created_at, acceptance: first.acceptance };
   const labels = sourceProjectLabels([first, same]);
   const reordered = sourceProjectLabels([same, first]);
-  expect(labels.get(first.id)).toContain('Source 1');
-  expect(labels.get(same.id)).toContain('Source 2');
+  expect(labels.get(first.id)).toMatch(/^Source 1 · /);
+  expect(labels.get(same.id)).toMatch(/^Source 2 · /);
   for (const item of [first, same]) {
     expect(labels.get(item.id)).toBe(reordered.get(item.id));
     expect(labels.get(item.id)).not.toContain(item.id);
