@@ -51,10 +51,17 @@ for (const width of [390, 1672]) {
     await page
       .getByRole('combobox', { name: 'Interface language', exact: true })
       .selectOption('zh-CN');
-    await expect(page.getByLabel('来源项目', { exact: true })).toHaveValue(secondId);
-    await expect(page.getByLabel('数据集名称', { exact: true })).toHaveValue('Original draft 007B');
+    await expect(page.getByRole('combobox', { name: '来源项目', exact: true })).toHaveValue(
+      secondId,
+    );
+    await expect(page.getByRole('textbox', { name: '数据集名称', exact: true })).toHaveValue(
+      'Original draft 007B',
+    );
     expect(
-      await page.getByLabel('来源项目', { exact: true }).locator('option').allTextContents(),
+      await page
+        .getByRole('combobox', { name: '来源项目', exact: true })
+        .locator('option')
+        .allTextContents(),
     ).toEqual(
       expect.arrayContaining([
         expect.stringContaining('来源 1'),
@@ -69,8 +76,10 @@ for (const width of [390, 1672]) {
       animations: 'disabled',
     });
     await page.getByRole('combobox', { name: '界面语言', exact: true }).selectOption('en');
-    await expect(page.getByLabel('Source project', { exact: true })).toHaveValue(secondId);
-    await expect(page.getByLabel('Dataset title', { exact: true })).toHaveValue(
+    await expect(page.getByRole('combobox', { name: 'Source project', exact: true })).toHaveValue(
+      secondId,
+    );
+    await expect(page.getByRole('textbox', { name: 'Dataset title', exact: true })).toHaveValue(
       'Original draft 007B',
     );
     expect(errors).toEqual([]);
