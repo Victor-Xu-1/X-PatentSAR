@@ -22,6 +22,24 @@ class TextOCRCancelled(RuntimeError):
     pass
 
 
+class TextOCRPhaseTimeout(TimeoutError):
+    """An operational phase failed; never evidence that an OCR value is wrong."""
+
+    def __init__(self, phase):
+        if type(phase) is not str or phase not in {
+            "queue",
+            "identity",
+            "worker_ready",
+            "source_frame",
+            "model_prepare",
+            "inference",
+        }:
+            raise ValueError("Unknown auxiliary text OCR timeout phase")
+        self.phase = phase
+        self.code = phase + "_timeout"
+        super().__init__(f"Auxiliary text OCR {phase} deadline exceeded")
+
+
 def remaining(deadline: float, cancel: threading.Event | None) -> float:
     if cancel is not None and cancel.is_set():
         raise TextOCRCancelled("Auxiliary text OCR was cancelled")

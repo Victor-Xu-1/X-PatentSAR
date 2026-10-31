@@ -1,5 +1,19 @@
 # Project governance manifest
 
+- Auxiliary text lifecycle authority: one protocol2 JSONL worker distinguishes
+  verified transport readiness, validated-owned-row model preparation and literal
+  inference. Preparation returns identity/hashes only, never text or acceptance;
+  observe requires readiness and revalidates the source. Constructor/GET/replay
+  remain model-free. Separate finite activation60s and existing inference30/max60s
+  deadlines, with typed queue/identity/worker/source/preparation/inference failures,
+  replace the ambiguous shared cold-start deadline. No automatic retries, new
+  environment/service/model/SDK recipe or scientific quality relaxation. The
+  same256 wire commands include preparation;2048 counts inference attempts,
+  including failures. Cache128/fail2/CPU2/RSS1024/offline/source bounds unchanged.
+  Binder94/extractor69 refresh derived attempts; successful Binding82/Activity56
+  schemas and all raw/chemical/manual assets are preserved. Native generated
+  controls are engineering evidence only; real tasks remain frontend-only.
+
 - Original role-cell frame authority: `cell_partial_frame` requests the existing
   renderer's source-window4 ONLY after the ordinary original physical-row
   inventory is unbounded. Exactly one horizontal edge and all attached source

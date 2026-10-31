@@ -12,6 +12,7 @@ from unittest.mock import patch
 import numpy as np
 
 from patent_sar_extractor.core.ocsr.worker_process import WorkerProtocolError
+from patent_sar_extractor.core.text_ocr.control import WORKER_PROTOCOL_VERSION
 from patent_sar_extractor.core.text_ocr.identity import recipe
 from patent_sar_extractor.core.text_ocr.process import TextOCRCancelled
 from patent_sar_extractor.core.text_ocr.runtime import AuxiliaryTextRuntime
@@ -28,12 +29,14 @@ class ControlledWorker:
     created: ClassVar[list] = []
     failure = None
     predictions = 0
+    preparations = 0
 
     def __init__(self, command, environment):
         self.identity_only = command[-1] == "--identity"
         self.environment = environment
         self.closed = False
         self.request = None
+        self.operation = None
         self.process = SimpleNamespace(
             pid=999999999, poll=lambda: 0 if self.closed else None
         )
@@ -51,7 +54,10 @@ class ControlledWorker:
             )
         if self.request is None:
             return {
-                "status": "ready",
+                "status": "worker_ready",
+                "protocol_version": 1
+                if self.failure == "old_protocol"
+                else WORKER_PROTOCOL_VERSION,
                 "identity": dict(
                     IDENTITY,
                     versions=recipe()["distributions"],
@@ -62,6 +68,26 @@ class ControlledWorker:
         if self.failure == "timeout":
             time.sleep(min(timeout, 0.01))
             raise TimeoutError
+        if self.operation == "prepare":
+            reply = {
+                "status": "model_ready",
+                **{
+                    key: self.request[key]
+                    for key in (
+                        "id",
+                        "image_sha256",
+                        "pixel_sha256",
+                        "model_fingerprint",
+                    )
+                },
+            }
+            if self.failure == "bad_prepare_id":
+                reply["id"] = "b" * 32
+            elif self.failure == "bad_prepare_fingerprint":
+                reply["model_fingerprint"] = "b" * 64
+            elif self.failure == "bad_prepare_fields":
+                reply["text"] = "This is not an observation"
+            return reply
         result = {
             key: self.request[key]
             for key in ("id", "image_sha256", "pixel_sha256", "model_fingerprint")
@@ -79,8 +105,12 @@ class ControlledWorker:
         return result
 
     def send(self, request):
-        type(self).predictions += 1
-        self.request = request
+        self.operation = request["operation"]
+        if self.operation == "observe":
+            type(self).predictions += 1
+        elif self.operation == "prepare":
+            type(self).preparations += 1
+        self.request = request["request"]
 
     def close(self):
         self.closed = True
@@ -98,6 +128,7 @@ class AuxiliaryTextRuntimeTests(unittest.TestCase):
         self.image = np.full((32, 150, 3), 255, np.uint8)
         self.image[10:20, 10:120] = 0
         ControlledWorker.created, ControlledWorker.predictions = [], 0
+        ControlledWorker.preparations = 0
         ControlledWorker.failure = None
         self.addCleanup(patch.stopall)
         patch(

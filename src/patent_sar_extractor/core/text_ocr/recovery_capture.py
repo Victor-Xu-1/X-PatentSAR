@@ -10,7 +10,7 @@ from patent_sar_extractor.core.cell_text_scope import text_scope
 from patent_sar_extractor.core.ocsr.worker_process import WorkerProtocolError
 
 from .identity import recipe
-from .process import TextOCRCancelled
+from .process import TextOCRCancelled, TextOCRPhaseTimeout
 from .recovery_primary import (
     PRIMARY_CONFLICT_CODE,
     complete_primary,
@@ -172,7 +172,9 @@ def capture_complete_views(
                 evidence_sink.append(
                     {
                         "status": "unavailable",
-                        "code": "request_timeout"
+                        "code": error.code
+                        if isinstance(error, TextOCRPhaseTimeout)
+                        else "request_timeout"
                         if isinstance(error, TimeoutError)
                         else "runtime_or_source_failure",
                         "views": views,

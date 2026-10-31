@@ -1,5 +1,33 @@
 # X-PatentSAR architecture
 
+## Auxiliary text activation is not an observed reading
+
+The existing finite JSONL worker has transport protocol2. `worker_ready` proves
+only its verified model/SDK identity and carrier version. Its first cache miss
+then sends `prepare` with an actual owned source row: the worker validates the
+path, source bytes, pixels, shape and model fingerprint BEFORE loading the same
+CPU text model. `model_ready` repeats only that request identity, never text,
+confidence or scientific acceptance. `observe` requires preparation and repeats
+the original row validation; there is no competing implicit lazy-load chain.
+
+One60-second activation budget covers identity, admission/transport, source
+file preparation and native model loading. The existing default30/max60-second
+inference budget begins only after a matching model-ready response. Serialized
+queue waiting has its own bounded/cancellable request budget; a queued timeout
+cannot stop another caller's worker. Phase-coded operational failures remain
+separate from raw OCR observations. No automatic retry or guessed replacement
+is introduced. Exact cached pixels/model need no model activation; idle or
+exhausted worker rotation requires preparation again on the next cache miss.
+
+The preparation command consumes one of the same256 wire-message slots. The
+2048 inference-attempt cap includes failed inference sends; cache128, two-failure
+circuit, CPU2, RSS1024MB, offline networking and unchanged source/row/pixel/score
+limits still apply. Constructor, GET and original-pixel replay remain inert.
+Model recipe/weights/SDK identity, successful proof schemas Binding82/Activity56,
+Web API/SQL and manual audit are unchanged. Binder94/extractor69 refresh affected
+derived work so prior unavailable attempts are not mistaken for current results.
+Generated controls verify lifecycle and source replay, not private-patent recall.
+
 ## Unbounded role-cell frames retain their touched edge
 
 `cell_partial_frame` is subordinate to the existing role-cell observer. Only
