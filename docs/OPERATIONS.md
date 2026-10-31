@@ -1,5 +1,29 @@
 # Operations and troubleshooting
 
+## Auxiliary text OCR times out on its first unresolved row
+
+Do not interpret transport readiness as a loaded text model or `request_timeout`
+as evidence of a bad source reading. Transport protocol2 separates a finite
+60-second activation (identity, worker, owned source row and native preparation)
+from the existing default30/max60-second inference deadline. Current retained
+unavailable attempts distinguish `queue_timeout`, `identity_timeout`,
+`worker_ready_timeout`, `source_frame_timeout`, `model_prepare_timeout` and
+`inference_timeout`; historical generic timeouts do not identify their phase.
+
+The ordinary environment setting and already-approved local model remain the
+only authority. Preparation requires validated original row bytes and returns
+no scientific value. A failed/forged response closes that owner's worker without
+retry; queue timeout does not close another caller's active worker. The same
+idle/wire/RSS/inference/cache/failure budgets and offline policy remain enforced.
+Do not increase those limits, edit observations, download a replacement model or
+enable LLM merely to clear this error. Missing or conflicting text stays unknown.
+
+Binder94/extractor69 invalidate derived attempts only; old source windows,
+Binding82/Activity56 proof formats, raw PDF/OCR/crops/chemistry and manual audit
+remain intact. After focused verification and idle deployment, only the normal
+frontend may submit a new real extraction/SAR. Generated native checks and a
+working handshake do not establish scientific or end-to-end patent acceptance.
+
 ## Role text was not attempted because its physical rows were unbounded
 
 The ordinary frame may join a paragraph through a touched table rule. A new

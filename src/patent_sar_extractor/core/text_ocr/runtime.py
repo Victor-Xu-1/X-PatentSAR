@@ -20,8 +20,15 @@ from patent_sar_extractor.core.ocsr.worker_process import (
 )
 from patent_sar_extractor.resource_admission import wait_for_memory
 
+from .control import (
+    STARTUP_SECONDS,
+    control_packet,
+    validate_prepared,
+    worker_ready_matches,
+)
 from .process import (
     TextOCRCancelled,
+    TextOCRPhaseTimeout,
     environment,
     model_stamp,
     query_text_identity,
@@ -52,6 +59,7 @@ class AuxiliaryTextRuntime:
         self._identity = None
         self._stamp = None
         self._worker = None
+        self._model_prepared = False
         self._cache = OrderedDict()
         self._lock = threading.Lock()
         self._closed = False
@@ -61,6 +69,7 @@ class AuxiliaryTextRuntime:
 
     def _stop(self):
         worker, self._worker = self._worker, None
+        self._model_prepared = False
         if worker is not None:
             worker.close()
 
@@ -116,7 +125,7 @@ class AuxiliaryTextRuntime:
         remaining(deadline, self.cancel)
         self._worker = JsonLineWorker([str(self.python), str(self._script)], self._env)
         ready = receive(self._worker, deadline, self.cancel)
-        if ready != {"status": "ready", "identity": self._identity}:
+        if not worker_ready_matches(ready, self._identity):
             raise WorkerProtocolError("Auxiliary text OCR changed identity at startup")
         self._requests = 0
 
@@ -139,19 +148,28 @@ class AuxiliaryTextRuntime:
             # hit. The prior loaded child still belongs to this cancelled owner.
             self.close()
             raise
+        except TimeoutError as error:
+            # A queued caller must not stop another call's owned worker.
+            raise TextOCRPhaseTimeout("queue") from error
         path = None
+        phase = "identity"
         try:
             if self._closed or self._failures >= 2 or self._total >= 2048:
                 raise WorkerProtocolError(
                     "Auxiliary text OCR session is closed or exhausted"
                 )
+            # One finite activation budget includes identity, transport and
+            # validated-row model loading. It is not an inference retry.
+            deadline = time.monotonic() + STARTUP_SECONDS
             self._prepare(deadline)
             remaining(deadline, self.cancel)
             key = self._identity["fingerprint"], pixel_digest
             if key in self._cache:
                 self._cache.move_to_end(key)
                 return dict(self._cache[key], cache_hit=True)
+            phase = "worker_ready"
             self._start(deadline)
+            phase = "source_frame"
             with tempfile.NamedTemporaryFile(
                 dir=self.root, suffix=".png", delete=False
             ) as stream:
@@ -165,12 +183,31 @@ class AuxiliaryTextRuntime:
                 "shape": list(image.shape),
                 "model_fingerprint": key[0],
             }
-            self._worker.send(request)
+            remaining(deadline, self.cancel)
+            if not self._model_prepared:
+                phase = "model_prepare"
+                remaining(deadline, self.cancel)
+                self._requests += 1
+                self._worker.send(control_packet("prepare", request))
+                validate_prepared(receive(self._worker, deadline, self.cancel), request)
+                self._model_prepared = True
+                # Preparation consumes one of the same256 wire-command slots;
+                # the2048 limit below counts inference attempts, not successes.
+            remaining(deadline, self.cancel)
+            if model_stamp(self.models) != self._stamp:
+                raise WorkerProtocolError(
+                    "Auxiliary text OCR model changed during preparation"
+                )
+            remaining(deadline, self.cancel)
+            phase = "inference"
+            deadline = time.monotonic() + timeout
+            remaining(deadline, self.cancel)
+            self._requests += 1
+            self._total += 1
+            self._worker.send(control_packet("observe", request))
             result = validate_reply(
                 receive(self._worker, deadline, self.cancel), request
             )
-            self._requests += 1
-            self._total += 1
             self._failures = 0
             self._last_used = time.monotonic()
             self._cache[key] = result
@@ -183,11 +220,15 @@ class AuxiliaryTextRuntime:
             TimeoutError,
             WorkerProtocolError,
             TextOCRCancelled,
-        ):
+        ) as error:
             self._failures += 1
             if self._worker is not None:
                 self.last_diagnostic = getattr(self._worker, "diagnostic", "")[-2000:]
             self._stop()
+            if isinstance(error, TimeoutError) and not isinstance(
+                error, TextOCRPhaseTimeout
+            ):
+                raise TextOCRPhaseTimeout(phase) from error
             raise
         finally:
             try:

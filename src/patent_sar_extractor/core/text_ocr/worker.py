@@ -15,6 +15,10 @@ runpy.run_path(
     str(Path(__file__).resolve().parents[2] / "worker_bootstrap.py"),
     run_name="__main__",
 )
+from patent_sar_extractor.core.text_ocr.control import (
+    WORKER_PROTOCOL_VERSION,
+    parse_control,
+)
 from patent_sar_extractor.core.text_ocr.identity import text_identity
 from patent_sar_extractor.core.text_ocr.request_stream import request_packets
 from patent_sar_extractor.worker_lifecycle import arm_parent_death
@@ -58,9 +62,22 @@ def main():
     from patent_sar_extractor.core.text_ocr.model import LiteralTextModel
 
     model = LiteralTextModel(identity, root)
-    emit(output, {"status": "ready", "identity": identity})
-    for request in request_packets(sys.stdin.buffer):
-        emit(output, model.observe(request))
+    emit(
+        output,
+        {
+            "status": "worker_ready",
+            "protocol_version": WORKER_PROTOCOL_VERSION,
+            "identity": identity,
+        },
+    )
+    for packet in request_packets(sys.stdin.buffer):
+        operation, request = parse_control(packet)
+        emit(
+            output,
+            model.prepare(request)
+            if operation == "prepare"
+            else model.observe(request),
+        )
 
 
 if __name__ == "__main__":

@@ -6,6 +6,7 @@ from pathlib import Path
 
 from patent_sar_extractor.core.ocsr.resource_budget import process_peak_resident_mb
 
+from .control import prepared_reply
 from .identity import model_files, recipe
 from .protocol import read_frame, validate_reply
 
@@ -16,9 +17,9 @@ class LiteralTextModel:
         self.root = root
         self._model = None
 
-    def observe(self, request: dict) -> dict:
-        # Validate exact owned row before loading the model or running inference.
-        image = read_frame(request, self.root, self.identity["fingerprint"])
+    def prepare(self, request: dict) -> dict:
+        # An actual validated owned row is required even for native activation.
+        read_frame(request, self.root, self.identity["fingerprint"])
         if self._model is None:
             directory = Path(self.identity["model_directory"])
             model_files(directory, recipe())
@@ -32,6 +33,12 @@ class LiteralTextModel:
                 enable_mkldnn=False,
                 enable_hpi=False,
             )
+        return prepared_reply(request)
+
+    def observe(self, request: dict) -> dict:
+        image = read_frame(request, self.root, self.identity["fingerprint"])
+        if self._model is None:
+            raise ValueError("Auxiliary text OCR model was not prepared")
         observations = list(
             self._model.predict(input=image[:, :, ::-1].copy(), batch_size=1)
         )

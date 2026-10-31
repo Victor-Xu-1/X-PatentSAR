@@ -18,10 +18,10 @@ import numpy as np
 from patent_sar_extractor.core.activity_header_layout import discover_header_layout
 from patent_sar_extractor.core.activity_header_observation import refine_scanned_header
 from patent_sar_extractor.core.cell_header_proof import physical_header_valid
+from patent_sar_extractor.core.cell_raster import render_cell_raster
 from patent_sar_extractor.core.cell_text_chunks import observe_text_cell
 from patent_sar_extractor.core.cell_text_proof import valid_text_reading
 from patent_sar_extractor.core.ocsr.worker_process import WorkerProtocolError
-from patent_sar_extractor.core.table_cells import cell_image
 from patent_sar_extractor.core.text_ocr.cell_capture import refine_text_pair
 from patent_sar_extractor.core.text_ocr.cell_proof import replay_auxiliary_cell
 from patent_sar_extractor.core.text_ocr.process import TextOCRCancelled
@@ -63,12 +63,20 @@ class NativeAuxiliaryTextTests(unittest.TestCase):
                     (25, 35 + 16 * index), "Compound 27B", fontsize=10, fontname="hebo"
                 )
             bounds = [10, 20, 200, 180]
-            images = tuple(cell_image(page, bounds, dpi) for dpi in (400, 600))
+            rasters = tuple(
+                render_cell_raster(page, bounds, dpi, purpose="text")
+                for dpi in (400, 600)
+            )
+            images = tuple(raster.image for raster in rasters)
             primaries = tuple(
-                observe_text_cell(
-                    image, dpi, cell_fixture.primary, rows_per_chunk=8
-                ).evidence(dpi, bounds)
-                for image, dpi in zip(images, (400, 600))
+                {
+                    **observe_text_cell(
+                        raster.image, dpi, cell_fixture.primary, rows_per_chunk=8
+                    ).evidence(dpi, bounds),
+                    "source_frame": raster.frame,
+                    "source_window": raster.source_window,
+                }
+                for raster, dpi in zip(rasters, (400, 600), strict=True)
             )
             with AuxiliaryTextRuntime(
                 Path(PYTHON), Path(MODELS), Path(temporary)
