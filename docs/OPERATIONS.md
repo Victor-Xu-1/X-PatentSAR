@@ -3621,7 +3621,15 @@ and a full horizontally scrollable molecule table. Start without regions for an
 overview; add regions and explicitly create another study when needed. Old
 results are retained, not relabelled after a specification change.
 
-Whole-study comparisons are bounded at75,000. All25,000 permitted source rows are
+Whole-study comparisons are bounded at75,000. Automatic planning charges the
+retained strict comparison pools, not larger duplicate proposals already removed
+by a complete smaller-region proof. Manual regions reserve their allowance first.
+Proposal metadata stays within the existing100,000-cut bound; repeated candidate
+vectors are generated on demand, and4096 retained sites/500,000 boundary sets
+remain hard limits. Real over-budget studies fail before plan/report publication,
+not a first-N result. SAR engine16 gives new studies a new execution identity;
+existing scientific reports and source/manual data are not migrated or rewritten.
+All25,000 permitted source rows are
 accounted for, including missing activity or ineligible structures. The native
 candidate pool has an explicit computational bound; exceeding it fails the study,
 not an invisible first-N ranking. Core/fragment filters and strongest/candidate
