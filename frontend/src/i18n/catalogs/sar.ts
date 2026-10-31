@@ -318,6 +318,7 @@ export const sar: Record<string, string> = {
   'CSV 文件': 'CSV file',
   来源项目: 'Source project',
   请选择已提取项目: 'Choose an extracted project',
+  '来源 {number}': 'Source {number}',
   数据集名称: 'Dataset title',
   创建独立快照: 'Create independent snapshot',
   '快照保留当前有效来源与修订；不会触发原始提取任务。':

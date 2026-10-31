@@ -1,5 +1,24 @@
 # X-PatentSAR architecture
 
+## Complete continuation ancestry is an inventory, not one local observation
+
+`caption_role_identity` partitions only the existing validated
+`continuation.previous` chain for the shared canonical JSON digest. Each local
+catalogue record, including its original observations and link metadata, still
+must fit the unchanged1-MiB component budget. The complete declaration page and
+catalogue declaration retain the existing32-MiB artifact ceiling and64-link
+semantic depth limit. Cycles, absent ancestors, oversized local records and
+over-total data refuse; no ancestor, observation, geometry or uncertainty is
+discarded. The original dictionaries and canonical digest bytes are unchanged.
+
+The page identity and catalogue-region identity consume the same bounded
+partition authority. Semantic title/continuation/compound ownership remains
+with the existing validators; hashing cannot grant acceptance. This fixes a
+complete, valid multi-page chain being charged as one local region. Binder95
+refreshes derived work; Binding82/Activity56, activity69, raw source assets,
+chemical observations, API/SQL and manual audit are unchanged. There is no new
+evidence store, alternate extraction queue, model or truncated proof format.
+
 ## Auxiliary text activation is not an observed reading
 
 The existing finite JSONL worker has transport protocol2. `worker_ready` proves

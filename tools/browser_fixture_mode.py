@@ -21,6 +21,7 @@ COMMON = {
     "read-poll-recovery.spec.ts",
     "topbar.spec.ts",
     "jobs-project-recovery.spec.ts",
+    "sar-source-projects.spec.ts",
     "product-version.spec.ts",
     "recent-density.spec.ts",
     "editor-viewport.spec.ts",
