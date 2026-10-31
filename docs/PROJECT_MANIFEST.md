@@ -1,5 +1,24 @@
 # Project governance manifest
 
+- Caption ancestry identity: the existing canonical JSON digest partitions only
+  validated `continuation.previous` inventory boundaries through
+  `caption_role_identity`. Every local record keeps the1-MiB limit, complete
+  page/region stays32MiB and the existing64-link semantic depth is unchanged.
+  Page and catalogue-region identities share this authority; canonical bytes,
+  raw observations, all ancestors, source validators and fail-closed acceptance
+  are preserved. Cycles/deep chains/local or total overflow refuse. Binder95
+  invalidates derived work only; no scientific schema, API/SQL, activity69,
+  chemistry, environment or manual-audit migration and no competing store.
+
+- SAR source-choice presentation: `model/projectOptionLabels` disambiguates
+  duplicate literal project titles with the existing translated acceptance
+  status and creation-time formatter. Remaining equal labels use stable
+  source ordinals derived from source IDs without displaying those IDs. The
+  option value and explicit snapshot request retain the exact original project
+  identity; locale, list order, draft and read-error gates do not create/import
+  data or change scientific acceptance. Unique titles keep their prior label.
+  No API/SQL, pipeline, scientific epoch, dataset or original source is rewritten.
+
 - Auxiliary text lifecycle authority: one protocol2 JSONL worker distinguishes
   verified transport readiness, validated-owned-row model preparation and literal
   inference. Preparation returns identity/hashes only, never text or acceptance;

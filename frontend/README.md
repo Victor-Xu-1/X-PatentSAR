@@ -3,6 +3,9 @@
 单一 React / TypeScript 工作台，产品版本来自 /api/v1/health，不写死版本标签。
 package.json 与 npm lock 的根版本由 PR 自动准备流程同步自 `contracts.__version__`。
 前端只消费 [API v1](../docs/WEB_API.md)，不另建提取或预测引擎。
+SAR 来源项目存在同名记录时，选择器显示原名、真实验收状态和创建时间；
+仍相同的标签使用稳定的来源序号区分，不展示内部 ID，不改写名称或提交身份。
+语言切换保留已选来源和草稿，不触发快照创建、提取或 SAR 计算。
 默认只做 PDF → 完整结构/活性表 → 在线修正；说明和技术信息按需打开。
 系统字体、白/浅灰背景和黑色操作按钮使用唯一样式权威 src/styles/tokens.css。
 SAR 图表的强/中/弱、未分档和缺失色由后端包内 chart_palette.json 统一供在线及

@@ -11,6 +11,18 @@ from tools.browser_fixture_mode import fixture_mode
 
 
 class SourceBrowserFixtureTests(unittest.TestCase):
+    def test_sar_source_choice_is_read_only_without_extraction_or_snapshot(self):
+        selected = {"frontend/e2e/sar-source-projects.spec.ts"}
+        self.assertEqual(fixture_mode(selected), "read-only")
+        self.assertEqual(
+            fixture_mode(selected | {"frontend/e2e/product-version.spec.ts"}),
+            "read-only",
+        )
+        self.assertEqual(
+            fixture_mode(selected | {"frontend/e2e/unknown-execution.spec.ts"}),
+            "execution",
+        )
+
     def test_source_column_heading_needs_only_existing_read_only_results(self):
         selected = {"frontend/e2e/source-column-heading.spec.ts"}
         self.assertEqual(fixture_mode(selected), "read-only")

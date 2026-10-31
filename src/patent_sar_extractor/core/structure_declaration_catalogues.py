@@ -1,11 +1,11 @@
 """Existing original caption scopes bound declarations, never another reader."""
 
 from .activity_context_geometry import grid_box, valid_box
+from .caption_role_identity import catalogue_declaration_id
 from .caption_role_proof import caption_role_status
 from .caption_role_semantics import catalog_title_role
 from .cell_frame_proof import inside_box
 from .source_body_context import intersecting_source_diagrams
-from .source_evidence_identity import proof_id
 from .source_geometry import overlaps
 from .source_observations import project_source_observation
 from .source_table_roles import title_texts
@@ -114,13 +114,7 @@ def catalogue_declarations(source, page_source_id, *, identifier_lists):
         caption = {"text": " ".join(texts) if texts else raw, "bbox": scope["window"]}
         output.append(
             {
-                "source_region": proof_id(
-                    {
-                        "status": "observed_original_table_declaration",
-                        "page_source": page_source_id,
-                        "caption_role": scope,
-                    }
-                ),
+                "source_region": catalogue_declaration_id(page_source_id, scope),
                 "page_no": source["page_no"],
                 "bbox": body,
                 "role": role,

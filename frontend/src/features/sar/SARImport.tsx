@@ -13,6 +13,7 @@ import { useSARMutation } from './useSARMutation';
 import { TableScroll } from './TableScroll';
 import { StudyGuide } from './study/StudyGuide';
 import { ProjectReadIssue } from '../projects/ProjectReadIssue';
+import { sourceProjectLabels } from '../../model/projectOptionLabels';
 
 export function SARImport({
   active,
@@ -45,6 +46,7 @@ export function SARImport({
   );
   const selectedExists = projects.data?.items.some((p) => p.id === projectId);
   const selectedProject = projects.data?.items.find((p) => p.id === projectId);
+  const projectLabels = sourceProjectLabels(projects.data?.items ?? []);
   function snapshot() {
     if (
       !active ||
@@ -127,7 +129,7 @@ export function SARImport({
                     value={project.id}
                     disabled={Boolean(project.read_error)}
                   >
-                    {project.title}
+                    {projectLabels.get(project.id) ?? project.title}
                   </option>
                 ))}
               </select>

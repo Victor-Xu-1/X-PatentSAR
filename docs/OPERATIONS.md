@@ -1,5 +1,21 @@
 # Operations and troubleshooting
 
+## Complete catalogue continuation exceeds a small-component identity budget
+
+A prior-page catalogue link is a bounded inventory of original page facts, not
+a single row or cell. Current canonical identity streams that ancestry at its
+explicit existing link boundaries while keeping each local record at1MiB,
+the complete declaration at32MiB and the same64-link maximum. Both page and
+region identifiers use the same policy and remain byte-compatible with old
+canonical SHA256 values. Oversized local observations, missing/cyclic/deep
+ancestry and total overflow still fail without omission or guessed ownership.
+
+Preserve the failed attempt and original log. Do not delete older ancestors,
+raise the raw region limit, remove completeness checks or manually rewrite a
+saved digest. Binder95 requires the ordinary frontend to retry affected derived
+work after reviewed-main deployment; existing raw assets/manual corrections
+remain unchanged. Generated controls do not establish private-patent acceptance.
+
 ## Auxiliary text OCR times out on its first unresolved row
 
 Do not interpret transport readiness as a loaded text model or `request_timeout`
