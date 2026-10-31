@@ -4908,7 +4908,7 @@ automatically found families. Every numbered source is still in the report;
 unmatched/ambiguous sites and coverage limits are not hidden by positive matches.
 The input-bound plan and native 25-pair batches are preserved on interruption.
 The parent checks plan/coverage before one atomic result publication. Discovery
-was introduced in SAR engine8 and is retained in engine14, independently of extraction. Exact
+was introduced in SAR engine8 and is retained in engine16, independently of extraction. Exact
 one/two/three-edge topology partitions reuse original side bitmasks and bridge
 searches; three original bridges use intersections, mixed ring/bridge cuts use
 actual region sides, and three ring edges require a residual bridge after two
@@ -4931,8 +4931,19 @@ RDKit's [aromaticity model](https://www.rdkit.org/docs/RDKit_Book.html#aromatici
 is retained; broken-ring fragments are not converted to artificial nonaromatic
 species. `site_reduction.py` removes broader automatic sites only after the SAME
 full matcher proves a smaller connected region for all the same candidates.
-Index overlap alone never qualifies. Raw comparison and retained-site budgets
-remain bounded. `prepared_graphs.py` is a256-entry job-local exact-Molfile pool,
+Index overlap alone never qualifies. `site_plans.py` stores one lightweight
+proposal per already-bounded indexed cut, sharing family members and preserving
+original region IDs, names and publication order. Candidate-ID vectors materialize
+on demand in smallest-region-first proof order. The sole `site_reduction.py`
+stream caches each retained site's complete strict proof; only then may a larger
+duplicate stop consuming comparison slots. The unchanged75000-comparison and4096-
+site caps apply to retained plans, including the allowance reserved by manual
+regions. Actual excess, cancellation or invalid ordering refuses the complete
+plan, never publishing a truncated network. Indexed-cut100000, boundary500000,
+variable32/fraction0.4, fixed-minimum6 and matcher limits remain unchanged.
+SAR engine16 binds this planning semantics to fresh study inputs/checkpoints;
+old reports remain immutable history, not retagged or recomputed on read.
+`prepared_graphs.py` is a256-entry job-local exact-Molfile pool,
 not a result cache/alternate proof or original mutation.
 Full-source bond/stereo facts are prepared once in `graph_features.py`. Fixed
 constraints and at most eight domain-length traversal orders are local to one

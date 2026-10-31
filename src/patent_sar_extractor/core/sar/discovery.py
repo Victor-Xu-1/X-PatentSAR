@@ -6,16 +6,15 @@ supported, including aromatic and non-stereogenic multiple-bond boundaries.
 H boundary stereo, stereogenic double-bond cuts and >3 ports are not exhaustive.
 """
 
-import hashlib
 from collections import Counter, defaultdict
 from itertools import chain
 
 from ..identifier_order import natural_identifier_key
 from .errors import SARInputError
-from .matching import compile_reference
 from .molecules import chemical_identity, read_molfile
 from .prepared_graphs import GraphPool
 from .site_cuts import candidate_cuts, hydrogen_cuts
+from .site_plans import ordered_site_plans
 from .site_reduction import compact_proved_sites
 
 MAX_CUTS = 100000
@@ -35,6 +34,8 @@ def discover_sites(
     locations. Exceeding any resource bound refuses the whole result; it never
     publishes the first N sites as though they were complete.
     """
+    if type(pair_budget) is not int or not 0 <= pair_budget <= MAX_PAIRS:
+        raise SARInputError("study_discovery_pair_limit")
     families = defaultdict(dict)
     identities, excluded = {}, Counter()
     ordered = sorted(
@@ -77,98 +78,29 @@ def discover_sites(
                 families[key][row["id"]] = ()  # No arbitrary symmetric site.
             elif row["id"] not in families[key]:
                 families[key][row["id"]] = (selection, ports, hydrogen_anchor)
-    by_id = {row["id"]: row for row in ordered}
-    manual = {
-        (
-            region["molecule_id"],
-            tuple(sorted(region["atom_indices"])),
-            region.get("hydrogen_anchor"),
-        )
-        for region in manual_regions
-    }
-    sites, comparisons = [], 0
     pool = GraphPool()
-    for key, members in sorted(families.items()):
-        check()
-        if len(members) < 2:
-            continue
-        excluded["ambiguous_cut_location"] += sum(
-            not atoms for atoms in members.values()
-        )
-        members = {mid: atoms for mid, atoms in members.items() if atoms}
-        for mid in sorted(
-            members,
-            key=lambda identifier: (
-                natural_identifier_key(by_id[identifier]["label"]),
-                identifier,
-            ),
-        ):
-            selection, ports, hydrogen_anchor = members[mid]
-            candidates = [
-                other
-                for other in members
-                if other != mid and identities[other] != identities[mid]
-            ]
-            if (
-                not candidates
-                or (mid, tuple(sorted(selection)), hydrogen_anchor) in manual
-            ):
-                continue
-            try:
-                compile_reference(
-                    by_id[mid]["molfile"],
-                    selection,
-                    hydrogen_anchor=hydrogen_anchor,
-                    pool=pool,
-                )
-            except ValueError:
-                excluded["unsupported_reference_boundary"] += 1
-                continue
-            seed = "\0".join(
-                (
-                    dataset["id"],
-                    str(dataset["revision"]),
-                    mid,
-                    by_id[mid]["graph_sha256"],
-                    key,
-                    ",".join(map(str, selection)),
-                    "ordinary_hydrogen:" + str(hydrogen_anchor)
-                    if hydrogen_anchor is not None
-                    else "original_atoms",
-                )
-            )
-            region_id = hashlib.sha256(seed.encode()).hexdigest()[:32]
-            sites.append(
-                {
-                    "region": {
-                        "id": region_id,
-                        "dataset_id": dataset["id"],
-                        "dataset_revision": dataset["revision"],
-                        "molecule_id": mid,
-                        "graph_sha256": by_id[mid]["graph_sha256"],
-                        "atom_indices": list(selection),
-                        "hydrogen_anchor": hydrogen_anchor,
-                        "attachment_count": ports,
-                        "kind": "variable",
-                        "name": f"S{len(sites) + 1}",
-                        "created_at": dataset.get("created_at", "source-derived"),
-                    },
-                    "candidate_ids": sorted(
-                        candidates,
-                        key=lambda other: (
-                            natural_identifier_key(by_id[other]["label"]),
-                            other,
-                        ),
-                    ),
-                }
-            )
-            comparisons += len(candidates)
-            if comparisons > pair_budget:
-                raise SARInputError("study_discovery_pair_limit")
-    sites, redundant = compact_proved_sites(sites, ordered, pool, check)
+    proposals = ordered_site_plans(
+        families,
+        ordered,
+        identities,
+        dataset,
+        manual_regions,
+        pool,
+        check,
+        excluded,
+    )
+    sites, redundant = compact_proved_sites(
+        proposals,
+        ordered,
+        pool,
+        check,
+        pair_budget=pair_budget,
+        site_budget=MAX_SITES,
+    )
+    # Proof order differs from publication order. Preserve the exact prior
+    # original-source IDs, names, candidate order and complete report shape.
+    sites.sort(key=lambda item: int(item["region"]["name"][1:]))
     comparisons = sum(len(item["candidate_ids"]) for item in sites)
-    if len(sites) > MAX_SITES:
-        raise SARInputError("study_discovery_pair_limit")
     return sites, {
         "method": "single-region-three-port-multiple-h-v6",
         "candidate_sites": len(sites),

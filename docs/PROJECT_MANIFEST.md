@@ -2218,7 +2218,7 @@
   matrix views. `RecordedDelta` renders no potency color or ranking claim.
   Archived input2–5 omit the additive field; reports/sources/queues stay intact.
 
-- Single-site discovery ownership: SAR engine14 uses `core/sar/discovery.py` as
+- Single-site discovery ownership: SAR engine16 uses `core/sar/discovery.py` as
   the sole bounded candidate planner. `cut_topology.py` enumerates exact connected
   one/two/three-edge partitions and `site_cuts.py` indexes canonical backgrounds;
   neither is a proof authority. The same background is frozen for
@@ -2230,7 +2230,14 @@
   fixed-anchor edges rather than the variable graph's internal vertex topology,
   transporting parity per anchor and refusing indistinguishable stereo ports.
   The old single-cut enumerator is removed; the sole retained matcher remains
-  proof authority. `study_discovery.py` binds plans to the existing native
+  proof authority. `site_plans.py` owns lightweight bounded proposals and stable
+  original-order identities, materializing candidate vectors in smallest-first
+  order for the sole strict duplicate reducer. SAR engine16 counts only retained
+  comparison/site slots under unchanged75000/4096 limits; manual allowances,
+  cancellation and all cut/boundary/graph caps remain strict. The removed eager
+  raw comparison-matrix path is not retained as an alternate execution mode.
+  Existing reports stay immutable; there is no SQL/API/input-schema migration.
+  `study_discovery.py` binds plans to the existing native
   study/checkpoint path; `study_pairs.py` processes exact planned pools through
   one matcher/writer. Parent publication regenerates/validates the plan and
   source coverage. No second task queue, dataset store, DB migration, model or

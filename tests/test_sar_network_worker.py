@@ -9,6 +9,7 @@ import test_sar_study_analysis as support
 from patent_sar_extractor.core.sar.errors import SARInputError
 from patent_sar_extractor.web.files import SafeFiles
 from patent_sar_extractor.web.sar.assets import atomic_json
+from patent_sar_extractor.web.sar.engine import engine_identity
 from patent_sar_extractor.web.sar.models import Pair, SARJob
 from patent_sar_extractor.web.sar.study_publication import verify_study
 from patent_sar_extractor.workers.study_analysis import analyse_study
@@ -94,6 +95,29 @@ class NetworkWorkerTests(unittest.TestCase):
         with self.assertRaises(SARInputError) as rejected:
             analyse_study(self.root, reply["input_sha256"])
         self.assertEqual(rejected.exception.code, "study_discovery_checkpoint_identity")
+
+    def test_discovery_budget_failure_publishes_no_plan_or_partial_report(self):
+        packet = self.input()
+        input_sha = self.write(packet)
+        with (
+            patch("patent_sar_extractor.core.sar.discovery.MAX_PAIRS", 1),
+            self.assertRaises(SARInputError) as rejected,
+        ):
+            analyse_study(self.root, input_sha)
+        self.assertEqual(rejected.exception.code, "study_discovery_pair_limit")
+        self.assertEqual({path.name for path in self.root.iterdir()}, {"input.json"})
+
+    def test_prior_planning_epoch_cannot_resume_under_new_execution_semantics(self):
+        packet = self.input()
+        with patch("patent_sar_extractor.web.sar.engine.SAR_ENGINE_VERSION", 15):
+            packet["engine_sha256"] = engine_identity()
+        input_sha = self.write(packet)
+        original = (self.root / "input.json").read_bytes()
+        with self.assertRaises(SARInputError) as rejected:
+            analyse_study(self.root, input_sha)
+        self.assertEqual(rejected.exception.code, "study_input_identity")
+        self.assertEqual((self.root / "input.json").read_bytes(), original)
+        self.assertEqual({path.name for path in self.root.iterdir()}, {"input.json"})
 
     def test_interrupted_native_pair_batches_can_resume_without_replacing_the_plan(
         self,

@@ -1,5 +1,6 @@
 """Remove broad automatic duplicates ONLY after a stricter complete proof."""
 
+from .errors import SARInputError
 from .matching import compile_reference
 
 
@@ -12,15 +13,31 @@ def _inside(small, large):
     )
 
 
-def compact_proved_sites(plans, rows, pool, check):
+def compact_proved_sites(
+    plans,
+    rows,
+    pool,
+    check,
+    *,
+    pair_budget=None,
+    site_budget=None,
+):
+    """Consume smallest-region-first plans through one cancellable proof path."""
+    if any(
+        budget is not None and (type(budget) is not int or budget < 0)
+        for budget in (pair_budget, site_budget)
+    ):
+        raise SARInputError("study_discovery_pair_limit")
     by_id = {row["id"]: row for row in rows}
     groups, retained, removed = {}, [], 0
-    for plan in sorted(
-        plans,
-        key=lambda item: (len(item["region"]["atom_indices"]), item["region"]["id"]),
-    ):
+    prior_order, comparisons = None, 0
+    for plan in plans:
         check()
         region = plan["region"]
+        order = len(region["atom_indices"]), region["id"]
+        if prior_order is not None and order < prior_order:
+            raise ValueError("Site reduction requires smallest-first proof order")
+        prior_order = order
         key = region["molecule_id"], tuple(plan["candidate_ids"])
         alternatives = groups.setdefault(key, [])
         dominated = False
@@ -53,6 +70,15 @@ def compact_proved_sites(plans, rows, pool, check):
         else:
             retained.append(plan)
             alternatives.append({"plan": plan, "proved": None})
-    # Retain stable source/region order, not proof evaluation order.
-    keep = {item["region"]["id"] for item in retained}
-    return [item for item in plans if item["region"]["id"] in keep], removed
+            comparisons += len(plan["candidate_ids"])
+            # Narrow-first proof means later/larger proposals cannot replace
+            # these retained sites. Charge once, only after unchanged strict
+            # duplicate proof. No larger numeric budget or partial output.
+            if (
+                pair_budget is not None
+                and comparisons > pair_budget
+                or site_budget is not None
+                and len(retained) > site_budget
+            ):
+                raise SARInputError("study_discovery_pair_limit")
+    return retained, removed
