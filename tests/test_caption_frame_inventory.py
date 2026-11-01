@@ -5,6 +5,7 @@ import json
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import fitz
 
@@ -21,18 +22,20 @@ from patent_sar_extractor.core.unruled_structure_observation import (
 from tests.test_caption_role_continuation import binding
 
 
-def original_grid(*, missing_drawing=False, unread_caption=False):
+def original_grid(
+    *, missing_drawing=False, unread_caption=False, ambiguous_drawing=False, columns=2
+):
     """Native text and vector ink; no private PDF or recognizer predictions."""
     document = fitz.open()
     page = document.new_page()
-    xs, ys = [50, 180, 310], [100, 125, 205]
+    xs, ys = [50 + 130 * index for index in range(columns + 1)], [100, 125, 205]
     page.insert_text((50, 85), "Table 47. Structures", fontsize=10)
     for x in xs:
         page.draw_line((x, ys[0]), (x, ys[-1]))
     for y in ys:
         page.draw_line((xs[0], y), (xs[-1], y))
     structures, boxes = [], []
-    for column, label in enumerate(("41A", "89B")):
+    for column, label in enumerate(("41A", "89B", "7E", "8E")[:columns]):
         text = "Compound ?" if unread_caption and column == 1 else "Compound " + label
         page.insert_text((xs[column] + 12, 117), text, fontsize=8)
         box = [xs[column] + 20, 145, xs[column] + 80, 180]
@@ -46,6 +49,9 @@ def original_grid(*, missing_drawing=False, unread_caption=False):
                 }
             )
             boxes.append(box)
+            if ambiguous_drawing and column == 1:
+                structures.append({**structures[-1], "id": "generated-overlap"})
+                boxes.append(list(box))
     return document, {1: structures}, {1: boxes}, [{"xs": xs, "ys": ys}]
 
 
@@ -111,6 +117,62 @@ class CaptionFrameInventoryTests(unittest.TestCase):
         )
         self.assertTrue(columns[1], "Unproved source cells must not disappear")
 
+    def test_missing_middle_candidate_in_three_columns_never_shifts_other_ids(self):
+        captions, columns = observations(missing_drawing=True, columns=3)
+        self.assert_original_pairs(captions, 2)
+        self.assertEqual({pair["label"] for pair in captions.bindings}, {"41A", "7E"})
+        self.assertIn(
+            "missing_caption_structure", [item["reason"] for item in captions.issues]
+        )
+        self.assertEqual([section["role"] for section in columns[1]], [])
+
+    def test_ambiguous_drawing_keeps_layout_but_cannot_grant_an_association(self):
+        captions, columns = observations(ambiguous_drawing=True)
+        self.assert_original_pairs(captions, 1)
+        self.assertEqual(captions.bindings[0]["label"], "41A")
+        self.assertIn(
+            "ambiguous_caption_structure", [item["reason"] for item in captions.issues]
+        )
+        self.assertEqual([section["role"] for section in columns[1]], [])
+
+    def test_headerless_columns_cannot_start_a_competing_caption_title_read(self):
+        with fitz.open() as document:
+            page = document.new_page()
+            xs, ys = [50, 180, 310], [100, 205, 310]
+            for x in xs:
+                page.draw_line((x, ys[0]), (x, ys[-1]))
+            for y in ys:
+                page.draw_line((xs[0], y), (xs[-1], y))
+            structures, boxes = [], []
+            for row, label in enumerate(("41A", "89B")):
+                top = ys[row]
+                page.insert_text((65, top + 40), label, fontsize=9)
+                box = [200, top + 25, 260, top + 80]
+                page.draw_polyline([(200, top + 70), (230, top + 25), (260, top + 70)])
+                boxes.append(box)
+                structures.append(
+                    {
+                        "id": f"generated-column-{row}",
+                        "page_no": 1,
+                        **dict(zip(("x0", "y0", "x1", "y1"), box, strict=True)),
+                    }
+                )
+            with patch(
+                "patent_sar_extractor.core.caption_grid_binding.observe_caption_role",
+                side_effect=AssertionError("A column frame is not a caption nominee"),
+            ):
+                result = bind_caption_grids(
+                    document,
+                    {1: structures},
+                    {1: boxes},
+                    [1],
+                    grids_for_page=lambda _page: [{"xs": xs, "ys": ys}],
+                )
+            self.assertEqual(result.roles, {})
+            self.assertEqual(result.frames, {})
+            self.assertEqual(result.bindings, [])
+            self.assertIn(1, result.tokens)
+
     def test_real_binder_retains_missing_source_and_failed_coverage(self):
         with tempfile.TemporaryDirectory(prefix="caption-source-inventory-") as name:
             root = Path(name)
@@ -148,7 +210,13 @@ class CaptionFrameInventoryTests(unittest.TestCase):
             )
             payload = load_json(Path(result["output_files"]["json"]), None)
             self.assertTrue(payload["source_issues"])
+            self.assertIn(
+                "missing_caption_structure",
+                [issue["reason"] for issue in payload["source_issues"]],
+            )
             self.assertTrue(coverage_errors(payload))
+            without_flags = {**payload, "source_issues": []}
+            self.assertTrue(coverage_errors(without_flags))
             self.assertNotIn(
                 "structure_column_anchor",
                 [section["role"] for section in payload["source_sections"]],

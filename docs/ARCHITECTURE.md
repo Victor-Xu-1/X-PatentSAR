@@ -11,6 +11,15 @@ window, and no bare, weak, conflicting or pending reading. It reuses the shared
 caption window and literal identity gates. Only that complete layout may suppress
 a competing unheaded-column nomination; it does not bind or admit a molecule.
 
+The same bounded row/cell geometry nominates a possible separate caption lane
+before any caption-title read. A headerless column frame with drawings in every
+row does not create a competing caption-role observation. Short unread/blank
+rows remain eligible for inspection; explicitly nonfinal/mixed/conflicting raw
+title hints and qualified adjacent carries still reach the unchanged original
+role reader. These are reader nominations, never title or molecule acceptance.
+Actual column title/continuation and complete page-source readers retain their
+normal observations; no already-created conflicting reading is overwritten.
+
 Structure ownership still uses `valid_caption_binding_evidence`, original replay
 and complete coverage. A missing drawing retains its source failure even when all
 caption text is proved. Unread cells remain unresolved, column headers keep their

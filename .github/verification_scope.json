@@ -12,6 +12,7 @@
     "src/patent_sar_extractor/core/binding_spatial.py",
     "src/patent_sar_extractor/core/caption_frame_inventory.py",
     "src/patent_sar_extractor/core/caption_grid_binding.py",
+    "src/patent_sar_extractor/core/caption_grid_rows.py",
     "src/patent_sar_extractor/core/caption_role_observation.py",
     "src/patent_sar_extractor/core/unruled_structure_observation.py",
     "tests/test_caption_frame_inventory.py",
@@ -19,6 +20,7 @@
   ],
   "python_modules": [
     "tests.test_caption_frame_inventory",
+    "tests.test_binding_cache_identity.BindingCacheIdentityTests.test_previous_route_epoch_or_schema_cannot_reuse_or_retag_bindings",
     "tests.test_caption_nomination_forms",
     "tests.test_caption_page_boundary",
     "tests.test_caption_role_continuation",

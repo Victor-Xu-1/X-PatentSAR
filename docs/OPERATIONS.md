@@ -10,6 +10,13 @@ this is not a complete-source or chemical-acceptance exemption. Unread or change
 cells, bare numbers without a proved role and known conflicts cannot provide this
 layout permission. Actual column headers still use the existing independent path.
 
+Caption-title inspection now first requires a possible separate caption/drawing
+lane, an existing qualified adjacent carry or an explicit nonfinal/conflicting
+title hint. Ordinary headerless column rows do not acquire an unrelated caption
+title failure before their own header/continuation reader runs. This does not
+select a preferred reading after a conflict: the un-nominated reader never runs.
+Its original page observations remain in the existing complete source inventory.
+
 Verify complete/missing/unread controls, original windows/role/identifier mutation,
 native/raster sources, cross-page boundaries, proper column continuations and the
 full binder's retained failure/coverage consumer. Only derived binder98 work is

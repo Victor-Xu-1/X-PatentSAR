@@ -7,7 +7,11 @@ from .activity_grid_context import _prefix
 from .binding_progress import observed_items
 from .caption_boundary_context import observe_caption_tail
 from .caption_cell_reading import reconcile_caption_form
-from .caption_grid_rows import caption_rows, numbered_header_nominee
+from .caption_grid_rows import (
+    caption_frame_nominee,
+    caption_rows,
+    numbered_header_nominee,
+)
 from .caption_grid_rows import inside as _inside
 from .caption_page_boundary import (
     CaptionGridCarry,
@@ -18,6 +22,7 @@ from .caption_page_boundary import (
 from .caption_role_links import role_link
 from .caption_role_observation import observe_caption_role
 from .caption_role_proof import caption_role_status
+from .caption_role_semantics import catalog_title_role
 from .source_table_markers import TABLE_MARKER
 from .table_cells import read_cell
 from .table_geometry import detect_ruled_table_regions, page_tokens
@@ -155,6 +160,17 @@ def bind_caption_grids(
             caption = _prefix(
                 tokens, context_region(region, [grid_box(g) for g in grids])
             )
+            if (
+                not caption_frame_nominee(
+                    region, tokens, boxes_by_page.get(page_no, [])
+                )
+                and not any(
+                    adjacent_caption_grid(prior, page_no, region, None, False)
+                    for _index, prior in prior_frames
+                )
+                and catalog_title_role(caption) not in {"nonfinal", "mixed", "conflict"}
+            ):
+                continue
             role = observe_caption_role(
                 page, region, grids, tokens, title_cache=title_observations
             )

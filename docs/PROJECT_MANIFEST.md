@@ -10,6 +10,12 @@
   attempts only; Binding82/Activity56/activity69/SAR16/input8, raw/chemical/manual
   data, API/SQL and model/environment dependencies remain unchanged.
 
+  Caption role reads are first nominated by the same bounded separate-row
+  geometry, existing qualified adjacent carries or explicit nonfinal/conflicting
+  title hints. Headerless column rows do not create competing caption owners;
+  their existing complete page/header/continuation observations remain intact.
+  No prior conflict is voted away or known measurement/identity inferred.
+
 - Canonical source encoding authority: the existing bounded graph measures
   immutable compact UTF8 sizes; materialization keeps only an internal read-only
   hint, never a wire/source field. The same canonical hasher may use native JSON
