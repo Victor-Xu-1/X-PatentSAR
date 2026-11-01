@@ -1,5 +1,27 @@
 # X-PatentSAR architecture
 
+## Caption layout facts are independent of structure-detector completeness
+
+`CaptionGridResult.frames` retains the original caption-cell observations already
+read by the one caption observer, including cells whose drawing is missing or
+ambiguous. This is call-local data, not another persisted proof/store or OCR pass.
+For an unknown catalogue title, `caption_frame_inventory` requires every physical
+label cell exactly once, with the unchanged prefixed reading, role, page and source
+window, and no bare, weak, conflicting or pending reading. It reuses the shared
+caption window and literal identity gates. Only that complete layout may suppress
+a competing unheaded-column nomination; it does not bind or admit a molecule.
+
+Structure ownership still uses `valid_caption_binding_evidence`, original replay
+and complete coverage. A missing drawing retains its source failure even when all
+caption text is proved. Unread cells remain unresolved, column headers keep their
+independent source path, and continuation/nonfinal/conflict rules are unchanged.
+The successful-pairs-only `caption_frame_index` is removed after consumers migrate
+to these same complete original facts. Binder98 invalidates derived attempts;
+Binding82/Activity56/activity69/SAR16/input8, raw PDF/OCR/crops, chemical/manual
+records, API/SQL and model/environment dependencies are unchanged. Native/raster
+generated controls are engineering coverage, not universal or private-patent
+scientific acceptance.
+
 ## Canonical source hashing reuses exact immutable graph sizes
 
 `artifact_materialization` retains the existing graph's measured compact UTF8
@@ -2776,16 +2798,17 @@ derived ownership remains historical; original assets and human audit are kept.
 
 Page-level caption text nominates cells; it never replaces the value already
 qualified by the shared `table_cells.read_cell` authority. Qualified/native
-contradictions still veto, and all raw readings remain. `caption_frame_index`
-is a call-local index of those same original pairs, not a second store or OCR
-pass. An unknown title role can exclude a competing unheaded-column hypothesis
-only when every cell of its complete label/drawing frame has unchanged explicit
-prefixed caption proof through `valid_caption_binding_evidence`. Missing cells,
-bare identifiers, duplicate or changed owners/bounds and genuine role conflicts
-cannot borrow this frame classification. Unknown title context is reused, not
-re-read until a preferred outcome appears. Formal catalogue/coverage/recognition
-consumers retain their existing gates. Binder40 refreshes implementation-derived
-ownership; Binding30 and the original-source proof shapes are unchanged.
+contradictions still veto, and all raw readings remain. The call-local frame now
+retains all original caption cells rather than only successful structure pairs.
+An unknown title role can exclude a competing unheaded-column hypothesis only
+when every physical label cell has unchanged explicit prefixed source proof.
+Missing/unread cells, bare identifiers, duplicate or changed owners/bounds and
+genuine role conflicts cannot borrow this frame classification. A missing drawing
+is an independent retained association failure, not a reason to reinterpret
+proved captions as column headers. Unknown title context is reused, not re-read
+until a preferred outcome appears. Formal binding/coverage/recognition consumers
+retain their existing gates; Binder98 refreshes implementation-derived ownership
+without changing successful original-source proof shapes.
 
 `caption_grid_binding` uses the same revalidated original role for table-start
 direction and adjacent continuation. An absent layout-lane caption cannot erase

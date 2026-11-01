@@ -35,17 +35,7 @@ class CaptionGridResult:
     regions: dict[int, list[tuple]] = field(default_factory=dict)
     protected_structure_ids: set[str] = field(default_factory=set)
     roles: dict[tuple[int, tuple], dict] = field(default_factory=dict)
-
-
-def caption_frame_index(bindings):
-    """Call-local index of the same observed pairs, never another source store."""
-    frames = {}
-    for pair in bindings:
-        role = pair["ownership"].get("caption_role")
-        if role is not None:
-            key = pair["label_page_no"], tuple(role["table_bbox"])
-            frames.setdefault(key, []).append(pair)
-    return frames
+    frames: dict[tuple[int, tuple], tuple[dict, ...]] = field(default_factory=dict)
 
 
 @title_geometry_call
@@ -279,8 +269,8 @@ def bind_caption_grids(
                 continue
             if carry_index is not None:
                 consumed.add(carry_index)
-            # Reuse the same observed unknown title too; only complete prefixed
-            # cell proof may establish its frame kind downstream.
+            # Reuse the same observed unknown title too; complete original
+            # caption-cell proof, not detector recall, owns layout nomination.
             result.pages.add(page_no)
             catalog_boxes.setdefault(page_no, []).append((xs[0], ys[0], xs[-1], ys[-1]))
             result.protected_structure_ids.update(
@@ -396,6 +386,7 @@ def bind_caption_grids(
                             (xs[col], ys[target], xs[col + 1], ys[target + 1]),
                             direction,
                         )
+            result.frames[(page_no, tuple(grid_box(region)))] = tuple(observed_captions)
             trailing = kinds[-1] == "drawing"
             tail = observe_caption_tail(
                 page,

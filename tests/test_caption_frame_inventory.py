@@ -1,16 +1,20 @@
 """Original caption layout is not conditional on complete detector recall."""
 
+import hashlib
+import json
+import tempfile
 import unittest
+from pathlib import Path
 
 import fitz
 
+from patent_sar_extractor.artifact_io import load_json
 from patent_sar_extractor.core.caption_binding_proof import (
     valid_caption_binding_evidence,
 )
-from patent_sar_extractor.core.caption_grid_binding import (
-    bind_caption_grids,
-    caption_frame_index,
-)
+from patent_sar_extractor.core.caption_grid_binding import bind_caption_grids
+from patent_sar_extractor.core.formal_structure import coverage_errors
+from patent_sar_extractor.core.structure_binder import bind
 from patent_sar_extractor.core.unruled_structure_observation import (
     observe_unruled_tables,
 )
@@ -63,7 +67,7 @@ def observations(**options):
             lambda _page: captions.tokens[1],
             page_texts=[document[0].get_text()],
             caption_roles=captions.roles,
-            caption_frames=caption_frame_index(captions.bindings),
+            caption_frames=captions.frames,
         )
         return captions, columns
 
@@ -82,7 +86,7 @@ class CaptionFrameInventoryTests(unittest.TestCase):
         captions, columns = observations()
         self.assert_original_pairs(captions, 2)
         self.assertEqual(captions.issues, [])
-        self.assertEqual(columns[1], [])
+        self.assertEqual([section["role"] for section in columns[1]], [])
 
     def test_missing_candidate_keeps_caption_failure_without_competing_columns(self):
         captions, columns = observations(missing_drawing=True)
@@ -91,7 +95,7 @@ class CaptionFrameInventoryTests(unittest.TestCase):
             "missing_caption_structure", [item["reason"] for item in captions.issues]
         )
         self.assertEqual(
-            columns[1],
+            [section["role"] for section in columns[1]],
             [],
             "Complete original prefixed caption cells retain their layout even "
             "when a drawing candidate is missing; the missing association must "
@@ -106,6 +110,50 @@ class CaptionFrameInventoryTests(unittest.TestCase):
             [item["reason"] for item in captions.issues],
         )
         self.assertTrue(columns[1], "Unproved source cells must not disappear")
+
+    def test_real_binder_retains_missing_source_and_failed_coverage(self):
+        with tempfile.TemporaryDirectory(prefix="caption-source-inventory-") as name:
+            root = Path(name)
+            original, metadata = root / "original.pdf", root / "structures.json"
+            document, structures, _boxes, _grids = original_grid(missing_drawing=True)
+            records = []
+            with document:
+                for index, item in enumerate(structures[1]):
+                    bounds = [item[axis] for axis in ("x0", "y0", "x1", "y1")]
+                    image = root / (item["id"] + ".png")
+                    document[0].get_pixmap(clip=fitz.Rect(bounds), alpha=False).save(
+                        image
+                    )
+                    records.append(
+                        {
+                            "structure_id": item["id"],
+                            "structure_index": index,
+                            "page_no": 1,
+                            "bbox_pdf": bounds,
+                            "image_path": str(image),
+                        }
+                    )
+                document.save(original)
+            before = hashlib.sha256(original.read_bytes()).hexdigest()
+            metadata.write_text(
+                json.dumps(
+                    {"patent_number": "GENERATED-CAPTION", "structures": records}
+                )
+            )
+            result = bind(
+                str(original),
+                {"structure_candidate_pages": [0]},
+                str(root / "bindings"),
+                str(metadata),
+            )
+            payload = load_json(Path(result["output_files"]["json"]), None)
+            self.assertTrue(payload["source_issues"])
+            self.assertTrue(coverage_errors(payload))
+            self.assertNotIn(
+                "structure_column_anchor",
+                [section["role"] for section in payload["source_sections"]],
+            )
+            self.assertEqual(hashlib.sha256(original.read_bytes()).hexdigest(), before)
 
 
 if __name__ == "__main__":

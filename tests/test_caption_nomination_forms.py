@@ -174,9 +174,10 @@ class CaptionNominationFormTests(unittest.TestCase):
             )
             self.assertEqual(len(result.bindings), 2)
             role = result.bindings[0]["ownership"]["caption_role"]
-            original = json.dumps(result.bindings, sort_keys=True)
+            captions = result.frames[(1, tuple(role["table_bbox"]))]
+            original = json.dumps(captions, sort_keys=True)
 
-            def owned(pairs):
+            def owned(cells):
                 return owns_caption_frame(
                     page,
                     grids[0],
@@ -184,24 +185,28 @@ class CaptionNominationFormTests(unittest.TestCase):
                     tokens,
                     boxes[1],
                     original_role=role,
-                    original_bindings=pairs,
+                    original_captions=cells,
                 )
 
-            self.assertTrue(owned(result.bindings))
+            self.assertTrue(owned(captions))
             self.assertFalse(owned([]))
-            self.assertFalse(owned(result.bindings[:1]))
-            self.assertFalse(owned([*result.bindings, result.bindings[0]]))
-            for mutation in ("identifier", "bare", "bounds"):
+            self.assertFalse(owned(captions[:1]))
+            self.assertFalse(owned([*captions, captions[0]]))
+            for mutation in ("identifier", "bare", "bounds", "review", "window"):
                 with self.subTest(mutation=mutation):
-                    changed = copy.deepcopy(result.bindings)
+                    changed = list(copy.deepcopy(captions))
                     if mutation == "identifier":
                         changed[0]["label"] = "I-099Z"
                     elif mutation == "bare":
-                        changed[0]["ownership"]["identifier_form"] = "bare"
+                        changed[0]["bare"] = True
+                    elif mutation == "bounds":
+                        changed[0]["bbox"] = [0, 0, 1, 1]
+                    elif mutation == "review":
+                        changed[0]["review"] = True
                     else:
-                        changed[0]["label_bbox"] = [0, 0, 1, 1]
+                        changed[0]["observations"][0]["bbox"] = [0, 0, 1, 1]
                     self.assertFalse(owned(changed))
-            self.assertEqual(json.dumps(result.bindings, sort_keys=True), original)
+            self.assertEqual(json.dumps(captions, sort_keys=True), original)
 
     def test_complete_conflicting_identifier_nonfinal_role_or_prose_is_not_a_hint(self):
         for hint in (

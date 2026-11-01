@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Caption-frame inventory authority: the existing observer retains all original
+  caption-cell readings in its call-local result, independently of detector and
+  pair success. The shared window/identity/role gates require every unchanged
+  explicit prefixed cell before suppressing a competing column nomination.
+  Missing/ambiguous structure associations and unread/conflicting source cells
+  remain failed; layout facts cannot grant molecule or coverage acceptance.
+  The obsolete successful-pairs index is removed. Binder98 refreshes derived
+  attempts only; Binding82/Activity56/activity69/SAR16/input8, raw/chemical/manual
+  data, API/SQL and model/environment dependencies remain unchanged.
+
 - Canonical source encoding authority: the existing bounded graph measures
   immutable compact UTF8 sizes; materialization keeps only an internal read-only
   hint, never a wire/source field. The same canonical hasher may use native JSON
