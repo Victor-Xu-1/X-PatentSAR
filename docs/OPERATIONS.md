@@ -1,5 +1,25 @@
 # Operations and troubleshooting
 
+## Repeated source validation spends time encoding the same immutable facts
+
+Profile a generated or separately authorized source through the actual consumer;
+do not attach to a live private task or run its PDF independently. The shared
+artifact graph now carries exact immutable container sizes in memory only. The
+same canonical hasher uses bounded native encoding when a graph-measured component
+fits both existing budgets, then rechecks the actual bytes and digest. Unknown,
+mutable and over-budget input keeps streaming refusal. No source evidence,
+uncertainty, scientific gate, byte limit or deadline is removed or increased.
+
+Focused checks must include old wire identity, full UTF8 accounting, independent
+mutable copies, exact local/total boundaries and original-source export consumers.
+Fixture creation may use the already-installed text reader; measured source replay
+must not prepare a model. Generated timing gains are not a universal pipeline
+speedup or proof that a previously failed task now succeeds. Preserve its review
+exports and failure evidence. Source/chemical findings require their own generic
+repair and acceptance; retry private extraction/SAR only through the frontend after
+reviewed-main installation at the unchanged address. No scientific epoch or SQL
+migration is needed for this byte-compatible internal performance change.
+
 ## Structure progress pauses while later chunks are still computing
 
 One existing warm worker handles up to three chunks. Progress now observes each

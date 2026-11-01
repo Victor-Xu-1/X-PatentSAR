@@ -3,6 +3,8 @@
 import hashlib
 import json
 
+from patent_sar_extractor.artifact_immutable import immutable_json_size
+
 from .source_evidence_identity import SourceEvidenceLimit
 
 
@@ -38,6 +40,23 @@ def composite_source_digest(source, partitions, *, maximum, component_limit, lab
         return len(encoded)
 
     def component(value):
+        measured = immutable_json_size(value)
+        if (
+            measured is not None
+            and measured <= component_limit
+            and measured <= maximum - total
+        ):
+            # The transport graph already measured this immutable subtree. Its
+            # finite size permits the standard native encoder, not a new JSON
+            # grammar or a cached scientific digest. Every actual byte is still
+            # hashed and checked; mutable/unknown/over-budget input keeps the
+            # original incremental refusal path below.
+            written = append(encoder.encode(value), component_limit)
+            if written != measured:
+                raise ValueError(
+                    "Immutable original source size differs from its graph"
+                )
+            return
         size = 0
         for part in encoder.iterencode(value):
             size += append(part, component_limit - size)

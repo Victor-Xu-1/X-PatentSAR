@@ -1,5 +1,29 @@
 # X-PatentSAR architecture
 
+## Canonical source hashing reuses exact immutable graph sizes
+
+`artifact_materialization` retains the existing graph's measured compact UTF8
+byte size as non-serialized, read-only metadata on each immutable container.
+`composite_source_identity` may use the standard native JSON encoder only when
+that measurement fits both the unchanged local component limit and remaining
+total budget. It still hashes every actual canonical byte, checks actual length
+against both budgets and rejects a mismatched graph measurement. Sorting keys
+changes order, not encoded byte count; source order and values are unchanged.
+
+Mutable, manually unmeasured and over-budget values retain the original streaming
+refusal path. No cached scientific digest, new JSON grammar, omitted observations,
+larger budget or alternate proof authority is introduced. Measurements come from
+the same finite graph/allocation preflight, not a field supplied in JSON. Wire
+transport1/2 and all scientific schemas/epochs, APIs, databases, model/runtime
+dependencies and manual audit remain unchanged. A mutable working copy must be
+remeasured before it can acquire this internal encoding hint.
+
+Generated checks compare exact canonical bytes, old wire hashes, Unicode/scalar
+types, mutation isolation, malformed graphs and exact byte boundaries, plus real
+workbook/SDF consumers with rejected chemistry and competing ownership. Measured
+generated validation cost is engineering evidence, not proof that a private
+patent's source findings or export timeout have been resolved.
+
 ## Saved chunk progress does not wait for a warm worker to exit
 
 The existing bounded environment runner exposes an optional filtered-line

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "9bbe74be6e091619db68f29d229c1a06a469d460",
+  "base_sha": "78fd4bd07376b82062686e9dfa5727e42168ec80",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
@@ -8,32 +8,24 @@
     "docs/PROJECT_MANIFEST.md",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "src/patent_sar_extractor/application/structure_checkpoint_observer.py",
-    "src/patent_sar_extractor/application/structure_window.py",
+    "src/patent_sar_extractor/artifact_immutable.py",
+    "src/patent_sar_extractor/artifact_materialization.py",
     "src/patent_sar_extractor/contracts.py",
-    "src/patent_sar_extractor/core/env_runner.py",
-    "src/patent_sar_extractor/workers/segmentation_window.py",
-    "tests/structure_window_controls.py",
-    "tests/test_env_runner_output.py",
-    "tests/test_structure_progress.py",
-    "tests/test_structure_window_live.py"
+    "src/patent_sar_extractor/core/composite_source_identity.py",
+    "tests/test_immutable_source_encoding.py"
   ],
   "python_modules": [
-    "tests.test_structure_window_live",
-    "tests.test_env_runner_output",
-    "tests.test_structure_progress",
-    "tests.test_segmentation_checkpoint",
-    "tests.test_source_order_checkpoints",
-    "tests.test_structure_worker_identity.StructureWorkerIdentityTests.test_zero_candidate_page_has_an_explicit_successful_observation",
-    "tests.test_structure_worker_identity.StructureWorkerIdentityTests.test_crop_save_failure_never_registers_a_page_as_a_structure",
-    "tests.test_structure_worker_identity.StructureWorkerIdentityTests.test_mask_box_count_mismatch_is_a_recorded_failure_not_empty_success",
-    "tests.test_web_checkpoints.LiveCheckpointTests.test_real_progress_and_cache_facts_are_visible_and_terminal_history_is_frozen",
-    "tests.test_job_attempts.AttemptTests.test_terminal_history_is_write_once_and_independent_of_mutated_output",
-    "tests.test_job_attempts.AttemptTests.test_corrupt_terminal_progress_is_unavailable_not_promoted",
+    "tests.test_immutable_source_encoding",
+    "tests.test_artifact_source_views",
+    "tests.test_artifact_catalog",
+    "tests.test_source_evidence_identity",
+    "tests.test_source_led_export.SourceLedExportTests.test_proved_no_activity_exports_all_ids_and_passes_control_qa",
+    "tests.test_source_led_export.SourceLedExportTests.test_bad_science_keeps_failure_and_exports_only_qualified_exact_pairs",
+    "tests.test_source_led_export.SourceLedExportTests.test_malformed_ownership_hard_stops_even_with_continue",
     "tests.test_release_policy.ReleaseNumberTests",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"
   ],
-  "frontend_tests": ["frontend/tests/job-progress.test.tsx"],
+  "frontend_tests": [],
   "browser_tests": []
 }
