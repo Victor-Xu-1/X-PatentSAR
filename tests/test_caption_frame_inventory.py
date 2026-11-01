@@ -32,9 +32,7 @@ def original_grid(*, missing_drawing=False, unread_caption=False):
         text = "Compound ?" if unread_caption and column == 1 else "Compound " + label
         page.insert_text((xs[column] + 12, 117), text, fontsize=8)
         box = [xs[column] + 20, 145, xs[column] + 80, 180]
-        page.draw_polyline(
-            [(box[0], 170), ((box[0] + box[2]) / 2, 145), (box[2], 170)]
-        )
+        page.draw_polyline([(box[0], 170), ((box[0] + box[2]) / 2, 145), (box[2], 170)])
         if not (missing_drawing and column == 1):
             structures.append(
                 {
