@@ -8,8 +8,8 @@ from typing import Final
 PRODUCT_NAME: Final = "X-PatentSAR"
 DISTRIBUTION_NAME: Final = "x-patentsar"
 COMMAND_NAME: Final = "x-patentsar"
-__version__: Final = "0.3.43"
-SHARED_JSON_VERSION: Final = 1
+__version__: Final = "0.3.44"
+SHARED_JSON_VERSION: Final = 2
 PHYSICAL_CAPTION_LINE_VERSION: Final = 3
 CHARACTERIZATION_ROLE_SCHEMA_VERSION: Final = 6
 AUXILIARY_TEXT_RECOVERY_VERSION: Final = 5

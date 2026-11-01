@@ -13,6 +13,7 @@ from patent_sar_extractor.artifact_catalog import (
     LITERAL,
     MARKER,
     REFERENCE,
+    VERSION,
     expand_shared_json,
     pack_shared_json,
     read_artifact_json,
@@ -115,7 +116,11 @@ class ArtifactCatalogTests(unittest.TestCase):
     def test_invalid_reference_and_catalog_types_versions_or_identities_are_rejected(
         self,
     ):
-        for field, value in (("version", True), ("version", 2), ("objects", [])):
+        for field, value in (
+            ("version", True),
+            ("version", VERSION + 1),
+            ("objects", []),
+        ):
             packet = pack_shared_json(self.payload())
             packet[MARKER][field] = value
             with self.subTest(field=field, value=value), self.assertRaises(ValueError):
@@ -131,7 +136,9 @@ class ArtifactCatalogTests(unittest.TestCase):
         self,
     ):
         encoded = compact_json(pack_shared_json(self.payload()))
-        changed = encoded.replace('"version":1', '"version":1,"version":1')
+        changed = encoded.replace(
+            f'"version":{VERSION}', f'"version":{VERSION},"version":{VERSION}'
+        )
         with self.assertRaises(ValueError):
             read_artifact_json(changed)
         self.assertEqual(read_artifact_json('{"legacy":1,"legacy":2}'), {"legacy": 2})

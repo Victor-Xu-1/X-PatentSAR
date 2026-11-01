@@ -1,5 +1,23 @@
 # Operations and troubleshooting
 
+## Shared evidence reaches the mutable node-expansion limit
+
+Do not raise node/byte/depth quotas, drop raw cells or ancestry, or treat a
+serialization failure as scientific success. Transport2 retains explicitly
+immutable source inventories as a shared graph while keeping ordinary mutable
+objects independent. The original file is atomically preserved on write failure.
+Old transport1/plain history remains readable under its original finite bounds;
+do not relabel it as newly accepted or rewrite historical observations.
+
+Include large multi-record source collections, native/Web readers, complete
+checkpoint relocation and image/path safety in focused checks. A writer-only
+test misses a copier that re-expands the source graph. Check old wire versions,
+changed content/read-only flags, cycles and expansion bombs; preserve original
+scientific digests, raw text and manual audit. Exact reviewed-main installation
+and unchanged-address frontend acceptance remain required. Generated transport
+controls do not establish private-patent completeness or chemical accuracy.
+No scientific epoch or SQL migration is needed for this lossless carrier change.
+
 ## A caption consumer exceeds the local identity budget
 
 The rejected-source catalog must retain an attempted association in full, even

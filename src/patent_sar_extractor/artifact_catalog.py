@@ -5,46 +5,43 @@ from __future__ import annotations
 import json
 import re
 
-from .artifact_nodes import MAX_DEPTH, MAX_EDGES, JsonGraph
+from .artifact_decoding import decode_graph
+from .artifact_encoding import LITERAL, READONLY, REFERENCE, encode_graph
+from .artifact_nodes import JsonGraph
 from .contracts import SHARED_JSON_VERSION
 
 MARKER = "_shared_json"
 VERSION = SHARED_JSON_VERSION
 MAX_SHARED_OBJECTS = 100_000
 MIN_SHARED_BYTES = 512
-REFERENCE = "$shared"
-LITERAL = "$literal"
+
+__all__ = (
+    "LITERAL",
+    "MARKER",
+    "READONLY",
+    "REFERENCE",
+    "expand_shared_json",
+    "pack_shared_json",
+    "read_artifact_json",
+)
 
 
 def pack_shared_json(payload: dict) -> dict:
-    """Keep source order/types/content; intern repeated substantial nodes only."""
+    """Ordinary values stay independent; explicit source views remain immutable."""
     if not isinstance(payload, dict) or MARKER in payload:
         raise ValueError("Shared JSON requires an unencoded artifact object")
     graph = JsonGraph()
     root = graph.visit(payload)
-    catalog = {}
-
-    def emit(key, *, reference=True):
-        node = graph.nodes[key]
-        if reference and node.uses > 1 and node.size >= MIN_SHARED_BYTES:
-            if key not in catalog:
-                if len(catalog) >= MAX_SHARED_OBJECTS:
-                    raise ValueError("Shared JSON catalog exceeds its bound")
-                catalog[key] = None
-                catalog[key] = emit(key, reference=False)
-            return {REFERENCE: key}
-        if node.kind == "object":
-            value = {name: emit(child) for name, child in node.body}
-            return {LITERAL: value} if set(value) in ({REFERENCE}, {LITERAL}) else value
-        if node.kind == "array":
-            return [emit(child) for child in node.body]
-        return node.body
-
-    encoded = emit(root, reference=False)
-    if catalog:
-        encoded[MARKER] = {"version": VERSION, "objects": catalog}
-        return encoded
-    return payload
+    graph.validate_allocation(root)
+    encoded = encode_graph(
+        graph,
+        root,
+        marker=MARKER,
+        version=VERSION,
+        max_objects=MAX_SHARED_OBJECTS,
+        min_bytes=MIN_SHARED_BYTES,
+    )
+    return payload if encoded is None else encoded
 
 
 def expand_shared_json(payload, *, duplicate_keys=False):
@@ -57,7 +54,7 @@ def expand_shared_json(payload, *, duplicate_keys=False):
         or not isinstance(declaration, dict)
         or set(declaration) != {"version", "objects"}
         or type(declaration["version"]) is not int
-        or declaration["version"] != VERSION
+        or declaration["version"] not in (1, VERSION)
         or not isinstance(declaration["objects"], dict)
         or not 1 <= len(declaration["objects"]) <= MAX_SHARED_OBJECTS
     ):
@@ -68,51 +65,11 @@ def expand_shared_json(payload, *, duplicate_keys=False):
         for key in catalog
     ):
         raise ValueError("Malformed shared JSON content identity")
-    cache, active, used = {}, set(), set()
-    graph = JsonGraph()
-    edges = 0
-
-    def walk(value, depth=0, *, literal=False):
-        nonlocal edges
-        edges += 1
-        if depth > MAX_DEPTH or edges > MAX_EDGES:
-            raise ValueError("Shared JSON traversal exceeds its bounds")
-        if isinstance(value, dict):
-            if not literal and set(value) == {REFERENCE}:
-                key = value[REFERENCE]
-                if not isinstance(key, str) or key not in catalog:
-                    raise ValueError("Shared JSON reference is missing")
-                if key in active:
-                    raise ValueError("Shared JSON reference cycle")
-                used.add(key)
-                if key not in cache:
-                    if isinstance(catalog[key], dict) and set(catalog[key]) == {
-                        REFERENCE
-                    }:
-                        raise ValueError(
-                            "Shared JSON catalog cannot contain an alias-only node"
-                        )
-                    active.add(key)
-                    restored = walk(catalog[key], depth)
-                    if graph.visit(restored) != key:
-                        raise ValueError("Shared JSON content identity differs")
-                    cache[key] = restored
-                    active.remove(key)
-                return cache[key]
-            if not literal and set(value) == {LITERAL}:
-                if not isinstance(value[LITERAL], dict):
-                    raise ValueError("Malformed shared JSON literal object")
-                return walk(value[LITERAL], depth, literal=True)
-            return {key: walk(item, depth + 1) for key, item in value.items()}
-        if isinstance(value, list):
-            return [walk(item, depth + 1) for item in value]
-        return value
-
-    restored = walk({key: value for key, value in payload.items() if key != MARKER})
-    if used != set(catalog):
-        raise ValueError("Shared JSON contains unreachable objects")
-    root = graph.visit(restored)
-    return graph.materialize(root)
+    return decode_graph(
+        {key: value for key, value in payload.items() if key != MARKER},
+        catalog,
+        version=declaration["version"],
+    )
 
 
 def read_artifact_json(source, *, strict_numbers=False):
