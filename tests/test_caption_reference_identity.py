@@ -93,7 +93,7 @@ class CaptionReferenceIdentityTests(unittest.TestCase):
                     drawings,
                     boxes,
                     pages,
-                    grids_for_page=lambda page: grids[page.number + 1],
+                    grids_for_page=lambda page, grids=grids: grids[page.number + 1],
                 )
             if result.issues:
                 raise AssertionError(result.issues)
