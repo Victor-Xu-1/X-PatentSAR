@@ -91,7 +91,9 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
                     ),
                 )
                 self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
-                self.assertEqual(coverage_errors(payload), [])
+                self.assertEqual(
+                    coverage_errors(payload), [], payload["source_issues"]
+                )
                 saved = json.loads(json.dumps(payload))
                 self.assertEqual(
                     len(
@@ -153,7 +155,9 @@ class RuledColumnContinuationTests(UnruledStructureControls, unittest.TestCase):
                     ),
                 )
                 self.assertEqual(len(result["compound_catalog"]["entries"]), 4)
-                self.assertEqual(coverage_errors(payload), [])
+                self.assertEqual(
+                    coverage_errors(payload), [], payload["source_issues"]
+                )
 
     def test_rehashed_same_page_gap_is_rechecked_against_the_registered_parent(self):
         _, payload = self.run_binding(
