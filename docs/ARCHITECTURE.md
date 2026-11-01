@@ -1,5 +1,32 @@
 # X-PatentSAR architecture
 
+## Immutable original evidence uses bounded shared transport, not mutable expansion
+
+The one artifact codec writes shared JSON transport2 and still reads transport1
+and ordinary historical JSON. Only explicitly frozen source values retain
+immutable sharing. The binding writer freezes its compound catalogue, source
+sections/reference scope, retained role observations, issues and strict coverage
+without editing the source input. Ordinary mutable records still restore as
+independent objects. Bounded source-object working copies are explicit and never
+qualify a changed source or manual correction.
+
+The same ordered graph identity distinguishes mutable and read-only containers;
+this is a transport identity, NOT a replacement for canonical scientific hashes.
+Decoding checks each reference/content/mutability claim, cycles, duplicates and
+unreachable entries before restoration. Encoding preflights the complete UTF8
+wire and catalogue overhead before building it. Existing32MiB encoded/512MiB
+logical, depth256,500000unique/2000000edge/2000000allocation and100000catalog
+bounds are unchanged. Allocation charges ordinary expanded values AND the unique
+immutable source pool. Mutable expansion bombs still refuse before allocation.
+
+Checkpoint image discovery and path-only relocation use this same graph instead
+of re-expanding immutable evidence. Only declared paths move; original text,
+model values and evidence identities remain literal. Copy/file/cancellation and
+stage admission retain their existing authorities. Product0.3.44 changes only
+transport and its consumers: Binding82/binder97, Activity56/activity69,
+SAR16/input8, API/SQL, raw assets, chemistry and manual audit are unchanged.
+There is no second evidence database, queue, model or permissive fallback.
+
 ## Caption consumers retain their complete bounded ancestry
 
 `caption_record_identity` reuses the same canonical encoder and

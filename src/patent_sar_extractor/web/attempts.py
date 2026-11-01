@@ -22,9 +22,10 @@ from pydantic import ValidationError
 
 from patent_sar_extractor import contracts as core
 from patent_sar_extractor.artifact_io import artifact_json_bytes
-from patent_sar_extractor.artifact_nodes import MAX_DEPTH, JsonGraph
+from patent_sar_extractor.artifact_nodes import MAX_DEPTH
 from patent_sar_extractor.core.binding_records import binding_records
 
+from .checkpoint_values import copy_images, relocate_value
 from .errors import WebError
 from .file_publication import publish_bytes_once
 from .files import MAX_ARTIFACT_BYTES, MAX_RECORDS, SafeFiles, private_directory
@@ -498,76 +499,27 @@ class CheckpointCopy:
         path_field: bool = False,
         max_depth: int = 40,
     ) -> Any:
-        if depth > max_depth:
-            raise WebError(
-                422, "checkpoint_limit", "Checkpoint nesting exceeds its limit."
-            )
-        if isinstance(value, str) and path_field and value:
-            if value == str(self.source):
-                return str(self.target)
-            if (
-                value.startswith(str(self.source) + "/")
-                or not Path(value).is_absolute()
-            ):
-                return str(self.target / self.files.relative(value))
-        if isinstance(value, list):
-            return [
-                self.relocate(item, depth=depth + 1, max_depth=max_depth)
-                for item in value
-            ]
-        if isinstance(value, dict):
-            # Only declared path fields move. Chemical strings, raw model
-            # observations, model fingerprints and other provenance stay exact.
-            return {
-                key: self.relocate(
-                    item,
-                    depth=depth + 1,
-                    path_field=key in PATH_KEYS,
-                    max_depth=max_depth,
-                )
-                for key, item in value.items()
-            }
-        return value
+        return relocate_value(
+            value,
+            source=self.source,
+            target=self.target,
+            relative=self.files.relative,
+            path_keys=PATH_KEYS,
+            depth=depth,
+            max_depth=max_depth,
+            path_field=path_field,
+        )
 
     def images(self, payload: Any, *, depth: int = 0, max_depth: int = 40) -> None:
-        if depth > max_depth:
-            raise WebError(
-                422, "checkpoint_limit", "Checkpoint nesting exceeds its limit."
-            )
-        if isinstance(payload, dict):
-            for key, value in payload.items():
-                if key in IMAGE_KEYS and value:
-                    if not isinstance(value, str):
-                        raise WebError(
-                            422,
-                            "invalid_checkpoint",
-                            "Checkpoint image reference is invalid.",
-                        )
-                    relative = self.files.relative(value)
-                    if relative.parts[0] not in {
-                        "structures",
-                        "structure_bindings",
-                        "smiles",
-                    } or relative.suffix.lower() not in {
-                        ".png",
-                        ".jpg",
-                        ".jpeg",
-                        ".webp",
-                        ".tif",
-                        ".tiff",
-                    }:
-                        raise WebError(
-                            409,
-                            "unsafe_checkpoint",
-                            "Checkpoint asset is outside its approved stage.",
-                        )
-                    if str(relative) not in self.content:
-                        self.put(str(relative), self.raw(str(relative)))
-                else:
-                    self.images(value, depth=depth + 1, max_depth=max_depth)
-        elif isinstance(payload, list):
-            for value in payload:
-                self.images(value, depth=depth + 1, max_depth=max_depth)
+        copy_images(
+            payload,
+            image_keys=IMAGE_KEYS,
+            relative=self.files.relative,
+            present=self.content.__contains__,
+            publish=lambda path: self.put(path, self.raw(path)),
+            depth=depth,
+            max_depth=max_depth,
+        )
 
     def verify(
         self, stage: str, spec: RunSpec, *, chunk_path: str | None = None
@@ -691,10 +643,8 @@ class CheckpointCopy:
         )
 
         shared = verified.stage in {"bind", "activity"}
-        if shared:
-            # Retain the existing long original-role packets under the same
-            # finite transport limits; this does not approve a checkpoint.
-            JsonGraph().visit(verified.payload)
+        # Canonical graph transforms retain source-view sharing and the same
+        # finite allocation limits; neither this copy nor storage grants admission.
         depth_limit = MAX_DEPTH if shared else 40
         self.images(verified.payload, max_depth=depth_limit)
         self.put(

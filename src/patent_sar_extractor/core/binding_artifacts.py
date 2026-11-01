@@ -8,6 +8,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from patent_sar_extractor.artifact_immutable import freeze_json
 from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.contracts import (
     BINDINGS_SCHEMA,
@@ -170,6 +171,16 @@ def write_binding_result(
             "unresolved_sources": issues,
         },
     }
+    source_fields = (
+        "compound_catalog",
+        "source_sections",
+        "source_reference_scope",
+        "source_role_observations",
+        "source_issues",
+        "strict_coverage",
+    )
+    sources = freeze_json({name: payload[name] for name in source_fields})
+    payload.update(sources)
     write_json_atomic(output_json, payload, shared=True)
     with output_csv.open("w", encoding="utf-8", newline="") as stream:
         writer = csv.DictWriter(stream, fieldnames=_CSV_FIELDS, extrasaction="ignore")
@@ -184,5 +195,5 @@ def write_binding_result(
         "structure_fallback": detected_style == "structure_sequence_fallback",
         "unbound_pages": list(unbound_pages),
         "output_files": {"json": str(output_json), "csv": str(output_csv)},
-        "compound_catalog": catalog,
+        "compound_catalog": payload["compound_catalog"],
     }

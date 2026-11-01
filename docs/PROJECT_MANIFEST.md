@@ -1,5 +1,19 @@
 # Project governance manifest
 
+- Immutable evidence transport: the existing artifact graph, versioned codec
+  and atomic writer own storage and reading. Transport2 adds explicit immutable
+  source views; transport1/plain history remains readable, ordinary mutable
+  values restore independently, and bounded source-object copies never grant
+  scientific acceptance. Encoding preflights complete wire/catalogue overhead;
+  decoding verifies content AND mutability before restoring. Existing32MiB
+  encoded/512MiB logical/depth256/500000unique/2000000edges and allocations/
+  100000catalog limits remain finite and unchanged. Checkpoint path transforms
+  reuse the graph, preserve raw text and never expand shared source inventories
+  into competing mutable copies. Binding82/binder97, Activity56/activity69,
+  SAR16/input8, original scientific digests/assets, manual audit, API/SQL and
+  model/environment dependencies are unchanged. No alternate queue/store or
+  source trimming; generated controls are not real-patent scientific acceptance.
+
 - Caption-wrapper identity: `caption_record_identity` exposes only explicitly
   owned caption-role/other-role ancestry inside rejected variant2 diagnostics,
   pending-occurrence, nonfinal-section and confirmed label-reference identities.

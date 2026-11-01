@@ -7,6 +7,8 @@ import json
 import math
 from dataclasses import dataclass
 
+from .artifact_immutable import FrozenDict, FrozenList
+
 MAX_ARTIFACT_BYTES = 32 * 1024 * 1024
 MAX_EXPANDED_BYTES = 512 * 1024 * 1024
 # Existing rejected source-role packets can carry 208 levels plus their artifact
@@ -30,29 +32,53 @@ class JsonNode:
     expanded_nodes: int
     uses: int = 0
 
+    @property
+    def readonly(self):
+        return self.kind.startswith("readonly_")
+
+    @property
+    def container(self):
+        return self.kind.removeprefix("readonly_") in ("object", "array")
+
+    @property
+    def children(self):
+        if self.kind.removeprefix("readonly_") == "object":
+            return (child for _name, child in self.body)
+        return iter(self.body) if self.container else iter(())
+
 
 class JsonGraph:
     """Hash unique ordered nodes once; detect input cycles before memoization."""
 
-    def __init__(self):
+    def __init__(self, *, max_depth=None, transform=None):
         self.nodes: dict[str, JsonNode] = {}
-        self.identities: dict[int, str] = {}
+        self.identities: dict[tuple[int, bool], str] = {}
         self.scalars: dict[tuple, str] = {}
         self.active: set[int] = set()
         self.edges = 0
+        self.max_depth = MAX_DEPTH if max_depth is None else min(max_depth, MAX_DEPTH)
+        self.transform = transform
 
-    def visit(self, value, depth=0) -> str:
+    def visit(
+        self, value, depth=0, *, readonly=False, mutable=False, field=None
+    ) -> str:
         self.edges += 1
-        if depth > MAX_DEPTH or self.edges > MAX_EDGES:
+        if depth > self.max_depth or self.edges > MAX_EDGES:
             raise ValueError("Shared JSON traversal exceeds its bounds")
+        if self.transform is not None:
+            value = self.transform(value, field)
         if not isinstance(value, (dict, list, tuple)):
-            return self._scalar(value)
+            return self.scalar(value)
         identity = id(value)
+        readonly = not mutable and (
+            readonly or isinstance(value, (FrozenDict, FrozenList))
+        )
+        context = (identity, readonly)
         if identity in self.active:
             raise ValueError("Shared JSON cannot contain a cycle")
-        if identity in self.identities:
-            key = self.identities[identity]
-            if depth + self.nodes[key].height > MAX_DEPTH:
+        if context in self.identities:
+            key = self.identities[context]
+            if depth + self.nodes[key].height > self.max_depth:
                 raise ValueError("Shared JSON traversal exceeds its bounds")
             self.nodes[key].uses += 1
             return key
@@ -67,37 +93,57 @@ class JsonGraph:
                             "Shared JSON object has competing normalized keys"
                         )
                     names.add(key)
-                    entries.append((key, self.visit(item, depth + 1)))
-                body = tuple(entries)
-                size = (
-                    2
-                    + max(0, len(body) - 1)
-                    + sum(
-                        len(compact_json(key).encode("utf-8"))
-                        + 1
-                        + self.nodes[child].size
-                        for key, child in body
+                    entries.append(
+                        (
+                            key,
+                            self.visit(
+                                item,
+                                depth + 1,
+                                readonly=readonly,
+                                mutable=mutable,
+                                field=key,
+                            ),
+                        )
                     )
-                )
+                body = tuple(entries)
                 kind = "object"
             else:
-                body = tuple(self.visit(item, depth + 1) for item in value)
-                size = (
-                    2
-                    + max(0, len(body) - 1)
-                    + sum(self.nodes[child].size for child in body)
+                body = tuple(
+                    self.visit(item, depth + 1, readonly=readonly, mutable=mutable)
+                    for item in value
                 )
                 kind = "array"
-            children = [child for _name, child in body] if kind == "object" else body
-            height = 1 + max(
-                (self.nodes[child].height for child in children), default=-1
-            )
-            count = 1 + sum(self.nodes[child].expanded_nodes for child in children)
-            key = self._add(kind, body, size, height, count)
-            self.identities[identity] = key
+            key = self.container(kind, body, readonly=readonly)
+            self.identities[context] = key
             return key
         finally:
             self.active.remove(identity)
+
+    def container(self, kind, body, *, readonly=False):
+        """One identity/budget authority for input traversal and wire decoding."""
+        children = tuple(child for _name, child in body) if kind == "object" else body
+        names_size = (
+            sum(len(compact_json(name).encode("utf-8")) + 1 for name, _child in body)
+            if kind == "object"
+            else 0
+        )
+        size = (
+            2
+            + max(0, len(body) - 1)
+            + names_size
+            + sum(self.nodes[child].size for child in children)
+        )
+        height = 1 + max((self.nodes[child].height for child in children), default=-1)
+        # A read-only view allocates a shared graph, not mutable copies at each
+        # reference. The materializer separately budgets that whole shared pool.
+        count = (
+            1
+            if readonly
+            else 1 + sum(self.nodes[child].expanded_nodes for child in children)
+        )
+        return self._add(
+            f"readonly_{kind}" if readonly else kind, body, size, height, count
+        )
 
     @staticmethod
     def _object_key(key):
@@ -107,7 +153,7 @@ class JsonGraph:
             return compact_json(key)
         raise ValueError("Shared JSON object has a non-JSON key")
 
-    def _scalar(self, value):
+    def scalar(self, value):
         kind = type(value).__name__
         if type(value) not in (type(None), bool, int, float, str) or (
             type(value) is float and not math.isfinite(value)
@@ -141,10 +187,12 @@ class JsonGraph:
         return key
 
     def materialize(self, key):
-        """Return ordinary JSON containers, never aliases between saved records."""
-        node = self.nodes[key]
-        if node.kind == "object":
-            return {name: self.materialize(child) for name, child in node.body}
-        if node.kind == "array":
-            return [self.materialize(child) for child in node.body]
-        return node.body
+        """Ordinary records stay independent; only explicit source views share."""
+        from .artifact_materialization import materialize
+
+        return materialize(self, key)
+
+    def validate_allocation(self, key):
+        from .artifact_materialization import validate_allocation
+
+        validate_allocation(self, key)
