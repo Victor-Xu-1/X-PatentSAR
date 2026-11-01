@@ -11,6 +11,7 @@ from .caption_label_roles import (
     validate_caption_references,
 )
 from .caption_pending_roles import validate_pending_caption_references
+from .caption_record_identity import caption_record_id
 from .caption_role_proof import validate_caption_exclusions
 from .heading_inventory import heading_inventory_issues, heading_sections
 from .printed_identifiers import identifier_key
@@ -67,7 +68,7 @@ def reference_scope(sections, original_pdf_sha256=""):
         "original_pdf_sha256": original_pdf_sha256,
         "region_ids": [region["region_id"] for region in regions],
         "caption_region_ids": [
-            proof_id(section)
+            caption_record_id(section, (("caption_role",),))
             for section in sections
             if section["role"] == "nonfinal_caption_catalog"
         ],
@@ -135,7 +136,7 @@ def _regions(sections, scope):
         and captions
         or scope["version"] in {2, 3, 4, 5, 6}
         and scope.get("caption_region_ids")
-        != [proof_id(section) for section in captions]
+        != [caption_record_id(section, (("caption_role",),)) for section in captions]
     ):
         raise ValueError(
             "Original nonfinal caption inventory differs or was downgraded"

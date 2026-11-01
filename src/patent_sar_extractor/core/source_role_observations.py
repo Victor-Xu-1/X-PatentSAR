@@ -227,7 +227,12 @@ def _catalog(observations, *, expected_keys=None, original_pdf_sha256=None):
     catalog, size = {}, 0
     for index, observation in enumerate(observations):
         _validate(observation, original_pdf_sha256=original_pdf_sha256)
-        key = proof_id(observation)
+        if observation.get("version") == 2:
+            from .binding_source_diagnostics import binding_diagnostic_id
+
+            key = binding_diagnostic_id(observation)
+        else:
+            key = proof_id(observation)
         if expected_keys is not None and key != expected_keys[index]:
             raise ValueError("Original role diagnostic identity differs")
         if key in catalog:

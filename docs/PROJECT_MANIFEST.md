@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- Caption-wrapper identity: `caption_record_identity` exposes only explicitly
+  owned caption-role/other-role ancestry inside rejected variant2 diagnostics,
+  pending-occurrence and nonfinal-section identities. It delegates to the same
+  canonical encoder and caption ancestry partitioner, not a second proof or
+  scientific admission chain. Entire local wrappers and each ancestor stay1MiB,
+  complete inventory32MiB, depth64 and diagnostic4096/64MiB/node/array/scalar
+  limits unchanged. Unknown nested chains and real overflow refuse. Original
+  bytes/hashes, unresolved issues and strict acceptance remain intact. Binder96
+  refreshes derived work only; Binding82/Activity56/activity69/SAR16/input8,
+  original assets, manual audit, API/SQL/models/dependencies are unchanged.
+
 - Caption ancestry identity: the existing canonical JSON digest partitions only
   validated `continuation.previous` inventory boundaries through
   `caption_role_identity`. Every local record keeps the1-MiB limit, complete

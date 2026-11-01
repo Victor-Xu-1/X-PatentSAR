@@ -1,5 +1,23 @@
 # Operations and troubleshooting
 
+## Rejected caption ancestry exceeds the local diagnostic identity budget
+
+The rejected-source catalog must retain an attempted association in full, even
+when its original catalogue role reaches previous pages. Binder96 uses the same
+bounded caption inventory policy for that diagnostic and its downstream
+pending-occurrence/nonfinal-section identities. It keeps the complete local
+wrapper at1MiB, every ancestor at1MiB, the entire inventory at32MiB and the
+diagnostic catalog at64MiB/4096attempts. The existing64-link/node/array/scalar
+bounds and raw canonical hashes remain unchanged. Arbitrary nested fields do
+not acquire inventory permission. Real overflow, malformed ancestry or changed
+source remains rejected; no observation is trimmed or promoted to success.
+
+Preserve the failed job and original log. After focused checks, main integration,
+installed-wheel verification and idle deployment at the original address, submit
+the unchanged original through the ordinary frontend. Do not manually repair
+stored diagnostics or run a separate PDF calculation. Existing source/chemical
+findings are not proved resolved merely because a diagnostic can now be saved.
+
 ## Complete catalogue continuation exceeds a small-component identity budget
 
 A prior-page catalogue link is a bounded inventory of original page facts, not

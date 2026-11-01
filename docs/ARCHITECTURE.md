@@ -1,5 +1,25 @@
 # X-PatentSAR architecture
 
+## Rejected caption diagnostics retain their complete bounded ancestry
+
+`caption_record_identity` reuses the same canonical encoder and
+`caption_ancestry_partitions` for explicit caption owners in the existing
+variant2 diagnostic, pending-occurrence and nonfinal-section readers/writers.
+Only known `caption_role` and boundary `other_role` locations expose the existing
+`continuation.previous` inventory. The entire current wrapper, ALL other fields
+and local role/link metadata together must still fit1MiB; every ancestor has the
+same local bound. The complete inventory uses the existing32MiB artifact limit,
+with unchanged64-link depth, diagnostic node/array/scalar limits and4096-attempt/
+64MiB catalog bounds. Unknown nested chains and real local/total overflow refuse.
+
+Raw dictionaries and canonical SHA256 bytes are unchanged, including short
+historical identities. Retention never qualifies a missing drawing or number;
+the diagnostic stays unresolved and ordinary source replay/strict coverage still
+owns acceptance. Binder96 refreshes affected derived work; Binding82/Activity56,
+activity69, SAR16/input8, API/SQL, original assets and manual audit are unchanged.
+No private PDF processing, OCR/model change, alternate store or source omission
+is introduced by this identity repair.
+
 ## Complete continuation ancestry is an inventory, not one local observation
 
 `caption_role_identity` partitions only the existing validated
