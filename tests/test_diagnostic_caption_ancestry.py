@@ -25,7 +25,11 @@ from patent_sar_extractor.web.files import SafeFiles
 
 def encoded(value):
     return json.dumps(
-        value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False
+        value,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        allow_nan=False,
     ).encode()
 
 
@@ -104,7 +108,9 @@ class DiagnosticCaptionAncestryTests(unittest.TestCase):
                 retained, catalog = self.retain(source)
                 key = retained[0]["evidence"]["source_diagnostic"]
                 self.assertEqual(key, hashlib.sha256(encoded(catalog[key])).hexdigest())
-                self.assertEqual(catalog[key]["proposal"], source["evidence"]["proposal"])
+                self.assertEqual(
+                    catalog[key]["proposal"], source["evidence"]["proposal"]
+                )
 
     def test_combined_local_envelope_and_each_ancestor_keep_one_region_limit(self):
         source = issue(original_chain())
@@ -178,9 +184,9 @@ class DiagnosticCaptionAncestryTests(unittest.TestCase):
             )
         changed = copy.deepcopy(catalog)
         observation = next(iter(changed.values()))
-        observation["proposal"]["caption_role"]["continuation"]["previous"][
-            "sources"
-        ][0]["original_rows"][0] += " changed"
+        observation["proposal"]["caption_role"]["continuation"]["previous"]["sources"][
+            0
+        ]["original_rows"][0] += " changed"
         with self.assertRaisesRegex(ValueError, "identity"):
             validate_role_catalog(changed)
         with self.assertRaisesRegex(ValueError, "document"):
