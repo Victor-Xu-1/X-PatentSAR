@@ -1,11 +1,14 @@
 # Operations and troubleshooting
 
-## Rejected caption ancestry exceeds the local diagnostic identity budget
+## A caption consumer exceeds the local identity budget
 
 The rejected-source catalog must retain an attempted association in full, even
-when its original catalogue role reaches previous pages. Binder96 uses the same
+when its original catalogue role reaches previous pages. Binder97 uses the same
 bounded caption inventory policy for that diagnostic and its downstream
-pending-occurrence/nonfinal-section identities. It keeps the complete local
+pending-occurrence/nonfinal-section and confirmed label-reference identities.
+The label index checks both same-page continuation and cross-page ownership;
+its ordinary numbered-cell branch keeps the original local-region policy.
+It keeps the complete local
 wrapper at1MiB, every ancestor at1MiB, the entire inventory at32MiB and the
 diagnostic catalog at64MiB/4096attempts. The existing64-link/node/array/scalar
 bounds and raw canonical hashes remain unchanged. Arbitrary nested fields do
@@ -16,7 +19,9 @@ Preserve the failed job and original log. After focused checks, main integration
 installed-wheel verification and idle deployment at the original address, submit
 the unchanged original through the ordinary frontend. Do not manually repair
 stored diagnostics or run a separate PDF calculation. Existing source/chemical
-findings are not proved resolved merely because a diagnostic can now be saved.
+findings are not proved resolved merely because a diagnostic or reference can
+now be hashed. A passing diagnostic test alone does not cover the confirmed
+label index: include its original-heading and persisted-reference consumers.
 
 ## Complete catalogue continuation exceeds a small-component identity budget
 

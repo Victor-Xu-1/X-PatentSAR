@@ -3,14 +3,14 @@
 import re
 from collections import defaultdict
 
-from .activity_header_evidence import proof_id
 from .caption_locator_proof import valid_locator_scope
+from .caption_record_identity import caption_record_id
 from .caption_role_proof import caption_role_status
 from .numbered_structure_pairs import _box
 from .printed_identifiers import identifier_key
 from .source_binding_proof import annotate_source_binding
 from .source_cell_tokens import cell_tokens, crosses_cell
-from .source_evidence_identity import SourceEvidenceLimit
+from .source_evidence_identity import SourceEvidenceLimit, proof_id
 from .source_section_roles import heading_members, section_heading
 
 ROLE = "structure_label_reference"
@@ -59,7 +59,7 @@ def caption_label_index(bindings, original_pdf_sha256):
                 else evidence["label_bbox"]
             )
             identifier = identifier_key(checked.get("cpd"), wrapped=True)
-            key = proof_id(
+            key = caption_record_id(
                 {
                     "status": "observed_original_caption"
                     if rule == "original_caption_cell"
@@ -72,7 +72,13 @@ def caption_label_index(bindings, original_pdf_sha256):
                         checked["struct_" + axis] for axis in ("x0", "y0", "x1", "y1")
                     ],
                     field: evidence,
-                }
+                },
+                (
+                    (field, "ownership", "caption_role"),
+                    (field, "ownership", "page_boundary", "other_role"),
+                )
+                if rule == "original_caption_cell"
+                else (),
             )
             ownership = evidence.get("ownership") or {}
             physical = (
