@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- Segmentation progress authority: one bounded runner filtered-line observer
+  wakes the existing reusable-checkpoint reader; one progress writer owns page
+  counts. At most three chunk pairs require fresh output/fresh manifest, current
+  fingerprint, exact page ownership and successful full-page inventory.
+  Signature memoization and notification deduplication avoid repeated parsing;
+  terminal revalidation still rejects changed data. No timer/service/queue,
+  guessed counts, model change, new scientific epoch/schema, API/SQL or manual
+  data rewrite. Native generated-child handshakes prove early work visibility,
+  not detector recall or chemical correctness. Existing cancellation/deadline/
+  output bounds remain part of the same owned subprocess path.
+
 - Immutable evidence transport: the existing artifact graph, versioned codec
   and atomic writer own storage and reading. Transport2 adds explicit immutable
   source views; transport1/plain history remains readable, ordinary mutable

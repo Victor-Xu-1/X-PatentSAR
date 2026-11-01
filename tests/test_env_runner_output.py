@@ -27,11 +27,11 @@ class EnvironmentOutputTests(unittest.TestCase):
         environment.start()
         self.addCleanup(environment.stop)
 
-    def run_child(self, code, *, stream=False, timeout=5):
+    def run_child(self, code, *, stream=False, timeout=5, on_line=None):
         script = self.root / "controlled_worker.py"
         script.write_text(code, encoding="utf-8")
         return env_runner.run_in_env(
-            "base", str(script), timeout=timeout, stream_output=stream
+            "base", str(script), timeout=timeout, stream_output=stream, on_line=on_line
         )
 
     def test_capture_bounds_both_pipes_and_preserves_terminal_failure(self):
@@ -208,6 +208,59 @@ class EnvironmentOutputTests(unittest.TestCase):
             unavailable = env_runner.check_env("base")
         self.assertFalse(unavailable["available"])
         self.assertIn("controlled_module_that_does_not_exist", unavailable["error"])
+
+    def test_public_stream_observer_keeps_filtering_bounds_and_child_exit_status(self):
+        observed = []
+        printed = io.StringIO()
+        with contextlib.redirect_stdout(printed):
+            result = self.run_child(
+                "import os, sys\n"
+                "print('Unable to register cuDNN factory', flush=True)\n"
+                "os.write(1, b'head:' + b'x' * 200_000 + b':tail\\n')\n"
+                "print('saved-work-wakeup', flush=True)\n"
+                "sys.exit(5)\n",
+                stream=True,
+                on_line=observed.append,
+            )
+        self.assertEqual(result.returncode, 5)
+        self.assertEqual("".join(observed), printed.getvalue())
+        self.assertNotIn("cuDNN factory", "".join(observed))
+        self.assertTrue(any("saved-work-wakeup" in line for line in observed))
+        self.assertLessEqual(
+            max(len(line.encode("utf-8")) for line in observed), 66_000
+        )
+
+    def test_public_observer_cancellation_reaps_only_the_owned_child(self):
+        pid_file = self.root / "observed-child.pid"
+
+        def cancel(_line):
+            raise KeyboardInterrupt("controlled public observer cancellation")
+
+        with (
+            contextlib.redirect_stdout(io.StringIO()),
+            self.assertRaisesRegex(KeyboardInterrupt, "public observer"),
+        ):
+            self.run_child(
+                "import os, time\n"
+                f"open({str(pid_file)!r}, 'w').write(str(os.getpid()))\n"
+                "print('saved-work-wakeup', flush=True)\n"
+                "time.sleep(10)\n",
+                stream=True,
+                on_line=cancel,
+            )
+        self.assertFalse(Path(f"/proc/{pid_file.read_text()}").exists())
+
+    def test_observer_without_streaming_is_rejected_before_any_child_starts(self):
+        with (
+            patch.object(
+                env_runner,
+                "run_bounded",
+                side_effect=AssertionError("No child may start"),
+            ) as native,
+            self.assertRaisesRegex(ValueError, "stream_output"),
+        ):
+            self.run_child("pass\n", on_line=lambda _line: None)
+        native.assert_not_called()
 
 
 if __name__ == "__main__":
