@@ -2,7 +2,27 @@
 
 import re
 
-from .source_evidence_identity import proof_id
+from .caption_record_identity import caption_record_id
+
+
+def binding_diagnostic_id(observation):
+    """Only the existing original caption owners can carry prior-page ancestry."""
+    validate_binding_diagnostic(observation)
+    return caption_record_id(
+        observation,
+        (
+            ("proposal", "caption_role"),
+            ("proposal", "page_boundary", "other_role"),
+            ("proposal", "exact_caption_evidence", "ownership", "caption_role"),
+            (
+                "proposal",
+                "exact_caption_evidence",
+                "ownership",
+                "page_boundary",
+                "other_role",
+            ),
+        ),
+    )
 
 
 def validate_binding_diagnostic(observation, *, original_pdf_sha256=None):
@@ -81,7 +101,7 @@ def retain_binding_diagnostics(issues, buffer, *, original_pdf_sha256=""):
                         for key, value in evidence.items()
                         if key != "proposal"
                     },
-                    "source_diagnostic": proof_id(observation),
+                    "source_diagnostic": binding_diagnostic_id(observation),
                 },
             }
         )

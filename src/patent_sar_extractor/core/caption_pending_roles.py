@@ -10,9 +10,9 @@ import math
 from collections import defaultdict
 
 from .caption_label_roles import PENDING_ROLE, owns_label_locator
+from .caption_record_identity import caption_record_id
 from .caption_role_proof import caption_role_status
 from .source_cell_claims import cell_source_status
-from .source_evidence_identity import proof_id
 from .source_role_observations import validate_role_catalog
 from .source_section_roles import section_heading
 
@@ -40,8 +40,9 @@ def pending_caption_index(catalog, original_pdf_sha256):
             or caption_role_status(role, page, box) != "compound"
         ):
             continue
-        role_id = proof_id(
-            {"status": "observed_original_caption_role", "caption_role": role}
+        role_id = caption_record_id(
+            {"status": "observed_original_caption_role", "caption_role": role},
+            (("caption_role",),),
         )
         # Only the original cell carrier nominates this occurrence. A later
         # model string cannot invent a page token or acquire a native role.
