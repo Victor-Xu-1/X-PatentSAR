@@ -1,5 +1,15 @@
 # Project governance manifest
 
+- Canonical source encoding authority: the existing bounded graph measures
+  immutable compact UTF8 sizes; materialization keeps only an internal read-only
+  hint, never a wire/source field. The same canonical hasher may use native JSON
+  encoding only inside unchanged local/remaining-total bounds, and hashes/checks
+  actual bytes again. Mutable/unmeasured/over-budget input retains streaming
+  refusal. No cached scientific digest, alternate proof/parser, source omission,
+  increased limit, scientific epoch/schema, API/SQL, model/environment or manual
+  data change. Exact old wire/canonical values and direct export consumers are
+  required controls; generated speed measurements are not real-task acceptance.
+
 - Segmentation progress authority: one bounded runner filtered-line observer
   wakes the existing reusable-checkpoint reader; one progress writer owns page
   counts. At most three chunk pairs require fresh output/fresh manifest, current

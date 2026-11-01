@@ -44,14 +44,18 @@ def materialize(graph, root):
                 for name, child in node.body
             )
             value = (
-                readonly_container(kind, contents) if node.readonly else dict(contents)
+                readonly_container(kind, contents, byte_size=node.size)
+                if node.readonly
+                else dict(contents)
             )
         else:
             contents = (
                 build(child, source_parent=node.readonly) for child in node.body
             )
             value = (
-                readonly_container(kind, contents) if node.readonly else list(contents)
+                readonly_container(kind, contents, byte_size=node.size)
+                if node.readonly
+                else list(contents)
             )
         # A boundary gets its own immutable wrapper. A later bounded deepcopy of
         # distinct records cannot acquire aliases through copy's outer memo.
