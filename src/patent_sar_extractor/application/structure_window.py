@@ -3,19 +3,15 @@
 from collections.abc import Callable
 from pathlib import Path
 
-from patent_sar_extractor.artifact_io import load_json, write_json_atomic
+from patent_sar_extractor.artifact_io import write_json_atomic
 from patent_sar_extractor.contracts import (
     SEGMENTATION_INPUT_FINGERPRINT_FILE,
     SEGMENTATION_WINDOW_SCHEMA,
     SEGMENTATION_WINDOW_SCHEMA_VERSION,
-    STRUCTURES_SCHEMA,
-    STRUCTURES_SCHEMA_VERSION,
-    artifact_identity_matches,
     schema_ref,
 )
 
-from .pipeline_io import _require_updated_worker_output, _worker_output_state
-from .stage_cache import _fingerprint_matches
+from .structure_checkpoint_observer import WindowCheckpointObserver
 
 
 def execute_missing_windows(
@@ -58,10 +54,7 @@ def execute_missing_windows(
                 ],
             },
         )
-        previous = {
-            j["output"]: _worker_output_state(Path(j["output"]) / "metadata.json")
-            for j in window
-        }
+        observer = WindowCheckpointObserver(window, on_saved)
         args = [
             "--pdf",
             pdf,
@@ -82,36 +75,11 @@ def execute_missing_windows(
             cwd=cwd,
             env_extra=environment,
             stream_output=True,
+            on_line=observer.on_line,
         )
-        for job in window:
-            path = Path(job["output"]) / "metadata.json"
-            payload = load_json(path, {})
-            if (
-                not artifact_identity_matches(
-                    payload, STRUCTURES_SCHEMA, STRUCTURES_SCHEMA_VERSION
-                )
-                or payload.get("failed_pages")
-                or not isinstance(payload.get("structures"), list)
-            ):
-                continue
-            try:
-                _require_updated_worker_output(path, previous[job["output"]])
-            except RuntimeError:
-                continue
-            # A failed later chunk must not throw away earlier successful work.
-            if not _fingerprint_matches(str(path), job["fingerprint"]):
-                continue
-            from patent_sar_extractor.core.structure_inventory import (
-                validate_structure_inventory,
-            )
-
-            try:
-                validate_structure_inventory(payload, expected_pages=job["pages"])
-            except (ValueError, TypeError, KeyError):
-                continue
-            results[job["output"]] = payload
-            if on_saved is not None:
-                on_saved(job["pages"])
+        # Revalidate current files even if live progress already observed them.
+        # A later failed chunk never promotes changed or missing earlier data.
+        results.update(observer.collect(terminal=True))
         if proc.returncode != 0 or any(j["output"] not in results for j in window):
             raise RuntimeError(
                 "structure extraction failed in its bounded window; completed chunks retained"

@@ -1,5 +1,24 @@
 # Operations and troubleshooting
 
+## Structure progress pauses while later chunks are still computing
+
+One existing warm worker handles up to three chunks. Progress now observes each
+fresh, sealed checkpoint while that child remains alive; it does not wait for
+the complete warm window to return. A separate post-seal output line wakes
+validation even after a partial SDK warning. No log number is counted.
+
+Both output and manifest must be new, with matching input fingerprint and the
+exact successful original-page inventory. Missing, stale, mismatched or failed
+data stays uncounted. The terminal path rechecks the files, so later corruption
+cannot be promoted by an earlier progress notification. Earlier valid work
+remains saved if a later chunk fails; terminal failure/cancellation remains
+failure/cancellation even if all pages were previously observed.
+
+Use generated native-child handshakes plus deadline/cancellation, cache,
+page-ownership and API/UI progress checks. Do not rerun a private patent from a
+script just to fill a progress demonstration. Actual private extraction/SAR
+acceptance still requires the ordinary frontend and strict scientific gates.
+
 ## Shared evidence reaches the mutable node-expansion limit
 
 Do not raise node/byte/depth quotas, drop raw cells or ancestry, or treat a

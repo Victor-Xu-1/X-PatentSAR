@@ -76,3 +76,6 @@ def execute_window(
         ):
             raise ValueError("Segmentation inputs changed while computing a chunk")
         seal_chunk(Path(out), before, fingerprint)
+        # This is only a wakeup. The parent independently reads the fresh,
+        # fingerprinted page inventory before publishing saved-work progress.
+        print("\nSegmentation checkpoint saved", flush=True)

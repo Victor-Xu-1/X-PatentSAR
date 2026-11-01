@@ -78,7 +78,9 @@ class StructureProgressTests(unittest.TestCase):
                     "pages": [index],
                     "output": str(root / f"chunk_{index}"),
                     "fingerprint": _step_fingerprint(
-                        "structures", pdf_path=str(pdf), params={"control": index}
+                        "structures",
+                        pdf_path=str(pdf),
+                        params={"control": index, "chunk_pages": [index]},
                     ),
                 }
                 for index in range(3)

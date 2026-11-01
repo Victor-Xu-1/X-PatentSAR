@@ -9,6 +9,7 @@ import os
 import subprocess
 import sys
 import tempfile
+from collections.abc import Callable
 
 from patent_sar_extractor.paths import PACKAGE_IMPORT_ROOT, config_files
 
@@ -49,13 +50,19 @@ def _run_streamed_filtered(
     timeout: int,
     cwd: str,
     env: dict[str, str] | None,
+    on_line: Callable[[str], None] | None = None,
 ) -> subprocess.CompletedProcess:
+    def emit(line):
+        print(line, end="", flush=True)
+        if on_line is not None:
+            on_line(line)
+
     return run_bounded(
         cmd,
         timeout=timeout,
         cwd=cwd,
         env=env,
-        on_line=lambda line: print(line, end="", flush=True),
+        on_line=emit,
         keep_line=_should_stream_child_line,
     )
 
@@ -190,6 +197,7 @@ def run_in_env(
     cwd: str | None = None,
     env_extra: dict[str, str] | None = None,
     stream_output: bool = False,
+    on_line: Callable[[str], None] | None = None,
 ) -> subprocess.CompletedProcess:
     """
     在指定 conda 环境中运行 Python 脚本。
@@ -201,10 +209,13 @@ def run_in_env(
         timeout: 超时秒数
         cwd: 工作目录
         env_extra: 额外环境变量 (合并到当前环境)
+        on_line: 可选的有界已过滤输出观察器，仅用于唤醒状态核对
 
     Returns:
         subprocess.CompletedProcess
     """
+    if on_line is not None and not stream_output:
+        raise ValueError("A stream observer requires stream_output=True")
     python = get_python(env_name)
     cmd = [python, script] + (args or [])
     logger.info(f"Running in {env_name}: {' '.join(cmd)}")
@@ -217,6 +228,7 @@ def run_in_env(
             timeout=timeout,
             cwd=cwd or os.getcwd(),
             env=run_env,
+            on_line=on_line,
         )
 
     return run_bounded(

@@ -1,5 +1,27 @@
 # X-PatentSAR architecture
 
+## Saved chunk progress does not wait for a warm worker to exit
+
+The existing bounded environment runner exposes an optional filtered-line
+observer only for streamed execution. It preserves byte limits, warning
+filtering, exit codes, deadlines and exact-child cancellation. Worker text is
+only a wakeup: after the existing segmentation sealer publishes a chunk, it
+flushes a separate acknowledgment line, not a trusted count.
+
+WindowCheckpointObserver observes at most the existing three chunk pairs.
+Only fresh metadata AND a fresh matching manifest can pass the same reusable
+chunk reader, exact page-list agreement and successful full-page inventory.
+Unchanged signatures do not repeat JSON parsing; notifications are deduplicated.
+The terminal path revalidates current files instead of accepting a previously
+observed payload. The same StructureProgress writer and API/UI schema remain
+authoritative. Processed zero-candidate pages are work facts, not proof of
+complete detection, valid structures or accepted chemistry.
+
+There is no timer, new thread/service/queue, model run or guessed percentage.
+Scientific payloads, cache/schema epochs, API/SQL and manual audit are unchanged;
+the product-only release is0.3.45. Generated native-child handshakes verify that
+saved work is visible before that same child can continue, without an OCSR model.
+
 ## Immutable original evidence uses bounded shared transport, not mutable expansion
 
 The one artifact codec writes shared JSON transport2 and still reads transport1
