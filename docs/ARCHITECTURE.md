@@ -1,5 +1,29 @@
 # X-PatentSAR architecture
 
+## Heading comparisons preserve every word except an explicit label/ID gap
+
+The existing `source_section_roles` parser owns `heading_comparison_text`.
+Only a complete recognized heading may normalize whitespace between its exact
+printed label token and first literal identifier. All original identifiers,
+leading zeros, suffixes, plural members, punctuation, role/preparation prefixes
+and remaining qualifiers stay in the comparison. Unknown text is not repaired;
+different parsed namespaces do not become the same identifier. No new heading
+parser, OCR call, confidence threshold or scientific inference is introduced.
+
+`heading_native_claims.heading_literal` and original heading replay consume the
+same comparison. A known earlier title no longer deletes every word boundary:
+an `EC50 10nM` qualifier cannot be replaced by `EC5010nM` merely because an ID
+matches. Partial native claims, actual paint/pixel ownership, both complete source
+views, detector conflicts, source limits and final structure association remain
+mandatory. Raw observations are never rewritten. Equal-looking OCR strings are
+not proof of correct chemistry.
+
+Binder99 refreshes derived attempts only; Binding82/Activity56/activity69/SAR16/
+input8, original PDF/OCR/crops, manual audit, API/SQL and dependencies remain
+unchanged. Historical unresolved flags are not retagged as confirmed. Focused
+native/raster, serialized original replay, nonfinal roles, partial sources,
+inventory and export controls do not constitute all-patent scientific acceptance.
+
 ## Caption layout facts are independent of structure-detector completeness
 
 `CaptionGridResult.frames` retains the original caption-cell observations already

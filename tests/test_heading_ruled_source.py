@@ -108,7 +108,7 @@ class HeadingRuledSourceTests(unittest.TestCase):
 
     def test_physical_cell_is_selected_before_any_ocr_window_is_read(self):
         with patch(
-            "patent_sar_extractor.core.heading_observation.observe_cell",
+            "patent_sar_extractor.core.paired_text_observation.observe_cell",
             wraps=observe_cell,
         ) as reader:
             proof = observe_original("Compound 71", ruled=True)

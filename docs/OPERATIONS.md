@@ -1,5 +1,27 @@
 # Operations and troubleshooting
 
+## Complete heading readings differ only at the label/number word boundary
+
+`Compound037B` and `Compound 037B` can name the same explicitly parsed original
+heading. The sole section-role parser now supplies the comparison form; it does
+not drop a prefix, infer a number, strip leading zeros or rewrite raw text.
+Only whitespace in that exact parsed label/ID separator is normalized. All
+other words, qualifiers and role/identifier distinctions remain constraints.
+An ambiguous differently parsed namespace must not be resolved by this rule.
+
+Use generated differing-input controls and actual original-pixel replay. Known
+native/optical conflicts, hidden paint, weak readings, clipped diagrams and changed
+source geometry stay refused. Earlier whole titles retain their other word
+boundaries instead of comparing after arbitrary whitespace deletion. Do not lower
+OCR thresholds or edit scientific artifacts to make an unresolved title pass.
+
+Binder99 invalidates derived attempts while raw assets and manual audit remain
+unchanged. Reuse the current paired text observer in tests; a hidden native
+conflict is rejected before redundant optical work. Positive heading/diagram
+fixtures must contain the complete original drawing, with clipped/overlapping
+counterparts retained as refusal controls. Deploy exact reviewed main at the
+existing address before any new real frontend-only extraction/SAR verification.
+
 ## A missing drawing produces an additional unrelated column-header failure
 
 The caption observer now retains all original caption-cell facts before deciding
