@@ -1,5 +1,30 @@
 # Operations and troubleshooting
 
+## A missing drawing produces an additional unrelated column-header failure
+
+The caption observer now retains all original caption-cell facts before deciding
+structure ownership. A complete, source-qualified prefixed label/drawing layout
+can keep its layout identity even when one detector candidate is missing. Its
+missing/ambiguous association remains failed in the original diagnostic inventory;
+this is not a complete-source or chemical-acceptance exemption. Unread or changed
+cells, bare numbers without a proved role and known conflicts cannot provide this
+layout permission. Actual column headers still use the existing independent path.
+
+Caption-title inspection now first requires a possible separate caption/drawing
+lane, an existing qualified adjacent carry or an explicit nonfinal/conflicting
+title hint. Ordinary headerless column rows do not acquire an unrelated caption
+title failure before their own header/continuation reader runs. This does not
+select a preferred reading after a conflict: the un-nominated reader never runs.
+Its original page observations remain in the existing complete source inventory.
+
+Verify complete/missing/unread controls, original windows/role/identifier mutation,
+native/raster sources, cross-page boundaries, proper column continuations and the
+full binder's retained failure/coverage consumer. Only derived binder98 work is
+refreshed; original assets/manual audit and scientific schemas are not rewritten.
+Do not independently rerun private PDFs to inspect this change. After exact-main
+installation and affected runtime checks, use the normal frontend for a new real
+attempt when the related source repairs are ready.
+
 ## Repeated source validation spends time encoding the same immutable facts
 
 Profile a generated or separately authorized source through the actual consumer;

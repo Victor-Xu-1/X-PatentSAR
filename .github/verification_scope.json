@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "base_sha": "78fd4bd07376b82062686e9dfa5727e42168ec80",
+  "base_sha": "393d7fdc3bab6e9e7bfbe671511ddf820775dbfc",
   "changed_paths": [
     ".github/verification_scope.json",
     "docs/ARCHITECTURE.md",
@@ -8,20 +8,25 @@
     "docs/PROJECT_MANIFEST.md",
     "frontend/package-lock.json",
     "frontend/package.json",
-    "src/patent_sar_extractor/artifact_immutable.py",
-    "src/patent_sar_extractor/artifact_materialization.py",
     "src/patent_sar_extractor/contracts.py",
-    "src/patent_sar_extractor/core/composite_source_identity.py",
-    "tests/test_immutable_source_encoding.py"
+    "src/patent_sar_extractor/core/binding_spatial.py",
+    "src/patent_sar_extractor/core/caption_frame_inventory.py",
+    "src/patent_sar_extractor/core/caption_grid_binding.py",
+    "src/patent_sar_extractor/core/caption_grid_rows.py",
+    "src/patent_sar_extractor/core/caption_role_observation.py",
+    "src/patent_sar_extractor/core/unruled_structure_observation.py",
+    "tests/test_caption_frame_inventory.py",
+    "tests/test_caption_nomination_forms.py"
   ],
   "python_modules": [
-    "tests.test_immutable_source_encoding",
-    "tests.test_artifact_source_views",
-    "tests.test_artifact_catalog",
-    "tests.test_source_evidence_identity",
+    "tests.test_caption_frame_inventory",
+    "tests.test_binding_cache_identity.BindingCacheIdentityTests.test_previous_route_epoch_or_schema_cannot_reuse_or_retag_bindings",
+    "tests.test_caption_nomination_forms",
+    "tests.test_caption_page_boundary",
+    "tests.test_caption_role_continuation",
+    "tests.test_ruled_column_continuation",
     "tests.test_source_led_export.SourceLedExportTests.test_proved_no_activity_exports_all_ids_and_passes_control_qa",
     "tests.test_source_led_export.SourceLedExportTests.test_bad_science_keeps_failure_and_exports_only_qualified_exact_pairs",
-    "tests.test_source_led_export.SourceLedExportTests.test_malformed_ownership_hard_stops_even_with_continue",
     "tests.test_release_policy.ReleaseNumberTests",
     "tests.test_standalone.StandalonePackagingTests.test_version_command_uses_product_version",
     "tests.test_standalone.StandalonePackagingTests.test_frontend_product_versions_match_the_single_authority"

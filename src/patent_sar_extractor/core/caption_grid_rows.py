@@ -51,9 +51,8 @@ def inside(box, cell):
     )
 
 
-def caption_rows(region, tokens, boxes, role):
-    xs, ys = _bounded_axes(region, tokens, boxes)
-    selected, drawings = grid_token_index(tokens, xs, ys), set()
+def _drawing_cells(xs, ys, boxes):
+    drawings = set()
     for box in boxes:
         if box is None:
             continue
@@ -63,6 +62,33 @@ def caption_rows(region, tokens, boxes, role):
             for c in range(max(0, col - 1), min(len(xs) - 1, col + 2)):
                 if inside(box, (xs[c], ys[r], xs[c + 1], ys[r + 1])):
                     drawings.add((r, c))
+    return drawings
+
+
+def caption_frame_nominee(region, tokens, boxes):
+    """Inspect title roles only for a possible separate caption/drawing layout.
+
+    Short unread or blank rows remain nominees, not accepted identifiers. A
+    column table with a drawing in every row cannot supply that caption lane.
+    Proved adjacent carries and explicit nonfinal titles are handled by the
+    existing observer separately. No geometry or source qualification is relaxed.
+    """
+    rows, _kinds = caption_rows(region, tokens, boxes, None)
+    xs, ys = region["xs"], region["ys"]
+    drawn_rows = {row for row, _column in _drawing_cells(xs, ys, boxes)}
+    return bool(
+        drawn_rows
+        and any(
+            row not in drawn_rows and (labels or ys[row + 1] - ys[row] <= 45)
+            for row, labels in enumerate(rows)
+        )
+    )
+
+
+def caption_rows(region, tokens, boxes, role):
+    xs, ys = _bounded_axes(region, tokens, boxes)
+    selected = grid_token_index(tokens, xs, ys)
+    drawings = _drawing_cells(xs, ys, boxes)
     rows, kinds = [], []
     for row in range(len(ys) - 1):
         labels, drawing = [], False

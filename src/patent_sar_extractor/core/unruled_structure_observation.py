@@ -130,7 +130,7 @@ def observe_unruled_tables(
                 original_role=(caption_roles or {}).get(
                     (page_index + 1, tuple(grid_box(grid)))
                 ),
-                original_bindings=(caption_frames or {}).get(
+                original_captions=(caption_frames or {}).get(
                     (page_index + 1, tuple(grid_box(grid))), ()
                 ),
             )
