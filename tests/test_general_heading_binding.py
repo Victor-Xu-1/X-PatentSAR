@@ -25,7 +25,9 @@ class GeneralHeadingBindingTests(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
 
-    def document(self, heading="[0023] Example 17: Preparation", *, step=True):
+    def document(
+        self, heading="[0023] Example 17: Preparation", *, step=True, diagram_offset=0
+    ):
         doc = fitz.open()
         page = doc.new_page(width=500, height=600)
         page.insert_text((60, 70), heading, fontsize=11)
@@ -39,8 +41,14 @@ class GeneralHeadingBindingTests(unittest.TestCase):
             (140, 170),
             (140, 120),
         ]
+        polygon = [(x, y + diagram_offset) for x, y in polygon]
         page.draw_polyline(polygon, color=(0, 0, 0), width=1.5)
-        page.draw_line((220, 120), (270, 95), color=(0, 0, 0), width=1.5)
+        page.draw_line(
+            (220, 120 + diagram_offset),
+            (270, 95 + diagram_offset),
+            color=(0, 0, 0),
+            width=1.5,
+        )
         if step:
             page.insert_text(
                 (60, 260), "[0024] A. Synthesis of an intermediate", fontsize=11
@@ -119,17 +127,28 @@ class GeneralHeadingBindingTests(unittest.TestCase):
                 self.assertEqual((bindings, issues), ([], []))
 
     def test_biology_section_does_not_hide_explicit_compound_heading(self):
-        with self.document("Example 72: Biological evaluation") as doc:
+        with self.document(
+            "Example 72: Biological evaluation", diagram_offset=25
+        ) as doc:
             doc[0].insert_text((60, 95), "Compound 209B: Binding ligand", fontsize=10)
             self.assertEqual(
                 [b["cpd"] for b in observed_heading_blocks(doc, [0], {})],
                 ["Compound 209B"],
             )
             bindings, issues = self.select(
-                doc, [self.structure(doc, bounds=(125, 110, 285, 210))]
+                doc, [self.structure(doc, bounds=(125, 110, 285, 235))]
             )
             self.assertEqual(issues, [])
             self.assertEqual([b["cpd"] for b in bindings], ["Compound 209B"])
+
+    def test_assay_adjacent_heading_cannot_promote_an_overlapping_partial_diagram(self):
+        with self.document("Example 72: Biological evaluation") as doc:
+            doc[0].insert_text((60, 95), "Compound 209B: Binding ligand", fontsize=10)
+            bindings, issues = self.select(
+                doc, [self.structure(doc, bounds=(125, 110, 285, 210))]
+            )
+            self.assertEqual(bindings, [])
+            self.assertEqual([issue["cpd"] for issue in issues], ["Compound 209B"])
 
     def test_assay_title_observation_is_retained_with_source_geometry(self):
         with self.document("Example 72: Biological evaluation") as doc:

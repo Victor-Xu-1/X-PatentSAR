@@ -59,9 +59,8 @@ def _known_original_agrees(prior, declaration, text):
         if earlier is None:
             if _text(literal) != _text(text):
                 return False
-        elif (
-            _identity(earlier) != _identity(declaration)
-            or "".join(literal.split()).casefold() != "".join(text.split()).casefold()
+        elif _identity(earlier) != _identity(declaration) or _text(literal) != _text(
+            text
         ):
             return False
     return True

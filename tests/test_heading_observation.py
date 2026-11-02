@@ -67,9 +67,9 @@ class HeadingObservationTests(unittest.TestCase):
         self.assertEqual(proof["observations"], [])
         self.assertIsNone(proved_heading_declaration(proof))
 
-    def test_actual_native_shadow_conflict_cannot_be_outvoted_by_two_raster_reads(self):
+    def test_native_shadow_conflict_is_rejected_before_redundant_optical_reads(self):
         proof = self.observe(shadow=True)
-        self.assertEqual(len(proof["observations"]), 2)
+        self.assertEqual(proof["observations"], [])
         self.assertIn("75", proof["native_source"]["text"])
         self.assertEqual(proof["status"], "unresolved")
         self.assertIsNone(proved_heading_declaration(proof))

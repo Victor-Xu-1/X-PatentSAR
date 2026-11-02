@@ -7,14 +7,17 @@ from .native_window_coverage import (
     native_window_text_complete,
 )
 from .native_window_rules import boundary_rule_path
-from .printed_identifiers import identifier_width
 from .source_geometry import overlaps
 from .source_observations import source_observation_status
-from .source_section_roles import heading_members, section_heading
+from .source_section_roles import (
+    heading_comparison_text,
+    heading_members,
+    section_heading,
+)
 
 
 def heading_literal(value):
-    return " ".join(identifier_width(value).split()).casefold()
+    return heading_comparison_text(value)
 
 
 def native_heading_agrees(proof, whole):

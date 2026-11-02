@@ -202,6 +202,28 @@ def heading_members(observation: dict | None) -> list[str]:
     return list(observation.get("identifiers", [observation["identifier"]]))
 
 
+def heading_comparison_text(text: object) -> str:
+    """Canonicalize only a parsed label/ID separator, not arbitrary word gaps.
+
+    All lexical text, role prefixes, identifiers, punctuation, list members and
+    qualifiers remain part of comparison. Stored source text is never changed.
+    Unknown text keeps the ordinary whitespace/case comparison contract.
+    """
+    source = " ".join(identifier_width(str(text or "")).split())
+    if len(source) > 4096 or section_heading(source) is None:
+        return source.casefold()
+    match, _prefix = _heading_match(source)
+    body = match.string
+    if not source.endswith(body):
+        return source.casefold()
+    offset = len(source) - len(body)
+    field = "members" if match.re is _GROUP else "identifier"
+    start, end = offset + match.end("kind"), offset + match.start(field)
+    return (
+        source[:start] + re.sub(r"\s+", "", source[start:end]) + source[end:]
+    ).casefold()
+
+
 def section_body_boundary(text: object) -> dict[str, Any] | None:
     """An explicit procedure/assay title, not an ordinary printed row label."""
     observed = section_heading(text)

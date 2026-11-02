@@ -1,5 +1,16 @@
 # Project governance manifest
 
+- Heading comparison authority: `source_section_roles.heading_comparison_text`
+  reuses the sole complete section-role parser. Only whitespace in the exact
+  label/identifier separator is normalized; identifiers/zeros/suffixes, kind,
+  prefixes, punctuation, list members and other words remain literal constraints.
+  The native-claim and original-source consumers share it; arbitrary qualifier
+  word-gap deletion is removed. All raw observations, physical/source/conflict/
+  score/coverage gates remain intact. Binder99 refreshes derived work only;
+  Binding82/Activity56/activity69/SAR16/input8, original assets/manual data,
+  API/SQL/models/dependencies remain unchanged. No competing parser/queue/store
+  or historical acceptance upgrade. Controlled checks are not universal recall.
+
 - Caption-frame inventory authority: the existing observer retains all original
   caption-cell readings in its call-local result, independently of detector and
   pair success. The shared window/identity/role gates require every unchanged
