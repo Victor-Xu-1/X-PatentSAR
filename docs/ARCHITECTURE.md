@@ -1,5 +1,41 @@
 # X-PatentSAR architecture
 
+## Continued captions preserve literal prose word boundaries
+
+`activity_continuation_policy.caption_prefix` no longer uses the compact
+physical-header comparator for caption identity. Its comparison keeps ordinary
+word gaps, unknown parenthetical qualifiers, digits, punctuation and measurement
+text. The existing table-marker parser and endpoint/unit grammar may normalize
+only their explicit typography, such as `Table8`/`Table 8` and
+`IC50(nM)`/`IC50 (nM)`. Whitespace wrapping remains equivalent to a word gap,
+never permission to join unknown words. Original observations remain verbatim.
+
+The adapter delegates literal words and marker identity to the existing
+`source_table_markers.caption_claim`; the pure helper is moved out of the
+physical-reader module to preserve one-way imports, without an old duplicate
+implementation. It introduces no competing caption
+parser. The same caption authority serves adjacent activity panels, saved table-scope
+revalidation and original characterization-row fragment links. It cannot change
+units/conditions, fill missing headers, hide ambiguity or grant a new scientific
+value. Existing complete physical-header repetition, including qualified compact
+native labels, retains its separate geometry/source/role gates unchanged.
+
+A complete original caption shared by multiple proved parallel panels resolves
+to the unique original header root from `table_scope_groups`. Every candidate
+must already own the complete caption and the root must itself be a candidate.
+Duplicate physical grids/IDs, independent roots, overlaps and unproved families
+remain ambiguous. The existing text owner resolver derives the bounded family
+map only for multiple qualified caption candidates, using the current inventory
+on capture/planning/readback. Mutable source changes cannot reuse a cached root;
+no saved owner flag supplies authority and the wire annotation shape is unchanged.
+
+Binding83/binder100 and Activity57/extractor70 invalidate affected derived work;
+raw PDF/OCR/crops, chemistry, manual corrections, API/SQL, SAR16/input8 and model
+dependencies are unchanged. Historical evidence is not relabelled accepted.
+Generated native producer and saved-reader controls are engineering evidence,
+not universal format coverage or real-patent scientific acceptance. Older epoch
+entries below describe their historical releases.
+
 ## Heading comparisons preserve every word except an explicit label/ID gap
 
 The existing `source_section_roles` parser owns `heading_comparison_text`.

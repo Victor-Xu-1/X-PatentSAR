@@ -1,5 +1,21 @@
 # Project governance manifest
 
+- Continued-caption authority: `activity_continuation_policy.caption_prefix`
+  preserves ordinary word boundaries and unknown qualifiers/measurements. Only
+  the existing explicit table-marker and endpoint/unit grammars normalize their
+  typography. Activity producer, saved scope reader and characterization-fragment
+  linker share this comparison; the complete physical-header comparator keeps
+  its existing source/role gates and compact-label compatibility. Binding83/
+  binder100 and Activity57/extractor70 refresh derived work only; originals,
+  chemistry/manual audit, API/SQL, SAR16/input8 and dependencies are unchanged.
+  No extra parser, store, queue, OCR pass or historical acceptance upgrade.
+  A complete shared physical caption uses the unique proved original header
+  root from the existing table-scope grouper. Capture, planning and saved readback
+  share the current-inventory resolver without a stale mutable-source cache.
+  Duplicate physical grids/IDs, independent roots,
+  unknown families and overlapping claims retain ambiguity; annotation fields,
+  all original reads, conditions and scientific ownership gates stay unchanged.
+
 - Heading comparison authority: `source_section_roles.heading_comparison_text`
   reuses the sole complete section-role parser. Only whitespace in the exact
   label/identifier separator is normalized; identifiers/zeros/suffixes, kind,

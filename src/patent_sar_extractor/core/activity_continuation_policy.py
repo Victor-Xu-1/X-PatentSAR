@@ -8,10 +8,14 @@ from .activity_context_values import (
     declared_context_suffix,
     normalized_context_conditions,
 )
-from .activity_header_metrics import normalize_metric_text
+from .activity_header_metrics import METRIC, explicit_unit, normalize_metric_text
 from .activity_headers import context_source_text
 from .source_paragraphs import strip_paragraph_locator
-from .source_table_markers import caption_table_marker, table_marker_identity
+from .source_table_markers import (
+    caption_claim,
+    caption_table_marker,
+    table_marker_identity,
+)
 
 
 def continuation_prefix(prefix: str) -> bool:
@@ -25,7 +29,26 @@ def continuation_prefix(prefix: str) -> bool:
 
 
 def canonical_header(text: str) -> str:
+    """Complete physical-header repetition only, not a literal caption identity."""
     return re.sub(r"\s+", "", normalize_metric_text(text))
+
+
+def _caption_literal(text: str) -> tuple[object, ...]:
+    """Keep prose word boundaries; normalize only owned marker/metric typography."""
+
+    def metric(match):
+        return re.sub(
+            r"\s+\(([^()]*)\)",
+            lambda unit: (
+                f"({value})"
+                if (value := explicit_unit(unit.group(1))) is not None
+                else unit.group()
+            ),
+            match.group(),
+        )
+
+    text = METRIC.sub(metric, normalize_metric_text(text))
+    return caption_claim(text) or tuple(text.split())
 
 
 def caption_prefix(
@@ -67,9 +90,9 @@ def caption_prefix(
     original = strip_paragraph_locator(original_context(original_caption)).strip(
         " .:：-()（）"
     )
-    return canonical_header(clean) in {
-        canonical_header(original),
-        canonical_header(table_id),
+    return _caption_literal(clean) in {
+        _caption_literal(original),
+        _caption_literal(table_id),
     }
 
 

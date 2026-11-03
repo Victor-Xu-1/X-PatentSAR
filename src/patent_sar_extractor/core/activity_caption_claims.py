@@ -1,24 +1,10 @@
 """Exact table-caption claims shared by physical nomination and readback."""
 
-import re
-
 from .activity_header_sources import context_source_parts, source_context_region
 from .cell_frame_proof import inside_box
 from .source_cell_tokens import cell_tokens
 from .source_observations import source_claim_runs
-from .source_table_markers import caption_table_marker, table_marker_identity
-
-
-def caption_claim(text):
-    """Ignore only the table marker's separator, never a word/number difference."""
-    marker = caption_table_marker(text)
-    if marker is None:
-        return None
-    return (
-        tuple(text[: marker.start()].split()),
-        re.sub(r"\s+", "", table_marker_identity(marker.group())).upper(),
-        tuple(text[marker.end() :].lstrip(" .:：\t\r\n").split()),
-    )
+from .source_table_markers import caption_claim
 
 
 def same_caption_claim(first, second):

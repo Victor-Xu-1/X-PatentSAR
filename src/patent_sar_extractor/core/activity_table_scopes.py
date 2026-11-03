@@ -1,5 +1,6 @@
 """Recompute physical source families from original layouts; saved flags are not proof."""
 
+from collections import Counter
 from dataclasses import asdict
 
 from .activity_context_geometry import table_dependency_order
@@ -168,6 +169,32 @@ def table_scope_groups(records):
         else:
             invalid.append(record)
     return families, invalid
+
+
+def caption_root_ids(records):
+    """Shared captions require one proved family and unique physical grid facts."""
+    grids = [
+        record
+        for record in records
+        if record.get("kind") == "grid" and record.get("layout")
+    ]
+    families, _invalid = table_scope_groups(grids)
+
+    def physical(record):
+        layout = record["layout"]
+        return record["page_no"], tuple(layout["xs"]), tuple(layout["ys"])
+
+    locations = Counter(physical(record) for record in grids)
+    identities = Counter(record["region_id"] for record in grids)
+    return {
+        record["region_id"]: family[0]["region_id"]
+        for family in families
+        if all(
+            locations[physical(record)] == 1 and identities[record["region_id"]] == 1
+            for record in family
+        )
+        for record in family
+    }
 
 
 def layout_scope_errors(regions):

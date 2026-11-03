@@ -1,5 +1,36 @@
 # Operations and troubleshooting
 
+## A changed caption is accepted as the preceding continued table
+
+Inspect the exact retained caption and its original word boundaries, not just
+the printed table number. `Assay ABC` and `Assay AB C` must not become the same
+continued source by deleting every space. The single caption policy preserves
+unknown words/qualifiers and measurement literals while accepting the existing
+explicit table-marker and endpoint/unit typography. It serves production carry,
+saved source-family replay and open characterization-row linking together.
+
+Do not tighten the independent complete physical-header comparator to disguise
+this caption error: legal compact native headers still need their current
+physical, role and original-source proofs. Changed conditions, missing captions,
+new table IDs, conflicting columns and ambiguous owners continue to refuse.
+No OCR/model call, threshold reduction, inferred condition or larger budget is
+part of this repair.
+
+For repeated parallel headers under one complete original title, inspect their
+proved header origin/source family. Multiple panels may share that unique root;
+they are not automatically duplicate missing text tables. The original caption
+must be complete in every claim, the root must own it, and physical grids and
+IDs must be unique. Duplicated grids or independent roots remain unresolved.
+Source ownership is recomputed on saved readback, never chosen by list order.
+
+Current Binding83/binder100 and Activity57/extractor70 rebuild derived attempts
+only. Original assets, failed evidence and manual audit remain untouched; old
+success markers do not upgrade historical proof. Run focused producer/replay,
+fragment-link and cache/version checks, then exact reviewed-main installation
+at the unchanged address. Real private extraction and subsequent SAR remain
+frontend-only, and cannot proceed while the original application state is not
+usable. Engineering checks alone do not establish scientific acceptance.
+
 ## Complete heading readings differ only at the label/number word boundary
 
 `Compound037B` and `Compound 037B` can name the same explicitly parsed original

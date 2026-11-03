@@ -11,8 +11,10 @@ from patent_sar_extractor.core.activity_caption_claims import (
     same_caption_claim,
 )
 from patent_sar_extractor.core.activity_coordinates import extract_coordinate_tables
+from patent_sar_extractor.core.activity_text_capture import capture_text_page
 from patent_sar_extractor.core.activity_text_partition import line_owner
 from patent_sar_extractor.core.activity_text_sources import text_source_owners
+from tests.test_activity_parallel_grids import panel
 from tests.test_activity_parser_modules import draw_grid
 
 
@@ -98,6 +100,75 @@ class ActivityCaptionClaimTests(unittest.TestCase):
             )
             complete = {**self.line, "bbox": self.box}
             self.assertEqual(line_owner(complete, regions)["role"], "ambiguous")
+
+    def parallel_caption(self):
+        document = self.enterContext(fitz.open())
+        page = document.new_page()
+        self.parallel_page = page
+        page.insert_text((40, 80), "Table 71. Target: JAK; Assay: binding", fontsize=9)
+        headers = ["No.", "IC50 (nM)", "Dmax (%)"]
+        panel(page, 40, 100, [headers, ["7", "3", "90"]])
+        panel(page, 220, 100, [headers, ["9", "5", "80"]])
+        regions = extract_coordinate_tables(document, [0]).coverage
+        self.assertEqual(len(regions), 2)
+        root = min(regions, key=lambda region: region["grid_axes"]["xs"][0])
+        tokens = root["layout"]["original_source"]["prefix"]["tokens"]
+        line = {
+            "text": root["layout"]["context"]["raw_caption"],
+            "bbox": [
+                min(token["bbox"][0] for token in tokens),
+                min(token["bbox"][1] for token in tokens),
+                max(token["bbox"][2] for token in tokens),
+                max(token["bbox"][3] for token in tokens),
+            ],
+        }
+        return line, regions, root
+
+    def test_shared_caption_resolves_only_to_its_proved_original_header_root(self):
+        line, regions, root = self.parallel_caption()
+        for ordered in (regions, list(reversed(regions))):
+            self.assertEqual(
+                line_owner(line, ordered),
+                {"role": "caption", "region_id": root["region_id"]},
+            )
+
+    def test_a_duplicate_root_or_child_grid_does_not_become_a_shared_caption(self):
+        line, regions, _root = self.parallel_caption()
+        for original in regions:
+            duplicate = copy.deepcopy(original)
+            duplicate["region_id"] = "e" * 32
+            for ordered in (
+                [*regions, duplicate],
+                [duplicate, *reversed(regions)],
+            ):
+                with self.subTest(original=original["region_id"]):
+                    self.assertEqual(line_owner(line, ordered)["role"], "ambiguous")
+
+    def test_changed_header_origin_does_not_reuse_a_cached_caption_family(self):
+        _line, regions, root = self.parallel_caption()
+        page = self.parallel_page
+        source = capture_text_page(
+            page, page.get_text("text"), coordinate_regions=regions
+        )
+        line = next(
+            line
+            for line in source["lines"]
+            if same_caption_claim(
+                line["text"], root["layout"]["context"]["raw_caption"]
+            )
+        )
+        owner = text_source_owners(regions)
+        self.assertEqual(
+            owner(line), {"role": "caption", "region_id": root["region_id"]}
+        )
+        child = next(region for region in regions if region is not root)
+        layout = child["layout"]
+        xs, ys = layout["xs"], layout["ys"]
+        layout["header_origin"] = {
+            "page_no": child["page_no"],
+            "bbox": [xs[0], ys[0], xs[-1], ys[layout["data_start"]]],
+        }
+        self.assertEqual(owner(line)["role"], "ambiguous")
 
     def test_missing_or_changed_caption_words_do_not_expand_or_acquire_a_grid(self):
         for text in (
