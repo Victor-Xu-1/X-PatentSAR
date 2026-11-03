@@ -57,6 +57,18 @@ def table_marker_identity(marker: str) -> str:
     return re.sub(r"^Tab[li1]e\s*", "Table ", marker, flags=re.IGNORECASE)
 
 
+def caption_claim(text):
+    """Ignore only the table marker's separator, never a word/number difference."""
+    marker = caption_table_marker(text)
+    if marker is None:
+        return None
+    return (
+        tuple(text[: marker.start()].split()),
+        re.sub(r"\s+", "", table_marker_identity(marker.group())).upper(),
+        tuple(text[marker.end() :].lstrip(" .:：\t\r\n").split()),
+    )
+
+
 def title_row_indices(rows, *, boundary=table_body_boundary):
     """One last-caption and two adjacent continuation-row selector."""
     starts = [index for index, row in enumerate(rows) if boundary(row["text"])]

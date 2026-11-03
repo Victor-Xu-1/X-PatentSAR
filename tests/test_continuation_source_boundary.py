@@ -67,7 +67,11 @@ class ContinuationSourceBoundaryTests(unittest.TestCase):
             bounds = tuple(page.rect)
             tokens = [
                 {
-                    **token,
+                    **{
+                        key: value
+                        for key, value in token.items()
+                        if key != "native_paint"
+                    },
                     "source": "raster",
                     "confidence": 0.2
                     if token["text"] == "24" and token["y"] < 100
@@ -98,3 +102,22 @@ class ContinuationSourceBoundaryTests(unittest.TestCase):
             ):
                 extract_coordinate_tables(document, [0])
         self.assertEqual(eligible, [1])
+
+    def test_raster_token_cannot_retain_a_native_paint_claim(self):
+        from patent_sar_extractor.core.source_observations import (
+            source_cell_observation,
+        )
+
+        with fitz.open() as document:
+            page = document.new_page()
+            page.insert_text((40, 50), "Target: JAK", fontsize=9)
+            observed = page_tokens(page)
+            self.assertTrue(any("native_paint" in token for token in observed))
+            bounds = tuple(page.rect)
+            contradictory = SourceTokens(
+                [{**token, "source": "raster"} for token in observed],
+                SourceLayout((), bounds),
+                bounds,
+            )
+            with self.assertRaisesRegex(ValueError, "Malformed original source-cell"):
+                source_cell_observation(contradictory, bounds)

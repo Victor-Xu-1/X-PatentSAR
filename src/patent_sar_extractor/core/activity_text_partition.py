@@ -39,6 +39,19 @@ def line_owner(line, regions, *, role_cells=None):
         tokens = original_caption_tokens(line, region)
         if tokens and all(inside_box(token["bbox"], line["bbox"]) for token in tokens):
             candidates.append({"region_id": region["region_id"], "role": "caption"})
+    if (
+        not overlaps
+        and len(candidates) > 1
+        and all(candidate["role"] == "caption" for candidate in candidates)
+    ):
+        from .activity_table_scopes import caption_root_ids
+
+        roots = caption_root_ids(regions)
+        original = {roots.get(candidate["region_id"]) for candidate in candidates}
+        if len(original) == 1 and original <= {
+            candidate["region_id"] for candidate in candidates
+        }:
+            return {"role": "caption", "region_id": next(iter(original))}
     if overlaps or len(candidates) > 1:
         return {
             "role": "ambiguous",
