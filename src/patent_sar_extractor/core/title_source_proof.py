@@ -13,6 +13,7 @@ from .heading_title_geometry import title_scope_bounds
 from .native_title_claims import native_title_agrees, title_literal
 from .native_window_coverage import native_window_complete, valid_native_window
 from .source_cell_pixels import cell_readings_conserve_ink, closed_cell_masks
+from .source_cell_tokens import crosses_cell
 from .source_evidence_identity import proof_id
 from .source_geometry import overlaps
 from .source_observations import source_observation_status
@@ -178,7 +179,7 @@ def title_source_inputs(proof):
     if (
         geometry is None
         or geometry[1] is not None
-        or proof["nomination_source"].get("boundary_tokens")
+        or title_boundaries_unresolved(proof)
         or proof["ink_source"] is None
         and proof["nomination_source"]["origin"] == "native"
         and source_observation_status(
@@ -235,6 +236,15 @@ def title_source_inputs(proof):
         ) or not valid_cell_frame(frame, reading, bounds, dpi):
             return None
     return bounds, native, observations
+
+
+def title_boundaries_unresolved(proof):
+    nomination = proof["nomination_source"]
+    if not nomination.get("boundary_tokens"):
+        return False
+    from .heading_raster_scope import separate_raster_boundaries
+
+    return not separate_raster_boundaries(proof.get("title_scope"), nomination)
 
 
 def primary_title_observation(proof):
@@ -299,6 +309,16 @@ def qualified_title_claim_agrees(nomination, text):
             nomination, nomination["bbox"], nomination["text"]
         )
         == "qualified"
+        or nomination["origin"] == "raster"
+        and nomination.get("boundary_tokens")
+        and nomination["tokens"]
+        and not crosses_cell(nomination["tokens"], nomination["bbox"])
+        and all(
+            p["confidence_available"]
+            and p["confidence_valid"]
+            and p["confidence"] >= 0.85
+            for p in nomination["tokens"]
+        )
     ):
         from .caption_role_semantics import catalog_title_role
         from .source_table_roles import title_key

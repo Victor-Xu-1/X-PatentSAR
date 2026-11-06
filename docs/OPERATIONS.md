@@ -1,5 +1,29 @@
 # Operations and troubleshooting
 
+## Many clear headings fail because padded windows contain adjacent line fragments
+
+Compare retained physical rows, not only the whole-window minimum confidence.
+A clear title can share a padded window with an unreadable fragment from the
+preceding paragraph. The shared observer now retains a complete bounded raster
+context and derives the complete heading row before either independent text read.
+It does not lower confidence, erase pixels, edit the source OCR, or accept a
+recognized prefix alone. Original closed-cell/rule ownership remains mandatory.
+
+Catalogue titles use the same row geometry. A raw raster locator may retain a
+neighbor's boundary token; the saved context must uniquely assign it to another
+physical row before reading can proceed. It stays in the audit record. Same-row,
+ambiguous, missing or native boundary claims still refuse. Conflicting original
+table IDs/nonfinal roles, independent read disagreement and changed source pixels
+cannot be repaired by voting. A successful geometric crop is not chemical QA.
+
+Binding84/binder101 and Activity58/extractor71 invalidate only derived attempts.
+Do not retag earlier failures as accepted or alter raw PDF/OCR/crops/manual audit.
+Verify generated differing-layout/cell/source-replay and directly related producer,
+export/cache consumers. Build/install exact reviewed main with a rollback wheel,
+deploy at the unchanged address, then continue the existing project from the
+frontend without another upload. Never bypass the formal structure/SMILES gate or
+import rejected rows into SAR. Engineering passes are not real-task acceptance.
+
 ## A changed caption is accepted as the preceding continued table
 
 Inspect the exact retained caption and its original word boundaries, not just

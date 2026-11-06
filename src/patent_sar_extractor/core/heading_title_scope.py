@@ -52,11 +52,30 @@ def observe_title_scope(
     paint_view=None,
     column_sources=(),
     original_pdf_sha256=None,
+    raster_nomination=False,
 ):
-    """Only actual native ownership activates row expansion; OCR locators are not votes."""
+    """Whole physical native/raster scope; recognized locators grant no role."""
     size = [page.rect.width, page.rect.height]
     seed = _native(layout, list(heading_bounds(nomination, size)))
     if not seed["tokens"] and not seed["boundary_tokens"]:
+        if (
+            raster_nomination
+            and layout.raster_bounds is not None
+            and (
+                not grids
+                or observe_cell_source(page, nomination, grids, MAX_HEADING_HEIGHT)
+                is None
+            )
+        ):
+            from .heading_raster_scope import observe_raster_scope, raster_scope_bounds
+
+            scope = observe_raster_scope(page, nomination)
+            owned = raster_scope_bounds(scope, nomination, size)
+            # A physical rule keeps the existing whole-cell authority. The
+            # ordinary-row reader cannot replace its ink-conservation witness.
+            if owned is not None and owned[1] == "original_title_requires_cell":
+                return None
+            return scope
         return None
     row = _row(page, nomination, layout, paint_view)
     if grids or any(p["kind"] == "stroke-path" for p in row["window"]["paints"]):
@@ -105,6 +124,13 @@ def replay_title_scope(page, proof, layout, *, paint_view=None):
     """Actual original rows/closed-cell pixels remain mandatory after serialization."""
     scope = proof.get("title_scope")
     nomination, size = proof["nomination"]["bbox"], proof["page_size"]
+    if isinstance(scope, dict) and scope.get("version") == 3:
+        from .heading_raster_scope import replay_raster_scope
+
+        seed = _native(layout, list(heading_bounds(nomination, size)))
+        return not (seed["tokens"] or seed["boundary_tokens"]) and replay_raster_scope(
+            page, scope
+        )
     if scope is None:
         seed = _native(layout, list(heading_bounds(nomination, size)))
         return not (seed["tokens"] or seed["boundary_tokens"])
