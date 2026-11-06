@@ -126,12 +126,14 @@ def _raster_scope_geometry(packet, nomination, size):
     first, last = selected[0], selected[-1]
     if rows[first][1] <= 0 or rows[last][3] >= mask.shape[0]:
         return RasterTitleGeometry(fallback, "crossing_original_title_rows")
-    for row in (rows[first], rows[last]):
-        if any(
-            original_rule_band(mask, 0, y, row[0], row[2], 400) is not None
-            for y in (row[1], row[3] - 1)
-        ):
-            return RasterTitleGeometry(fallback, "original_title_requires_cell")
+    for row in (rows[index] for index in selected):
+        for y in range(row[1], row[3]):
+            # Only the current original pixel row is searched. The shared rule
+            # helper's broader positional tolerance otherwise borrows a rule
+            # from an adjacent physical row. Checking every row also retains a
+            # rule that crosses title ink in the middle rather than at its edge.
+            if original_rule_band(mask[y : y + 1], 0, 0, row[0], row[2], 400):
+                return RasterTitleGeometry(fallback, "original_title_requires_cell")
     top = max(bounds[1], original[first - 1][3] if first else bounds[1])
     bottom = min(
         bounds[3], original[last + 1][1] if last + 1 < len(rows) else bounds[3]

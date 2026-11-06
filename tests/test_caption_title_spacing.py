@@ -13,6 +13,7 @@ from patent_sar_extractor.core.caption_role_semantics import catalog_title_role
 from patent_sar_extractor.core.catalog_reader import read_catalog_entries
 from patent_sar_extractor.core.formal_structure import coverage_errors
 from patent_sar_extractor.core.source_table_roles import observed_role
+from patent_sar_extractor.core.title_source_proof import title_packet_text
 from tests import test_caption_role_writer as writer_controls
 from tests.test_caption_role_continuation import binding, two_pages
 from tests.test_caption_role_raster import raster_catalog
@@ -20,7 +21,7 @@ from tests.test_caption_source_roles import catalog
 
 
 class CaptionTitleSpacingTests(unittest.TestCase):
-    def test_known_negative_title_is_not_outvoted_by_an_unqualified_reading(self):
+    def test_known_negative_and_mismatched_weak_title_both_fail_closed(self):
         doc, structures, boxes = catalog("Table 63.NotCompounds", prefixed=True)
         with doc:
             result = bind_caption_grids(doc, structures, boxes, [1])
@@ -34,7 +35,12 @@ class CaptionTitleSpacingTests(unittest.TestCase):
         weak.update(origin="raster", status="unqualified")
         for token in weak["tokens"]:
             token.update(source="raster", confidence=0.4)
-        self.assertEqual(observed_role([packet, weak]), ("conflict", ""))
+        self.assertEqual(title_packet_text(packet), "Table 63.NotCompounds")
+        self.assertEqual(observed_role([packet]), ("conflict", "TABLE63"))
+        # Relabeling native evidence as raster cannot create a matching original
+        # title observation. The whole set remains unresolved, never accepted.
+        self.assertIsNone(title_packet_text(weak))
+        self.assertEqual(observed_role([packet, weak]), ("unresolved", ""))
 
     def test_case_delimited_original_roles_preserve_categories_and_negation(self):
         for title, expected in (

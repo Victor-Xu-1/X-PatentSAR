@@ -19,6 +19,7 @@ def original_parallel_catalogues(
     right_shift=0,
     open_right=False,
     headers=False,
+    title_baseline=85,
 ):
     document = fitz.open()
     page = document.new_page(width=740, height=300)
@@ -61,17 +62,20 @@ def original_parallel_catalogues(
             boxes.append(tuple(box))
     if mode == "native":
         for x, title in zip((30, 400), titles, strict=True):
-            page.insert_text((x, 85), title, fontsize=9)
+            page.insert_text((x, title_baseline), title, fontsize=9)
     else:
         with fitz.open() as lettering:
-            heading = lettering.new_page(width=740, height=96)
+            height = 99 if title_baseline != 85 else 96
+            heading = lettering.new_page(width=740, height=height)
             for x, title in zip((30, 400), titles, strict=True):
-                heading.insert_text((x, 85), title, fontsize=9)
+                heading.insert_text((x, title_baseline), title, fontsize=9)
             if extra_title is not None:
                 heading.insert_text((290, 85), extra_title, fontsize=7)
             if mode == "raster":
                 image = heading.get_pixmap(matrix=fitz.Matrix(3, 3), alpha=False)
-                page.insert_image(fitz.Rect(0, 0, 740, 96), stream=image.tobytes("png"))
+                page.insert_image(
+                    fitz.Rect(0, 0, 740, height), stream=image.tobytes("png")
+                )
             else:
                 with (
                     fitz.open(
@@ -80,7 +84,7 @@ def original_parallel_catalogues(
                     ) as vector,
                     fitz.open(stream=vector.convert_to_pdf(), filetype="pdf") as pdf,
                 ):
-                    page.show_pdf_page(fitz.Rect(0, 0, 740, 96), pdf, 0)
+                    page.show_pdf_page(fitz.Rect(0, 0, 740, height), pdf, 0)
     return document, {1: structures}, {1: boxes}, frames
 
 

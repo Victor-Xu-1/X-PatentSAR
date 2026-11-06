@@ -1,5 +1,11 @@
 # Project governance manifest
 
+- Raster title rule authority: `heading_raster_scope` tests original rule pixels
+  inside every selected physical title row. An adjacent separate rule cannot
+  veto an independent row; a crossing rule still requires closed-cell proof.
+  Binding85/binder102 and Activity59/extractor72 refresh derived evidence only;
+  original PDF, OCR, structures and manual audit remain unchanged.
+
 - Raster title geometry authority: `heading_raster_scope` adds retained title-
   scope3 inside the existing heading/catalogue capture, validator and original
   replayer. Bounded full-width original pixels partition complete rows before

@@ -35,9 +35,9 @@ from tests.parallel_catalogue_support import (
 
 
 class StructureCatalogueHeaderTests(ParallelCatalogueControls, unittest.TestCase):
-    def source(self, *, mode="native", titles=TITLES):
+    def source(self, *, mode="native", titles=TITLES, title_baseline=85):
         document, by_page, _boxes, grids = original_parallel_catalogues(
-            mode, titles=titles, headers=True
+            mode, titles=titles, headers=True, title_baseline=title_baseline
         )
         temporary = TemporaryDirectory(prefix="catalogue-header-original-")
         self.addCleanup(temporary.cleanup)
@@ -74,6 +74,16 @@ class StructureCatalogueHeaderTests(ParallelCatalogueControls, unittest.TestCase
                     }
                 )
         return document, by_page[1], grids, tokens, sha, columns
+
+    def test_raster_titles_above_table_rules_flow_to_catalogue_consumer(self):
+        _doc, _diagrams, grids, _tokens, sha, columns = self.source(
+            mode="raster", title_baseline=95
+        )
+        scopes = catalogue_scopes_for_grids(
+            1, grids, {}, column_sections=columns, original_pdf_sha256=sha
+        )
+        self.assertEqual([scope["role"] for scope in scopes], ["compound", "nonfinal"])
+        self.assertEqual([scope["table_key"] for scope in scopes], ["TABLEA", "TABLEB"])
 
     def test_native_and_raster_titles_reuse_the_same_original_sources_without_ocr(self):
         for mode in ("native", "raster"):
