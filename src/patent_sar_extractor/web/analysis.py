@@ -75,6 +75,7 @@ class AnalysisService:
         self.cache = AnalysisCache(workspace.store.root)
         self.runner = runner or BoundedAnalysisRunner()
         self._busy = threading.Lock()
+        self._capability_probe = threading.Lock()
         self._closed = threading.Event()
         self._runtime: tuple[str, dict[str, str]] | None = None
         self._session_thread: int | None = None
@@ -101,19 +102,32 @@ class AnalysisService:
             self._runtime = None
 
     def capabilities(self) -> dict[str, bool]:
-        if self._closed.is_set():
-            return {"admet": False, "summary": False}
+        # Concurrent cold health reads must share the verified probe rather than
+        # treating its exclusive analysis lease as an unavailable environment.
+        wait = min(30, self.settings.admet_timeout_seconds) + 1
+        if not self._capability_probe.acquire(timeout=wait):
+            return {"admet": False, "summary": not self._closed.is_set()}
         try:
-            python = executable(self.settings.admet_python)
-            admet_bundle(self.settings.admet_model_dir)
-            identity = interpreter_key(python)
-            if self._runtime is None or self._runtime[0] != identity:
-                with self._operation(None):
-                    self._probe(python, identity, None)
-            available = True
-        except WebError:
-            available = False
-        return {"admet": available, "summary": True}
+            if self._closed.is_set():
+                return {"admet": False, "summary": False}
+            try:
+                python = executable(self.settings.admet_python)
+                admet_bundle(self.settings.admet_model_dir)
+                identity = interpreter_key(python)
+                if self._runtime is None or self._runtime[0] != identity:
+                    with self._operation(None):
+                        # A settings update may have completed while this read
+                        # waited for the operation lease; probe its new identity.
+                        python = executable(self.settings.admet_python)
+                        admet_bundle(self.settings.admet_model_dir)
+                        identity = interpreter_key(python)
+                        self._probe(python, identity, None)
+                available = True
+            except WebError:
+                available = False
+            return {"admet": available, "summary": True}
+        finally:
+            self._capability_probe.release()
 
     @contextmanager
     def _operation(self, cancel: threading.Event | None) -> Iterator[None]:
