@@ -6,6 +6,7 @@ import sqlite3
 import threading
 import unittest
 from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from pathlib import Path
 from unittest.mock import patch
 
@@ -130,6 +131,33 @@ class AnalysisCoreTests(WebFixture, unittest.TestCase):
             ):
                 self.assertFalse(analysis.capabilities()["admet"])
             self.assertIsNone(analysis._runtime)
+
+    def test_cold_capability_rechecks_configuration_under_the_lease(self):
+        _, analysis = self.make_service()
+        analysis.settings = AnalysisSettings(admet_python=Path("/old"))
+        seen = []
+
+        @contextmanager
+        def changed_while_waiting(_cancel):
+            analysis.settings = AnalysisSettings(admet_python=Path("/new"))
+            yield
+
+        def probe(python, identity, _cancel):
+            seen.append((python, identity))
+            analysis._runtime = (identity, {"test": "verified"})
+
+        with (
+            patch(
+                "patent_sar_extractor.web.analysis.executable",
+                side_effect=lambda path: path,
+            ),
+            patch("patent_sar_extractor.web.analysis.admet_bundle"),
+            patch("patent_sar_extractor.web.analysis.interpreter_key", side_effect=str),
+            patch.object(analysis, "_operation", side_effect=changed_while_waiting),
+            patch.object(analysis, "_probe", side_effect=probe),
+        ):
+            self.assertTrue(analysis.capabilities()["admet"])
+        self.assertEqual(seen, [(Path("/new"), "/new")])
 
     def test_private_schema_real_persistence_and_no_main_schema_mutation(self):
         workspace, analysis = self.make_service()
