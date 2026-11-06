@@ -3,8 +3,12 @@
 from __future__ import annotations
 
 import sqlite3
+import threading
 import unittest
+from concurrent.futures import ThreadPoolExecutor
+from contextlib import contextmanager
 from pathlib import Path
+from unittest.mock import patch
 
 from test_web_support import WebFixture, artifact_run
 
@@ -72,6 +76,89 @@ class AnalysisCoreTests(WebFixture, unittest.TestCase):
         self.addCleanup(analysis.close)
         return workspace, analysis
 
+    def test_concurrent_cold_capability_reads_share_the_owned_probe(self):
+        _, analysis = self.make_service()
+        started, release = threading.Event(), threading.Event()
+        calls = []
+
+        def probe(_python, identity, _cancel):
+            calls.append(identity)
+            started.set()
+            if not release.wait(5):
+                raise AssertionError("probe was not released")
+            analysis._runtime = (identity, {"test": "verified"})
+
+        with (
+            patch(
+                "patent_sar_extractor.web.analysis.executable",
+                return_value=Path("/probe"),
+            ),
+            patch("patent_sar_extractor.web.analysis.admet_bundle"),
+            patch(
+                "patent_sar_extractor.web.analysis.interpreter_key", return_value="same"
+            ),
+            patch.object(analysis, "_probe", side_effect=probe),
+            ThreadPoolExecutor(max_workers=2) as pool,
+        ):
+            first = pool.submit(analysis.capabilities)
+            self.assertTrue(started.wait(5))
+            second = pool.submit(analysis.capabilities)
+            try:
+                with self.assertRaises(TimeoutError):
+                    second.result(timeout=0.25)
+            finally:
+                release.set()
+            self.assertTrue(first.result(timeout=5)["admet"])
+            self.assertTrue(second.result(timeout=5)["admet"])
+            self.assertEqual(calls, ["same"])
+
+    def test_cold_capability_does_not_hide_real_busy_or_failed_probe(self):
+        _, analysis = self.make_service()
+        with (
+            patch(
+                "patent_sar_extractor.web.analysis.executable",
+                return_value=Path("/probe"),
+            ),
+            patch("patent_sar_extractor.web.analysis.admet_bundle"),
+            patch(
+                "patent_sar_extractor.web.analysis.interpreter_key", return_value="same"
+            ),
+        ):
+            with analysis._busy:
+                self.assertFalse(analysis.capabilities()["admet"])
+            with patch.object(
+                analysis, "_probe", side_effect=WebError(503, "failed", "failed")
+            ):
+                self.assertFalse(analysis.capabilities()["admet"])
+            self.assertIsNone(analysis._runtime)
+
+    def test_cold_capability_rechecks_configuration_under_the_lease(self):
+        _, analysis = self.make_service()
+        analysis.settings = AnalysisSettings(admet_python=Path("/old"))
+        seen = []
+
+        @contextmanager
+        def changed_while_waiting(_cancel):
+            analysis.settings = AnalysisSettings(admet_python=Path("/new"))
+            yield
+
+        def probe(python, identity, _cancel):
+            seen.append((python, identity))
+            analysis._runtime = (identity, {"test": "verified"})
+
+        with (
+            patch(
+                "patent_sar_extractor.web.analysis.executable",
+                side_effect=lambda path: path,
+            ),
+            patch("patent_sar_extractor.web.analysis.admet_bundle"),
+            patch("patent_sar_extractor.web.analysis.interpreter_key", side_effect=str),
+            patch.object(analysis, "_operation", side_effect=changed_while_waiting),
+            patch.object(analysis, "_probe", side_effect=probe),
+        ):
+            self.assertTrue(analysis.capabilities()["admet"])
+        self.assertEqual(seen, [(Path("/new"), "/new")])
+
     def test_private_schema_real_persistence_and_no_main_schema_mutation(self):
         workspace, analysis = self.make_service()
         with workspace.store.connect() as connection:
@@ -135,6 +222,11 @@ class AnalysisCoreTests(WebFixture, unittest.TestCase):
         project = workspace.import_run(run)
         compounds = workspace.compounds(project.id)
         compounds[0].smiles = None
+        # The synthetic historical import is not a source-verified structure.
+        # Set the DTO explicitly so this test exercises summary counting rather
+        # than assuming an unverified import has acquired accepted SMILES.
+        self.assertIsNone(compounds[1].smiles)
+        compounds[1].smiles = "CCO"
         compounds[0].activities = [
             Activity(
                 name="IC50", value="1", unit="nM", target="A", assay="one", page=1
