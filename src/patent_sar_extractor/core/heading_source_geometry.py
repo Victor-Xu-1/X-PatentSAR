@@ -82,7 +82,20 @@ def valid_heading_geometry(proof):
     if not _inside(bounds, [0, 0, *size]) or bounds[3] - bounds[1] > MAX_HEADING_HEIGHT:
         return False
     hint, raster = proof.get("nomination"), proof.get("raster_bounds")
-    if not _nomination(hint, bounds):
+    scope = proof.get("title_scope")
+    raster_row = isinstance(scope, dict) and scope.get("version") == 3
+    hint_bounds = bounds
+    if raster_row:
+        from .heading_raster_scope import context_bounds
+
+        if not isinstance(hint, dict) or (
+            hint.get("source") != "page_ocr" or hint.get("geometry_space") != "rendered"
+        ):
+            return False
+        if not _inside(hint.get("bbox"), [0, 0, *size]):
+            return False
+        hint_bounds = context_bounds(hint["bbox"], size)
+    if not _nomination(hint, hint_bounds):
         return False
     if proof.get("version") == 2:
         from .heading_cell_source import valid_cell_geometry

@@ -1,5 +1,33 @@
 # X-PatentSAR architecture
 
+## Original physical rows own raster heading and catalogue-title windows
+
+`heading_raster_scope` supplies title-scope3 to the existing shared title
+observer, geometry validator and original-pixel replayer. A rendered raster
+locator nominates a row, not the final word crop. One bounded full-width400dpi
+context retains every original ink row; the complete nominated row is read at
+the existing400/600dpi through `observe_paired_text`. Whitespace separators,
+not recognition confidence or a keyword, separate neighboring clipped text.
+Same-row prefixes/suffixes and multirow nominations remain in the whole read.
+Ambiguous, crossing, over-budget or unreadable sources do not become successes.
+
+Original rule bands keep the existing closed-cell authority. The ordinary-row
+observer cannot replace that cell's complete ink-conservation witness. Native
+headings retain their existing source/visibility fast path. Raster catalogue
+boundary tokens are retained verbatim and may stop vetoing a title only when
+the same complete pixel inventory assigns each to one OTHER physical row.
+Same-row/unowned boundaries and all native boundaries remain unresolved.
+Qualified original table IDs and nonfinal roles remain vetoes after recovery;
+two agreeing new readings cannot outvote those original claims.
+
+No model, threshold, queue/store, new OCR engine or dependency is introduced.
+Existing8M-pixel and8semantic-row limits remain; the bounded geometry context
+has at most32rows and grants no scientific role. Original context/paired frame
+hashes are replayed without OCR. Binding84/binder101 and Activity58/extractor71
+refresh derived proofs only; original PDF/page OCR/crops, chemistry, manual
+audit, API/SQL and SAR16/input8 stay unchanged. Generated source/installed/native
+OCR checks are not proof of all-patent recall or perfect chemical recognition.
+
 ## Continued captions preserve literal prose word boundaries
 
 `activity_continuation_policy.caption_prefix` no longer uses the compact

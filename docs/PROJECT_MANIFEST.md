@@ -1,5 +1,17 @@
 # Project governance manifest
 
+- Raster title geometry authority: `heading_raster_scope` adds retained title-
+  scope3 inside the existing heading/catalogue capture, validator and original
+  replayer. Bounded full-width original pixels partition complete rows before
+  the same paired text reader runs. Original rule bands retain closed-cell
+  ownership; no weak-row deletion, word-crop vote or native-boundary exemption.
+  Only uniquely other-row raster locator boundaries may stop blocking capture,
+  while all raw tokens and qualified original key/role vetoes are retained.
+  Existing8M-pixel/8semantic-row limits remain; at most32context rows grant
+  geometry only. Binding84/binder101 and Activity58/extractor71 rebuild derived
+  proofs, not original assets, chemistry, manual audit, API/SQL or SAR16/input8.
+  No parallel extractor/store/queue, dependency, model or threshold change.
+
 - Continued-caption authority: `activity_continuation_policy.caption_prefix`
   preserves ordinary word boundaries and unknown qualifiers/measurements. Only
   the existing explicit table-marker and endpoint/unit grammars normalize their

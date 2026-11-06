@@ -34,6 +34,7 @@ from .title_source_proof import (
     raw_title_packet,
     source_title_observation,
     source_title_text,
+    title_boundaries_unresolved,
     title_nomination_bounds,
 )
 from .title_source_reuse import remember_title_observation, reuse_title_observation
@@ -54,7 +55,13 @@ def observe_source_title(
             raise ValueError("Unproved original title-ink rows")
         bounds = rows[0][ink_source["row_index"]]["bbox"]
     else:
-        scope = observe_title_scope(page, nominated, layout, paint_view=paint_view)
+        scope = observe_title_scope(
+            page,
+            nominated,
+            layout,
+            paint_view=paint_view,
+            raster_nomination=raw["origin"] == "raster",
+        )
         scoped = (
             title_scope_bounds(scope, nominated, size) if scope is not None else None
         )
@@ -80,7 +87,7 @@ def observe_source_title(
         "auxiliary_title_attempts": [],
     }
     if (
-        raw.get("boundary_tokens")
+        title_boundaries_unresolved(proof)
         or ink_source is None
         and raw["origin"] == "native"
         and source_observation_status(raw, raw["bbox"], raw["text"]) != "qualified"

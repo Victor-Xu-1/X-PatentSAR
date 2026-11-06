@@ -148,6 +148,10 @@ def _row_scope(row, nomination, size, *, columns=()):
 
 def title_scope_bounds(packet, nomination, size):
     """Recompute scope from retained source facts, never a saved success flag."""
+    if isinstance(packet, dict) and packet.get("version") == 3:
+        from .heading_raster_scope import raster_scope_bounds
+
+        return raster_scope_bounds(packet, nomination, size)
     if (
         not isinstance(size, list)
         or len(size) != 2

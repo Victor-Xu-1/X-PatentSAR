@@ -42,6 +42,9 @@ def observe_heading(
         paint_view=paint_view,
         column_sources=column_sources,
         original_pdf_sha256=original_pdf_sha256,
+        raster_nomination=(
+            line["source"] == "page_ocr" and line.get("geometry_space") == "rendered"
+        ),
     )
     scoped = (
         title_scope_bounds(scope, line["bbox"], [page.rect.width, page.rect.height])
