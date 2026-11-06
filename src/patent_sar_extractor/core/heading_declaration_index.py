@@ -193,4 +193,16 @@ class HeadingDeclarationIndex:
                 "y": heading["nomination"]["bbox"][3],
             }
             declaration_candidates(scope, heading)
+        # A source-qualified input caption can only replace the provisional
+        # stop after the same complete reaction graph validates it. Failure
+        # retains the ordinary boundary and never removes a source line.
+        if panel is None and len(pages) == 1:
+            from .heading_reaction_caption import observe_reaction_caption_scope
+
+            try:
+                improved = observe_reaction_caption_scope(self.doc, scope, heading)
+            except (ValueError, RuntimeError):
+                improved = None
+            if improved is not None:
+                scope = improved
         return scope

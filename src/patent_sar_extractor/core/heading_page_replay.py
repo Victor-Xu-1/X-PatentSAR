@@ -173,6 +173,10 @@ class HeadingPageReplay:
             observed = self.line_inventories[key]
             if observed != saved["lines"]:
                 raise ValueError("Original declaration text inventory was changed")
+        if scope.get("version") == 5:
+            from .heading_reaction_caption import replay_reaction_caption
+
+            replay_reaction_caption(self.document, scope, heading)
         for witnesses, page in zip(
             scope["later_columns"], scope["pages"][1:], strict=True
         ):

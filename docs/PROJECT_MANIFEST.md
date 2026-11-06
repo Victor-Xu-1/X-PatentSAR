@@ -1,5 +1,14 @@
 # Project governance manifest
 
+- Original heading ownership: `heading_reaction_caption` adds an explicitly
+  replayable single-page input-label witness within the existing declaration
+  and reaction authorities, not an alternative route. `heading_panel_raster_scope`
+  and the existing native row/foreign-column policies use exact original frame,
+  pixel and column sources; unowned crossings and ambiguous captions refuse.
+  Call-local content-addressed geometry/route caching never caches actual replay.
+  Binding86/binder103 and Activity60/extractor73 refresh derived evidence only.
+  Raster plus operators and detached above-arrow reagent roles remain unproved.
+
 - Raster title rule authority: `heading_raster_scope` tests original rule pixels
   inside every selected physical title row. An adjacent separate rule cannot
   veto an independent row; a crossing rule still requires closed-cell proof.

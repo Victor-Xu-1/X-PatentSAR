@@ -202,6 +202,69 @@ class HeadingPanelScopeTests(LateralStructureControls, unittest.TestCase):
         )
         self.assertEqual(coverage_errors(payload), [])
 
+    def test_foreign_ink_at_title_edge_cannot_be_discarded_with_a_panel_rule(self):
+        def crossing_ink(page, _records):
+            page.draw_line((30.1, 60), (38, 60), width=0.6)
+
+        for raster in (False, True):
+            with self.subTest(raster=raster):
+                _, payload = self.panel_source(
+                    raster=raster, mutate_panels=crossing_ink
+                )
+                owners = {row["cpd"] for row in self.targets(payload)}
+                self.assertNotIn("Compound I-017B", owners)
+                self.assertIn("Compound 205", owners)
+
+    def test_original_title_panel_frame_must_replay_for_native_and_scan(self):
+        for raster, version in ((False, 4), (True, 5)):
+            with self.subTest(raster=raster):
+                _, payload = self.panel_source(raster=raster)
+                target = next(
+                    row
+                    for row in self.targets(payload)
+                    if row["cpd"] == "Compound I-017B"
+                )
+                title = target["original_heading_structure_evidence"]["heading_source"][
+                    "title_scope"
+                ]
+                self.assertEqual(title["version"], version)
+                with fitz.open(self.root / "original.pdf") as document:
+                    self.assertEqual(
+                        original_heading_source_errors(document, [target]), []
+                    )
+                    document[1].draw_line((30, 45), (36, 45), width=0.6)
+                    self.assertTrue(original_heading_source_errors(document, [target]))
+
+    def test_scanned_panel_geometry_memo_never_reuses_changed_source(self):
+        from patent_sar_extractor.core import heading_panel_raster_scope
+        from patent_sar_extractor.core.heading_title_geometry import title_scope_bounds
+        from patent_sar_extractor.core.title_geometry_memo import title_geometry_call
+
+        _, payload = self.panel_source(raster=True)
+        proof = self.targets(payload)[0]["original_heading_structure_evidence"][
+            "heading_source"
+        ]
+        scope, nomination, size = (
+            proof["title_scope"],
+            proof["nomination"]["bbox"],
+            proof["page_size"],
+        )
+        changed = copy.deepcopy(scope)
+        changed["panel"]["cell"][0] += 1
+
+        @title_geometry_call
+        def compare():
+            first = title_scope_bounds(scope, nomination, size)
+            self.assertEqual(title_scope_bounds(scope, nomination, size), first)
+            self.assertIsNone(title_scope_bounds(changed, nomination, size))
+
+        with patch(
+            "patent_sar_extractor.core.heading_panel_raster_scope.panel_raster_bounds",
+            wraps=heading_panel_raster_scope.panel_raster_bounds,
+        ) as observed:
+            compare()
+        self.assertEqual(observed.call_count, 2)
+
     def test_independent_outside_candidates_are_retained_without_expanding_a_panel(
         self,
     ):

@@ -1,5 +1,22 @@
 # Operations and troubleshooting
 
+## Original diagram captions, panel frames and scanned column boundaries
+
+Inspect the original source, complete drawing inventory and directed reaction
+graph before associating a numbered product. A short intermediate label can
+share a source-proved input diagram only when the full same-page route and its
+literal label are independently replayable. Do not infer a product from a label,
+nearest/rightmost structure, an unproved raster plus sign or a saved success flag.
+
+For original closed panels, title reading excludes only independently proved
+frame ink and checks unowned edge ink in the title neighborhood. For scanned
+foreign columns, the retained full row may be partitioned only at blank seams
+outside independently proved column bands. Open frames, crossing ink, changed
+sources and region-budget overflow remain explicit refusals. Binding86/binder103
+and Activity60/extractor73 refresh derived evidence, not original assets or
+manual audit. Confirm exact-main package/health and real front-end QA before
+using a patent in SAR; generated controls do not prove scientific completeness.
+
 ## A raster table title is rejected near a separate top rule
 
 Inspect the retained physical title rows and original rule pixels. A rule in a

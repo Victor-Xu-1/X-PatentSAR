@@ -136,6 +136,10 @@ def declaration_candidates(scope, heading):
     A partial drawing remains a candidate, never disappears to manufacture
     uniqueness. Invalid/changed packets are rejected, not treated as empty.
     """
+    if isinstance(scope, dict) and scope.get("version") == 5:
+        from .heading_reaction_caption import reaction_caption_candidates
+
+        return reaction_caption_candidates(scope, heading)
     if (
         not isinstance(scope, dict)
         or set(scope)
@@ -176,7 +180,7 @@ def declaration_candidates(scope, heading):
     title_scope = heading.get("title_scope")
     if (
         isinstance(title_scope, dict)
-        and title_scope.get("version") == 2
+        and title_scope.get("version") in {2, 6}
         and title_scope["column_sources"] != scope["column_sources"]
     ):
         raise ValueError("Heading title and declaration changed original column owners")

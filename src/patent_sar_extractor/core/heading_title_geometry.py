@@ -14,6 +14,7 @@ from .native_window_coverage import MAX_WINDOW_PAINTS, valid_native_window
 from .native_window_rules import boundary_rule_path
 from .source_geometry import overlaps
 from .source_observations import source_observation_status
+from .title_geometry_memo import memoized_title_geometry
 
 
 def title_seek_bounds(nomination, size):
@@ -81,13 +82,19 @@ def original_row_marks(row, *, cell=None, ruling_cells=(), raster_marks=None):
     return marks
 
 
-def _row_component(row, nomination, *, cell=None, columns=()):
+def _row_component(row, nomination, *, cell=None, columns=(), restrict_cell=False):
     window = row["window"]
     if window["refusal"] is not None:
         return None, window["refusal"]
     marks = original_row_marks(row, cell=cell)
     if len(marks) > MAX_WINDOW_PAINTS:
         return None, "source_mark_budget"
+    if restrict_cell:
+        if cell is None:
+            return None, "missing_original_title_panel"
+        if any(overlaps(box, cell) and not inside_box(box, cell) for box in marks):
+            return None, "crossing_original_title_panel"
+        marks = [box for box in marks if inside_box(box, cell)]
     if columns:
         marks, refusal = title_marks_outside_columns(marks, columns, window["bbox"])
         if refusal is not None:
@@ -121,9 +128,11 @@ def _row_component(row, nomination, *, cell=None, columns=()):
     return selected[0], None
 
 
-def _row_scope(row, nomination, size, *, columns=()):
+def _row_scope(row, nomination, size, *, columns=(), cell=None):
     fallback = list(heading_bounds(nomination, size))
-    selected, refusal = _row_component(row, nomination, columns=columns)
+    selected, refusal = _row_component(
+        row, nomination, columns=columns, cell=cell, restrict_cell=cell is not None
+    )
     if refusal is not None:
         return fallback, refusal
     seek = title_seek_bounds(nomination, size)
@@ -148,10 +157,29 @@ def _row_scope(row, nomination, size, *, columns=()):
 
 def title_scope_bounds(packet, nomination, size):
     """Recompute scope from retained source facts, never a saved success flag."""
+    if isinstance(packet, dict) and packet.get("version") in {4, 5, 6}:
+        return memoized_title_geometry(
+            {"packet": packet, "nomination": nomination, "size": size},
+            lambda source: _title_scope_bounds(
+                source["packet"], source["nomination"], source["size"]
+            ),
+        )
+    return _title_scope_bounds(packet, nomination, size)
+
+
+def _title_scope_bounds(packet, nomination, size):
     if isinstance(packet, dict) and packet.get("version") == 3:
         from .heading_raster_scope import raster_scope_bounds
 
         return raster_scope_bounds(packet, nomination, size)
+    if isinstance(packet, dict) and packet.get("version") == 5:
+        from .heading_panel_raster_scope import panel_raster_bounds
+
+        return panel_raster_bounds(packet, nomination, size)
+    if isinstance(packet, dict) and packet.get("version") == 6:
+        from .heading_raster_scope import raster_column_scope_bounds
+
+        return raster_column_scope_bounds(packet, nomination, size)
     if (
         not isinstance(size, list)
         or len(size) != 2
@@ -167,6 +195,8 @@ def title_scope_bounds(packet, nomination, size):
         - (
             {"column_sources", "original_pdf_sha256", "page_no"}
             if packet.get("version") == 2
+            else {"panel"}
+            if packet.get("version") == 4
             else set()
         )
         != {
@@ -179,7 +209,7 @@ def title_scope_bounds(packet, nomination, size):
             "cell_source",
         }
         or type(packet["version"]) is not int
-        or packet["version"] not in {1, 2}
+        or packet["version"] not in {1, 2, 4}
         or packet["nomination_bbox"] != list(nomination)
         or packet["page_size"] != size
         or not isinstance(packet["page_size"], list)
@@ -198,6 +228,28 @@ def title_scope_bounds(packet, nomination, size):
         or row["window"]["page_size"] != size
     ):
         return None
+    if packet["version"] == 4:
+        from .heading_panel_scope import panel_bounds
+
+        if (
+            packet["method"] != "panel_row"
+            or packet["cell_source"] is not None
+            or not (
+                packet["native_seed"]["tokens"]
+                or packet["native_seed"]["boundary_tokens"]
+            )
+        ):
+            return None
+        heading = {"page_size": size, "nomination": {"bbox": list(nomination)}}
+        try:
+            cell = panel_bounds(packet["panel"], heading)
+        except (ValueError, TypeError, KeyError, IndexError):
+            return None
+        if cell is None:
+            return list(
+                heading_bounds(nomination, size)
+            ), "unproved_original_title_panel"
+        return _row_scope(row, nomination, size, cell=cell)
     if packet["method"] == "closed_cell":
         if packet["version"] != 1:
             return None

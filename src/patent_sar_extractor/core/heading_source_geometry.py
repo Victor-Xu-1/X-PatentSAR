@@ -83,7 +83,7 @@ def valid_heading_geometry(proof):
         return False
     hint, raster = proof.get("nomination"), proof.get("raster_bounds")
     scope = proof.get("title_scope")
-    raster_row = isinstance(scope, dict) and scope.get("version") == 3
+    raster_row = isinstance(scope, dict) and scope.get("version") in {3, 5, 6}
     hint_bounds = bounds
     if raster_row:
         from .heading_raster_scope import context_bounds
