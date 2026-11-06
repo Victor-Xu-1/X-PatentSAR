@@ -18,6 +18,10 @@ from patent_sar_extractor.core.binding_source_headings import (
 )
 from patent_sar_extractor.core.heading_observation import observe_heading
 from patent_sar_extractor.core.heading_original_replay import validate_original_heading
+from patent_sar_extractor.core.heading_raster_scope import (
+    observe_raster_scope,
+    raster_scope_bounds,
+)
 from patent_sar_extractor.core.heading_source_proof import proved_heading_declaration
 
 
@@ -28,6 +32,7 @@ def raster_heading(
     neighbors=True,
     following="Next independent experimental paragraph.",
     following_y=104,
+    rule_y=None,
 ):
     """A real generated PDF raster, with a tightly located printed title row."""
     with fitz.open() as source:
@@ -38,6 +43,8 @@ def raster_heading(
             )
             page.insert_text((40, following_y), following, fontsize=8)
         page.insert_text((40, 92), literal, fontsize=8, fontname="tibo")
+        if rule_y is not None:
+            page.draw_line((30, rule_y), (470, rule_y), width=0.5)
         width = fitz.get_text_length(literal, fontname="tibo", fontsize=8)
         image = page.get_pixmap(matrix=fitz.Matrix(4, 4)).tobytes("png")
     with fitz.open() as document:
@@ -83,6 +90,21 @@ def controlled_reader(literal):
 
 
 class HeadingPhysicalRowTests(unittest.TestCase):
+    def test_a_rule_crossing_the_middle_of_a_multiline_title_is_not_ignored(self):
+        with fitz.open() as document:
+            page = document.new_page(width=500, height=260)
+            for y, text in (
+                (70, "Example 17"),
+                (90, "Preparation of"),
+                (110, "Compound 29"),
+            ):
+                page.insert_text((40, y), text, fontsize=8)
+            page.draw_line((30, 87), (470, 87), width=0.5)
+            nomination = [35, 60, 200, 113]
+            packet = observe_raster_scope(page, nomination)
+            _, refusal = raster_scope_bounds(packet, nomination, [500, 260])
+            self.assertEqual(refusal, "original_title_requires_cell")
+
     def observe(self, page, nomination, literal=None):
         digest = hashlib.sha256(page.parent.tobytes(no_new_id=True)).hexdigest()
         with (

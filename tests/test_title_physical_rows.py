@@ -114,6 +114,28 @@ class TitlePhysicalRowTests(unittest.TestCase):
             changed["title_scope"] = None
             self.assertIsNone(source_title_text(changed))
 
+    def test_complete_caption_above_a_separate_rule_keeps_its_original_identity(self):
+        literal = "Table 47. Examples of Compounds"
+        with raster_heading(literal, rule_y=95.5) as (_, page, heading):
+            proof = self.observe(page, nominated_title(page, heading), literal)
+            self.assertEqual(source_title_text(proof), literal)
+            replay_source_title(page, proof)
+
+    def test_rule_intersecting_caption_ink_cannot_be_discarded_as_a_neighbor(self):
+        literal = "Table 47. Examples of Compounds"
+        with raster_heading(literal, rule_y=90) as (_, page, heading):
+            proof = self.observe(page, nominated_title(page, heading), literal)
+            self.assertIsNone(source_title_text(proof))
+
+    def test_a_later_changed_rule_does_not_replay_as_the_original_title(self):
+        literal = "Table 47. Examples of Compounds"
+        with raster_heading(literal, rule_y=95.5) as (_, page, heading):
+            proof = self.observe(page, nominated_title(page, heading), literal)
+            self.assertEqual(source_title_text(proof), literal)
+            page.draw_line((30, 90), (470, 90), width=0.5)
+            with self.assertRaises(ValueError):
+                replay_source_title(page, proof)
+
 
 if __name__ == "__main__":
     unittest.main()

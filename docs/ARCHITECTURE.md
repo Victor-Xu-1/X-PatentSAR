@@ -1,5 +1,15 @@
 # X-PatentSAR architecture
 
+## Rules adjacent to raster title rows
+
+The existing raster-title geometry checks each original pixel row inside every
+selected title row for a physical rule. A separate rule in an adjacent row does
+not make a title into a cell, even if it falls within the rule detector's
+position tolerance. A rule crossing any selected title row still requires the
+existing closed-cell proof. No ink is removed or inferred; original context and
+OCR readings remain replayable. Binding85/binder102 and Activity59/extractor72
+rebuild derived proof, without changing original PDF, OCR, structures or audits.
+
 ## Original physical rows own raster heading and catalogue-title windows
 
 `heading_raster_scope` supplies title-scope3 to the existing shared title

@@ -1,5 +1,14 @@
 # Operations and troubleshooting
 
+## A raster table title is rejected near a separate top rule
+
+Inspect the retained physical title rows and original rule pixels. A rule in a
+separate row must not be borrowed into the title by a positional tolerance;
+a rule that actually crosses a title row still needs closed-cell proof. Do not
+erase rules, promote unreadable titles, or reuse an older derived acceptance.
+Binding85/binder102 and Activity59/extractor72 refresh only derived evidence.
+Generated OCR checks are not acceptance of any real patent or its chemistry.
+
 ## Many clear headings fail because padded windows contain adjacent line fragments
 
 Compare retained physical rows, not only the whole-window minimum confidence.
