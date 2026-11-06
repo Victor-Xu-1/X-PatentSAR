@@ -9,6 +9,8 @@ in the context proof, not in the heading's confidence or scientific identity.
 import math
 from dataclasses import dataclass
 
+import numpy as np
+
 from .cell_frame_proof import inside_box
 from .cell_header_lines import physical_row_bounds
 from .cell_raster import cell_pixel_rect
@@ -50,7 +52,7 @@ def observe_raster_scope(page, nomination):
     }
 
 
-def _raster_scope_geometry(packet, nomination, size):
+def _raster_scope_geometry(packet, nomination, size, *, foreign_windows=()):
     """Re-derive all geometry from retained pixels; no OCR/role/flag is a vote."""
     if (
         not isinstance(packet, dict)
@@ -104,6 +106,12 @@ def _raster_scope_geometry(packet, nomination, size):
     mask = retained_pixels(reading, bounds, 400, MAX_CONTEXT_PIXELS)
     if mask is None:
         return None
+    if foreign_windows:
+        clipped = _outside_foreign_columns(mask, extent, nomination, foreign_windows)
+        if clipped is None:
+            return RasterTitleGeometry(fallback, "ambiguous_original_column_title_ink")
+        mask, left = clipped
+        extent.x0 += left
     rows, refusal = physical_row_bounds(
         mask, 400, maximum_row_height=MAX_HEADING_HEIGHT, maximum_rows=32
     )
@@ -147,6 +155,78 @@ def _raster_scope_geometry(packet, nomination, size):
     if result[3] - result[1] > MAX_HEADING_HEIGHT:
         return RasterTitleGeometry(fallback, "title_height_budget")
     return RasterTitleGeometry(result, None, tuple(original), tuple(selected))
+
+
+def _outside_foreign_columns(mask, extent, nomination, windows):
+    """Keep full pixels, excluding only proven foreign bands at blank seams."""
+    width = mask.shape[1]
+    owned = np.zeros(width, dtype=bool)
+    for window in windows:
+        left = max(0, math.floor(window[0] * 400 / 72) - extent.x0)
+        right = min(width, math.ceil(window[2] * 400 / 72) - extent.x0)
+        if left >= right or owned[left:right].any():
+            return None
+        owned[left:right] = True
+    x0 = max(0, math.floor(nomination[0] * 400 / 72) - extent.x0)
+    x1 = min(width, math.ceil(nomination[2] * 400 / 72) - extent.x0)
+    if x0 >= x1 or owned[x0:x1].any():
+        return None
+    left, right = x0, x1
+    while left and not owned[left - 1]:
+        left -= 1
+    while right < width and not owned[right]:
+        right += 1
+    # A seam with ink cannot assign that connected source to either owner.
+    for seam in (left, right):
+        if 0 < seam < width and mask[:, max(0, seam - 1) : min(width, seam + 1)].any():
+            return None
+    if np.any(mask[:, :left] & ~owned[None, :left]) or np.any(
+        mask[:, right:] & ~owned[None, right:]
+    ):
+        return None
+    return mask[:, left:right], left
+
+
+def raster_column_scope_bounds(packet, nomination, size):
+    from .heading_title_columns import title_column_windows
+
+    if (
+        not isinstance(packet, dict)
+        or set(packet)
+        != {
+            "version",
+            "method",
+            "nomination_bbox",
+            "page_size",
+            "pixels",
+            "column_sources",
+            "original_pdf_sha256",
+            "page_no",
+        }
+        or type(packet["version"]) is not int
+        or packet["version"] != 6
+        or packet["method"] != "raster_column_row"
+    ):
+        return None
+    base = {key: packet[key] for key in ("nomination_bbox", "page_size", "pixels")}
+    base.update(version=3, method="raster_row")
+    try:
+        windows = title_column_windows(
+            packet["column_sources"],
+            packet["page_no"],
+            size,
+            packet["original_pdf_sha256"],
+            nomination,
+            context_bounds(nomination, size),
+        )
+        if not windows:
+            return None
+        observed = _raster_scope_geometry(
+            base, nomination, size, foreign_windows=windows
+        )
+    except (ValueError, TypeError, KeyError, IndexError, AttributeError):
+        return None
+    return (observed.bounds, observed.refusal) if observed is not None else None
 
 
 def _selected_rows(rows, nomination):

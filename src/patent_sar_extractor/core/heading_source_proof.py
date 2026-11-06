@@ -119,7 +119,7 @@ def heading_observation_status(proof):
         title_scope = proof["title_scope"]
         if (
             isinstance(title_scope, dict)
-            and title_scope.get("version") == 2
+            and title_scope.get("version") in {2, 6}
             and (
                 title_scope.get("original_pdf_sha256") != proof["original_pdf_sha256"]
                 or title_scope.get("page_no") != proof["page_no"]

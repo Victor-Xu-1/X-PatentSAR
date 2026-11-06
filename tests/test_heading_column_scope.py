@@ -3,10 +3,14 @@
 import copy
 import unittest
 
+import fitz
 from lateral_structure_support import LateralStructureControls
 
 from patent_sar_extractor.core.formal_structure import coverage_errors
 from patent_sar_extractor.core.heading_declaration_scope import declaration_candidates
+from patent_sar_extractor.core.heading_original_replay import (
+    original_heading_source_errors,
+)
 from patent_sar_extractor.core.ocsr.recognition_inputs import recognition_inputs
 from patent_sar_extractor.core.pipeline_rules import annotate_binding_accuracy
 
@@ -83,6 +87,40 @@ class HeadingColumnScopeTests(LateralStructureControls, unittest.TestCase):
                 ]
             with self.subTest(mutation=mutation):
                 self.assertTrue(annotate_binding_accuracy(changed)["fail_closed"])
+
+    def test_scanned_foreign_column_title_requires_exact_original_replay(self):
+        _, payload = self.run_case(later_product=True, ruled=True, raster=True)
+        binding = next(
+            r
+            for r in payload["compound_catalog"]["entries"]
+            if r["cpd"] == "Compound B80"
+        )
+        title = binding["original_heading_structure_evidence"]["heading_source"][
+            "title_scope"
+        ]
+        self.assertEqual(title["version"], 6)
+        with fitz.open(self.root / "original.pdf") as document:
+            self.assertEqual(original_heading_source_errors(document, [binding]), [])
+            document[0].draw_line((330, 415), (330, 440), width=0.6)
+            self.assertTrue(original_heading_source_errors(document, [binding]))
+        changed = copy.deepcopy(binding)
+        changed["original_heading_structure_evidence"]["heading_source"]["title_scope"][
+            "column_sources"
+        ] = []
+        self.assertTrue(annotate_binding_accuracy(changed)["fail_closed"])
+
+    def test_scanned_ink_on_foreign_column_seam_is_never_discarded(self):
+        def crossing(document, _records):
+            document[0].draw_line((325, 425), (335, 425), width=0.8)
+
+        _, payload = self.run_case(
+            later_product=True, ruled=True, raster=True, mutate_document=crossing
+        )
+        self.assertNotIn(
+            "Compound B80",
+            {row["cpd"] for row in payload["compound_catalog"]["entries"]},
+        )
+        self.assertTrue(coverage_errors(payload))
 
     def test_an_unassigned_own_column_diagram_still_blocks_a_singleton(self):
         def extra(document, records):

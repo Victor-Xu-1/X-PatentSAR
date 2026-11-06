@@ -1,5 +1,30 @@
 # X-PatentSAR architecture
 
+## Original reaction labels, panel titles and foreign raster columns
+
+The existing declaration index may retain a bounded single-page reaction-caption
+witness when the literal intermediate label has one independently verified
+diagram owner and the same complete directed graph proves it is an explicitly
+connected input. The full original page inventory remains unchanged. Native
+labels retain visible text/paint; raster labels require paired original-source
+reads and replay. A real subsequent preparation, competing label, terminal label,
+unconnected node, missing operator, ambiguous section, unavailable source or
+over-budget packet is never promoted. The projection is replayed through the
+same declaration and reaction authorities; it is not a second extraction queue.
+Current scanned reaction plus signs and isolated above-arrow reagents still need
+independent role proof; a pixel locator or label proximity is not sufficient.
+
+Title scopes can also use a complete physical panel with original frame pixels,
+or independently proved foreign column bands with blank original-pixel seams.
+Only row-local source geometry is scoped: crossing/unknown border ink and
+foreign ownership conflicts stay unresolved. Changed frame/column pixels or
+source identities invalidate replay. Large source packets refuse locally. The
+existing call-local, content-addressed memo is used only for derived title geometry
+and reaction-witness validation; actual-original replay is never cached. Binding86/binder103
+and Activity60/extractor73 invalidate derived proof reuse without changing raw
+PDF/OCR/crops, manual edits, chemistry, model weights, API/SQL or SAR data.
+Generated controls and an OCR comparison do not establish all-patent recall.
+
 ## Rules adjacent to raster title rows
 
 The existing raster-title geometry checks each original pixel row inside every
